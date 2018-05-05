@@ -24,6 +24,18 @@
     const container = document.getElementById('container');
     const canvas = document.getElementById('canvas');
 
+    const getQueryVariable = variable => {
+      const query = window.location.search.substring(1);
+      const vars = query.split('&');
+      for (let i = 0; i < vars.length; i++) {
+        const pair = vars[i].split('=');
+        if (decodeURIComponent(pair[0]) == variable) {
+          return decodeURIComponent(pair[1]);
+        }
+      }
+      return null;
+    };
+
     const registryUrl = 'http://zeovr.io:9000';
     const RAY_COLOR = 0x44c2ff;
     const RAY_HIGHLIGHT_COLOR = new THREE.Color(RAY_COLOR).multiplyScalar(0.5).getHex();
@@ -85,6 +97,18 @@
     const urlMeasures = [];
     let links = [];
     const _getCurrentLinks = () => links.slice(0, 8);
+    const playerMatrix = new ArrayBuffer(
+      3 * Float32Array.BYTES_PER_ELEMENT +
+      4 * Float32Array.BYTES_PER_ELEMENT
+    );
+    playerMatrix.set = (() => {
+      const uint8Array = new Uint8Array(playerMatrix);
+      return arrayBuffer => {
+        uint8Array.set(new Uint8Array(arrayBuffer));
+      };
+    })();
+    playerMatrix.position = new Float32Array(playerMatrix, 0, 3);
+    playerMatrix.quaternion = new Float32Array(playerMatrix, 3 * Float32Array.BYTES_PER_ELEMENT, 4);
 
     const localVector = new THREE.Vector3();
     const localVector2 = new THREE.Vector3();
@@ -116,6 +140,88 @@
         return navigator.getGamepads();
       }
     };
+
+    const playerMeshes = [];
+    const _makePlayerMesh = playerId => {
+      const mesh = new THREE.Mesh(new THREE.BoxBufferGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({color: 0x00FFFF}));
+      mesh.visible = false;
+      mesh.playerId = playerId;
+      mesh.update = (position, quaternion) => {
+        mesh.position.fromArray(position);
+        mesh.quaternion.fromArray(quaternion);
+        mesh.updateMatrixWorld();
+        mesh.visible = true;
+      };
+      return mesh;
+    };
+
+    const ws = (() => {
+      const multiplayerServer = getQueryVariable('m');
+      if (multiplayerServer) {
+        const ws = new WebSocket(multiplayerServer);
+        ws.binaryType = 'arraybuffer';
+        ws.onopen = () => {
+          const id = Math.random().toString(36).substring(7);
+          ws.send(JSON.stringify({id}));
+        };
+        ws.onerror = err => {
+          console.warn('websocket error', err);
+        };
+        let currentId = null;
+        ws.onmessage = m => {
+          const {data} = m;
+          if (typeof data === 'string') {
+            const j = JSON.parse(data);
+            const {type} = j;
+
+            switch (type) {
+              case 'playerEnter': {
+                const {id} = j;
+
+                const playerMesh = _makePlayerMesh(id);
+                scene.add(playerMesh);
+                playerMeshes.push(playerMesh);
+
+                console.log('player enter', id);
+                break;
+              }
+              case 'playerLeave': {
+                const {id} = j;
+
+                const playerMeshIndex = playerMeshes.findIndex(playerMesh => playerMesh.playerId === id);
+                const playerMesh = playerMeshes[playerMeshIndex];
+                scene.remove(playerMesh);
+                playerMeshes.splice(playerMeshIndex, 1);
+
+                console.log('player leave', id);
+                break;
+              }
+              case 'setContext': {
+                const {id} = j;
+                currentId = id;
+                break;
+              }
+              default: {
+                console.warn('got invalid messasge type', type);
+                break;
+              }
+            }
+          } else {
+            if (currentId) {
+              playerMatrix.set(data);
+
+              const playerMesh = playerMeshes.find(playerMesh => playerMesh.playerId === currentId);
+              playerMesh.update(playerMatrix.position, playerMatrix.quaternion);
+            } else {
+              console.warn('got player position message without player id context');
+            }
+          }
+        };
+        return ws;
+      } else {
+        return null;
+      }
+    })();
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -1349,12 +1455,21 @@
           );
         } */
       };
+      const _updatePlayer = () => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          camera.position.toArray(playerMatrix.position);
+          camera.quaternion.toArray(playerMatrix.quaternion);
+
+          ws.send(playerMatrix);
+        }
+      };
       _updateControls();
       _updateControllers();
       _updateHands();
       _updateIntersections();
       _animateKeyboard();
       _animateControllers();
+      _updatePlayer();
 
       const device = renderer.vr.getDevice();
       if (device && device.constructor.name === 'FakeVRDisplay') {
