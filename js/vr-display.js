@@ -330,6 +330,11 @@ class FakeVRDisplay extends MRDisplay {
     this._frameData = new VRFrameData();
   }
 
+  setSize(width, height) {
+    this._width = width;
+    this._height = height;
+  }
+
   update() {
     localMatrix.compose(
       this.position,
