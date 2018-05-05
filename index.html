@@ -21,7 +21,6 @@
   <script src="js/svg-boundings.js"></script>
   <script>
     const registryUrl = 'http://zeovr.io:9000';
-    const multiplayerServerUrl = 'ws://127.0.0.1:9000';
     const RAY_COLOR = 0x44c2ff;
     const RAY_HIGHLIGHT_COLOR = new THREE.Color(RAY_COLOR).multiplyScalar(0.5).getHex();
     const rayDistance = 10;
@@ -76,10 +75,6 @@
         }
       `,
     };
-    const matrix = new ArrayBuffer(
-      3 * Float32Array.BYTES_PER_ELEMENT +
-      4 * Float32Array.BYTES_PER_ELEMENT
-    );
 
     let urlText = 'http://';
     let urlCursor = urlText.length;
@@ -95,21 +90,6 @@
     const localQuaternion = new THREE.Quaternion();
     const localEuler = new THREE.Euler();
     localEuler.order = 'YXZ';
-
-    const ws = new WebSocket(multiplayerServerUrl);
-    ws.binaryType = 'arraybuffer';
-    ws.onopen = () => {
-      console.log('websocket open');
-
-      const id = Math.random().toString(36).substring(7);
-      ws.send(JSON.stringify({id}));
-    };
-    ws.onerror = err => {
-      console.warn('websocket error', err);
-    };
-    ws.onmessage = m => {
-      console.log('websocket message', m.data);
-    };
 
     const container = document.getElementById('container');
 
@@ -1362,30 +1342,12 @@
           );
         } */
       };
-      const _updatePlayer = () => {
-        if (ws.readyState === WebSocket.OPEN) {
-          // console.log('update player 1');
-
-          const position = new Float32Array(matrix, 0, 3);
-          camera.position.toArray(position);
-          const quaternion = new Float32Array(matrix, 3 * Float32Array.BYTES_PER_ELEMENT, 4);
-          camera.quaternion.toArray(quaternion);
-
-          // const matrixFloat32Array = new Float32Array(matrix);
-          // matrixFloat32Array.set(position, 0);
-          // matrixFloat32Array.set(quaternion, 3);
-          ws.send(matrix);
-
-          // console.log('update player 2');
-        }
-      };
       _updateControls();
       _updateControllers();
       _updateHands();
       _updateIntersections();
       _animateKeyboard();
       _animateControllers();
-      _updatePlayer();
 
       const device = renderer.vr.getDevice();
       if (device && device.constructor.name === 'FakeVRDisplay') {
