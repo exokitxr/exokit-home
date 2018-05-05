@@ -109,6 +109,14 @@
         renderer.vr.setDevice(fakeDisplay);
       });
 
+    const _getGamepads = () => {
+      if (fakeDisplay.isPresenting) {
+        return fakeDisplay.gamepads;
+      } else {
+        return navigator.getGamepads();
+      }
+    };
+
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     const renderer = new THREE.WebGLRenderer({
@@ -979,7 +987,7 @@
         }
       };
       const _updateControllers = () => {
-        const gamepads = navigator.getGamepads();
+        const gamepads = _getGamepads();
 
         for (let i = 0; i < gamepads.length; i++) {
           const gamepad = gamepads[i];
@@ -1003,7 +1011,7 @@
         menuMesh.urlMesh.update();
         menuMesh.gridMesh.updatePlanes();
 
-        const gamepads = navigator.getGamepads();
+        const gamepads = _getGamepads();
 
         for (let i = 0; i < controllerMeshes.length; i++) {
           const controllerMesh = controllerMeshes[i];
@@ -1315,7 +1323,7 @@
         }
       };
       const _animateControllers = () => {
-        const gamepads = navigator.getGamepads();
+        const gamepads = _getGamepads();
 
         for (let i = 0; i < gamepads.length; i++) {
           const gamepad = gamepads[i];
