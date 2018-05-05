@@ -21,6 +21,9 @@
   <script src="js/keycode.js"></script>
   <script src="js/svg-boundings.js"></script>
   <script>
+    const container = document.getElementById('container');
+    const canvas = document.getElementById('canvas');
+
     const registryUrl = 'http://zeovr.io:9000';
     const RAY_COLOR = 0x44c2ff;
     const RAY_HIGHLIGHT_COLOR = new THREE.Color(RAY_COLOR).multiplyScalar(0.5).getHex();
@@ -92,9 +95,6 @@
     const localEuler = new THREE.Euler();
     localEuler.order = 'YXZ';
 
-    const container = document.getElementById('container');
-
-    const canvas = document.getElementById('canvas');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     const renderer = new THREE.WebGLRenderer({
