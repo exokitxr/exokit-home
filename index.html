@@ -97,18 +97,29 @@
     const urlMeasures = [];
     let links = [];
     const _getCurrentLinks = () => links.slice(0, 8);
-    const playerMatrix = new ArrayBuffer(
-      3 * Float32Array.BYTES_PER_ELEMENT +
-      4 * Float32Array.BYTES_PER_ELEMENT
-    );
-    playerMatrix.set = (() => {
+
+    const numPlayerMatrixElements = (3+4)*(1+2);
+    const playerMatrix = new ArrayBuffer(numPlayerMatrixElements * Float32Array.BYTES_PER_ELEMENT);
+    playerMatrix.setArrayBuffer = (() => {
       const uint8Array = new Uint8Array(playerMatrix);
-      return arrayBuffer => {
-        uint8Array.set(new Uint8Array(arrayBuffer));
+      return newArrayBuffer => {
+        uint8Array.set(new Uint8Array(newArrayBuffer));
       };
     })();
-    playerMatrix.position = new Float32Array(playerMatrix, 0, 3);
-    playerMatrix.quaternion = new Float32Array(playerMatrix, 3 * Float32Array.BYTES_PER_ELEMENT, 4);
+    playerMatrix.hmd = {
+      position: new Float32Array(playerMatrix, (0)*Float32Array.BYTES_PER_ELEMENT, 3),
+      quaternion: new Float32Array(playerMatrix, (3)*Float32Array.BYTES_PER_ELEMENT, 4),
+    };
+    playerMatrix.gamepads = [
+      {
+        position: new Float32Array(playerMatrix, (3+4)*Float32Array.BYTES_PER_ELEMENT, 3),
+        quaternion: new Float32Array(playerMatrix, (3+4+3)*Float32Array.BYTES_PER_ELEMENT, 4),
+      },
+      {
+        position: new Float32Array(playerMatrix, (3+4+3+4)*Float32Array.BYTES_PER_ELEMENT, 3),
+        quaternion: new Float32Array(playerMatrix, (3+4+3+4+3)*Float32Array.BYTES_PER_ELEMENT, 4),
+      },
+    ];
 
     const localVector = new THREE.Vector3();
     const localVector2 = new THREE.Vector3();
@@ -143,16 +154,40 @@
 
     const playerMeshes = [];
     const _makePlayerMesh = playerId => {
-      const mesh = new THREE.Mesh(new THREE.BoxBufferGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({color: 0x00FFFF}));
-      mesh.visible = false;
-      mesh.playerId = playerId;
-      mesh.update = (position, quaternion) => {
-        mesh.position.fromArray(position);
-        mesh.quaternion.fromArray(quaternion);
-        mesh.updateMatrixWorld();
-        mesh.visible = true;
+      const object = new THREE.Object3D();
+
+      const hmdMesh = new THREE.Mesh(new THREE.BoxBufferGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({color: 0x00FFFF}));
+      hmdMesh.visible = false;
+      object.add(hmdMesh);
+
+      const _makeGamepadMesh = () => {
+        const mesh = new THREE.Mesh(new THREE.BoxBufferGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({color: 0x00FFFF}));
+        mesh.visible = false;
+        return mesh;
       };
-      return mesh;
+      const gamepadMeshes = Array(2);
+      for (let i = 0; i < gamepadMeshes.length; i++) {
+        const gamepadMesh = _makeGamepadMesh();
+        object.add(gamepadMesh);
+        gamepadMeshes[i] = gamepadMesh;
+      }
+
+      object.playerId = playerId;
+      object.update = playerMatrix => {
+        hmdMesh.position.fromArray(playerMatrix.hmd.position);
+        hmdMesh.quaternion.fromArray(playerMatrix.hmd.quaternion);
+        hmdMesh.updateMatrixWorld();
+        hmdMesh.visible = true;
+
+        for (let i = 0; i < gamepadMeshes.length; i++) {
+          const gamepadMesh = gamepadMeshes[i];
+          gamepadMesh.position.fromArray(playerMatrix.gamepads[i].position);
+          gamepadMesh.quaternion.fromArray(playerMatrix.gamepads[i].quaternion);
+          gamepadMesh.updateMatrixWorld();
+          gamepadMesh.visible = true;
+        }
+      };
+      return object;
     };
 
     const ws = (() => {
@@ -208,10 +243,10 @@
             }
           } else {
             if (currentId) {
-              playerMatrix.set(data);
+              playerMatrix.setArrayBuffer(data);
 
               const playerMesh = playerMeshes.find(playerMesh => playerMesh.playerId === currentId);
-              playerMesh.update(playerMatrix.position, playerMatrix.quaternion);
+              playerMesh.update(playerMatrix);
             } else {
               console.warn('got player position message without player id context');
             }
@@ -1455,10 +1490,16 @@
           );
         } */
       };
-      const _updatePlayer = () => {
+      const _pushPlayerUpdate = () => {
         if (ws && ws.readyState === WebSocket.OPEN) {
-          camera.position.toArray(playerMatrix.position);
-          camera.quaternion.toArray(playerMatrix.quaternion);
+          camera.position.toArray(playerMatrix.hmd.position);
+          camera.quaternion.toArray(playerMatrix.hmd.quaternion);
+
+          for (let i = 0; i < controllerMeshes.length; i++) {
+            const controllerMesh = controllerMeshes[i];
+            controllerMesh.position.toArray(playerMatrix.gamepads[i].position);
+            controllerMesh.quaternion.toArray(playerMatrix.gamepads[i].quaternion);
+          }
 
           ws.send(playerMatrix);
         }
@@ -1469,7 +1510,7 @@
       _updateIntersections();
       _animateKeyboard();
       _animateControllers();
-      _updatePlayer();
+      _pushPlayerUpdate();
 
       const device = renderer.vr.getDevice();
       if (device && device.constructor.name === 'FakeVRDisplay') {
