@@ -483,33 +483,44 @@
         }
       };
       handMesh.updatePlayerMatrix = playerMatrixHandData => {
-        for (let j = 0; j < fingerMeshes.length; j++) {
-          const boneMeshes = fingerMeshes[j];
+        if (playerMatrixHandData.enabled[0]) {
+          for (let j = 0; j < fingerMeshes.length; j++) {
+            const boneMeshes = fingerMeshes[j];
 
-          for (let k = 0; k < boneMeshes.length; k++) {
-            const boneMesh = boneMeshes[k];
+            for (let k = 0; k < boneMeshes.length; k++) {
+              const boneMesh = boneMeshes[k];
 
-            const boneBaseIndex = ((j*4) + k) * (3+3);
-            const boneStartPosition = localVector2.set(playerMatrixHandData[boneBaseIndex + 0], playerMatrixHandData[boneBaseIndex + 1], playerMatrixHandData[boneBaseIndex + 2]);
-            const boneEndPosition = localVector3.set(playerMatrixHandData[boneBaseIndex + 3], playerMatrixHandData[boneBaseIndex + 4], playerMatrixHandData[boneBaseIndex + 5]);
+              const boneBaseIndex = ((j*4) + k) * (3+3);
+              const boneStartPosition = localVector2.set(playerMatrixHandData.data[boneBaseIndex + 0], playerMatrixHandData.data[boneBaseIndex + 1], playerMatrixHandData.data[boneBaseIndex + 2]);
+              const boneEndPosition = localVector3.set(playerMatrixHandData.data[boneBaseIndex + 3], playerMatrixHandData.data[boneBaseIndex + 4], playerMatrixHandData.data[boneBaseIndex + 5]);
 
-            const boneCenter = localVector4
-              .copy(boneStartPosition)
-              .add(boneEndPosition)
-              .divideScalar(2);
-            const boneDirection = boneEndPosition
-              .sub(boneStartPosition);
-            const boneLength = boneDirection.length();
-            boneDirection.divideScalar(boneLength);
+              const boneCenter = localVector4
+                .copy(boneStartPosition)
+                .add(boneEndPosition)
+                .divideScalar(2);
+              const boneDirection = boneEndPosition
+                .sub(boneStartPosition);
+              const boneLength = boneDirection.length();
+              boneDirection.divideScalar(boneLength);
 
-            boneMesh.position.copy(boneCenter);
-            boneMesh.quaternion.setFromUnitVectors(
-              upVector,
-              boneDirection
-            )
-            boneMesh.scale.y = boneLength;
-            boneMesh.updateMatrixWorld();
-            boneMesh.visible = true;
+              boneMesh.position.copy(boneCenter);
+              boneMesh.quaternion.setFromUnitVectors(
+                upVector,
+                boneDirection
+              )
+              boneMesh.scale.y = boneLength;
+              boneMesh.updateMatrixWorld();
+              boneMesh.visible = true;
+            }
+          }
+        } else {
+          for (let j = 0; j < fingerMeshes.length; j++) {
+            const boneMeshes = fingerMeshes[j];
+
+            for (let k = 0; k < boneMeshes.length; k++) {
+              const boneMesh = boneMeshes[k];
+              boneMesh.visible = false;
+            }
           }
         }
       };
@@ -624,7 +635,7 @@
           }
 
           for (let i = 0; i < handMeshes.length; i++) {
-            handMeshes[i].updatePlayerMatrix(playerMatrix.hands[i].data);
+            handMeshes[i].updatePlayerMatrix(playerMatrix.hands[i]);
           }
         };
 
@@ -1675,7 +1686,7 @@
           }
 
           for (let i = 0; i < 2; i++) {
-            playerMatrix.hands[i].enabled[0] = 1;
+            playerMatrix.hands[i].enabled[0] = +handMeshes[i].visible;
             playerMatrix.hands[i].data.set(handMeshes[i].handFrameData);
           }
 
