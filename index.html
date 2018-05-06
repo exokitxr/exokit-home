@@ -1301,12 +1301,14 @@
               .applyEuler(localEuler)
           );
 
-          localVector.copy(fakeDisplay.position)
-            .add(
-              localVector2.set(0, -0.1, -0.5)
-                .applyQuaternion(fakeDisplay.quaternion)
-            ).toArray(fakeDisplay.gamepads[1].pose.position);
-          fakeDisplay.quaternion.toArray(fakeDisplay.gamepads[1].pose.orientation);
+          for (let i = 0; i < 2; i++) {
+            localVector.copy(fakeDisplay.position)
+              .add(
+                localVector2.set(-0.1 + (i*0.1*2), -0.1, -0.2)
+                  .applyQuaternion(fakeDisplay.quaternion)
+              ).toArray(fakeDisplay.gamepads[i].pose.position);
+            fakeDisplay.quaternion.toArray(fakeDisplay.gamepads[i].pose.orientation);
+          }
 
           fakeDisplay.update();
         }
