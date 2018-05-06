@@ -401,7 +401,7 @@
         fingerMeshes[j] = boneMeshes;
       }
 
-      handMesh.update = frameHandData => {
+      handMesh.updateFrameData = frameHandData => {
         const palmNormal = localVector.set(frameHandData[3], frameHandData[4], frameHandData[5]);
 
         if (palmNormal.x !== 0 || palmNormal.y !== 0 || palmNormal.z !== 0) {
@@ -1257,7 +1257,7 @@
       const _updateHands = () => {
         if (renderer.vr.frameData && renderer.vr.frameData.hands) {
           for (let i = 0; i < renderer.vr.frameData.hands.length; i++) {
-            handMeshes[i].update(renderer.vr.frameData.hands[i]);
+            handMeshes[i].updateFrameData(renderer.vr.frameData.hands[i]);
           }
         }
       };
