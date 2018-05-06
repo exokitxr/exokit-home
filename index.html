@@ -188,42 +188,6 @@
     };
 
     const playerMeshes = [];
-    /* const _makeLocalPlayerMesh = playerId => {
-      const object = new THREE.Object3D();
-
-      const hmdMesh = new THREE.Mesh(new THREE.BoxBufferGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({color: 0x00FFFF}));
-      hmdMesh.visible = false;
-      object.add(hmdMesh);
-
-      const _makeGamepadMesh = () => {
-        const mesh = new THREE.Mesh(new THREE.BoxBufferGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({color: 0x00FFFF}));
-        mesh.visible = false;
-        return mesh;
-      };
-      const gamepadMeshes = Array(2);
-      for (let i = 0; i < gamepadMeshes.length; i++) {
-        const gamepadMesh = _makeGamepadMesh();
-        object.add(gamepadMesh);
-        gamepadMeshes[i] = gamepadMesh;
-      }
-
-      object.playerId = playerId;
-      object.update = playerMatrix => {
-        hmdMesh.position.fromArray(playerMatrix.hmd.position);
-        hmdMesh.quaternion.fromArray(playerMatrix.hmd.quaternion);
-        hmdMesh.updateMatrixWorld();
-        hmdMesh.visible = true;
-
-        for (let i = 0; i < gamepadMeshes.length; i++) {
-          const gamepadMesh = gamepadMeshes[i];
-          gamepadMesh.position.fromArray(playerMatrix.gamepads[i].position);
-          gamepadMesh.quaternion.fromArray(playerMatrix.gamepads[i].quaternion);
-          gamepadMesh.updateMatrixWorld();
-          gamepadMesh.visible = true;
-        }
-      };
-      return object;
-    }; */
 
     const ws = (() => {
       const multiplayerServer = getQueryVariable('m');
