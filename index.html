@@ -474,7 +474,7 @@
           for (let k = 0; k < boneMeshes.length; k++) {
             const boneMesh = boneMeshes[k];
 
-            const boneBaseIndex = ((j * 5) + k) * (3 + 3);
+            const boneBaseIndex = ((j*4) + k) * (3 + 3);
             const boneStartPosition = localVector2.set(playerMatrixHandData[boneBaseIndex + 0], playerMatrixHandData[boneBaseIndex + 1], playerMatrixHandData[boneBaseIndex + 2]);
             const boneEndPosition = localVector3.set(playerMatrixHandData[boneBaseIndex + 3], playerMatrixHandData[boneBaseIndex + 4], playerMatrixHandData[boneBaseIndex + 5]);
 
