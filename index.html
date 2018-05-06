@@ -383,7 +383,7 @@
     const boneMaterial = new THREE.MeshPhongMaterial({
       color: 0x00FF00,
     });
-    for (let i = 0; i < handMeshes.length; i++) {
+    const _makeHandMesh = () => {
       const handMesh = new THREE.Mesh(fingerTipGeometry, fingerTipMaterial);
       handMesh.visible = false;
 
@@ -469,6 +469,10 @@
         }
       };
 
+      return handMesh;
+    };
+    for (let i = 0; i < handMeshes.length; i++) {
+      const handMesh = _makeHandMesh();
       scene.add(handMesh);
       handMeshes[i] = handMesh;
     }
