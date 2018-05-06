@@ -430,29 +430,42 @@
               const boneMesh = boneMeshes[k];
 
               const boneBaseIndex = (1 + 1 + (j * 5) + k) * (3 + 3);
-              const boneStartPosition = localVector2.set(frameHandData[boneBaseIndex + 0], frameHandData[boneBaseIndex + 1], frameHandData[boneBaseIndex + 2]);
-              const boneEndPosition = localVector3.set(frameHandData[boneBaseIndex + 3], frameHandData[boneBaseIndex + 4], frameHandData[boneBaseIndex + 5]);
+              const boneStartPosition = localVector2
+                .copy(camera.position)
+                .add(
+                  localVector3
+                    .set(frameHandData[boneBaseIndex + 0], frameHandData[boneBaseIndex + 1], frameHandData[boneBaseIndex + 2])
+                    .applyQuaternion(camera.quaternion)
+                );
+              const boneEndPosition = localVector3
+                .copy(camera.position)
+                .add(
+                  localVector4
+                    .set(frameHandData[boneBaseIndex + 3], frameHandData[boneBaseIndex + 4], frameHandData[boneBaseIndex + 5])
+                    .applyQuaternion(camera.quaternion)
+                );
 
-              handFrameData.set(frameHandData.slice(boneBaseIndex, boneBaseIndex + 3+3), j*4*(3+3) + k*(3+3));
-
-              const boneCenter = localVector4.copy(boneStartPosition).add(boneEndPosition).divideScalar(2);
-              const boneDirection = boneEndPosition
+              const boneCenter = localVector4
+                .copy(boneStartPosition)
+                .add(boneEndPosition)
+                .divideScalar(2);
+              const boneDirection = localVector5
+                .copy(boneEndPosition)
                 .sub(boneStartPosition);
               const boneLength = boneDirection.length();
               boneDirection.divideScalar(boneLength);
 
-              boneMesh.position
-                .copy(camera.position)
-                .add(
-                  boneCenter.applyQuaternion(camera.quaternion)
-                );
+              boneMesh.position.copy(boneCenter);
               boneMesh.quaternion.setFromUnitVectors(
                 upVector,
                 boneDirection
-              ).premultiply(camera.quaternion);
+              );
               boneMesh.scale.y = boneLength;
               boneMesh.updateMatrixWorld();
               boneMesh.visible = true;
+
+              boneStartPosition.toArray(handFrameData, j*4*(3+3) + k*(3+3) + 0);
+              boneEndPosition.toArray(handFrameData, j*4*(3+3) + k*(3+3) + 3);
             }
           }
         } else {
@@ -474,25 +487,24 @@
           for (let k = 0; k < boneMeshes.length; k++) {
             const boneMesh = boneMeshes[k];
 
-            const boneBaseIndex = ((j*4) + k) * (3 + 3);
+            const boneBaseIndex = ((j*4) + k) * (3+3);
             const boneStartPosition = localVector2.set(playerMatrixHandData[boneBaseIndex + 0], playerMatrixHandData[boneBaseIndex + 1], playerMatrixHandData[boneBaseIndex + 2]);
             const boneEndPosition = localVector3.set(playerMatrixHandData[boneBaseIndex + 3], playerMatrixHandData[boneBaseIndex + 4], playerMatrixHandData[boneBaseIndex + 5]);
 
-            const boneCenter = localVector4.copy(boneStartPosition).add(boneEndPosition).divideScalar(2);
+            const boneCenter = localVector4
+              .copy(boneStartPosition)
+              .add(boneEndPosition)
+              .divideScalar(2);
             const boneDirection = boneEndPosition
               .sub(boneStartPosition);
             const boneLength = boneDirection.length();
             boneDirection.divideScalar(boneLength);
 
-            boneMesh.position
-              .copy(camera.position)
-              .add(
-                boneCenter.applyQuaternion(camera.quaternion)
-              );
+            boneMesh.position.copy(boneCenter);
             boneMesh.quaternion.setFromUnitVectors(
               upVector,
               boneDirection
-            ).premultiply(camera.quaternion);
+            )
             boneMesh.scale.y = boneLength;
             boneMesh.updateMatrixWorld();
             boneMesh.visible = true;
