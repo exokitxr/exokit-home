@@ -467,6 +467,38 @@
           }
         }
       };
+      handMesh.updatePlayerMatrix = playerMatrixHandData => {
+        for (let j = 0; j < fingerMeshes.length; j++) {
+          const boneMeshes = fingerMeshes[j];
+
+          for (let k = 0; k < boneMeshes.length; k++) {
+            const boneMesh = boneMeshes[k];
+
+            const boneBaseIndex = ((j * 5) + k) * (3 + 3);
+            const boneStartPosition = localVector2.set(playerMatrixHandData[boneBaseIndex + 0], playerMatrixHandData[boneBaseIndex + 1], playerMatrixHandData[boneBaseIndex + 2]);
+            const boneEndPosition = localVector3.set(playerMatrixHandData[boneBaseIndex + 3], playerMatrixHandData[boneBaseIndex + 4], playerMatrixHandData[boneBaseIndex + 5]);
+
+            const boneCenter = localVector4.copy(boneStartPosition).add(boneEndPosition).divideScalar(2);
+            const boneDirection = boneEndPosition
+              .sub(boneStartPosition);
+            const boneLength = boneDirection.length();
+            boneDirection.divideScalar(boneLength);
+
+            boneMesh.position
+              .copy(camera.position)
+              .add(
+                boneCenter.applyQuaternion(camera.quaternion)
+              );
+            boneMesh.quaternion.setFromUnitVectors(
+              upVector,
+              boneDirection
+            ).premultiply(camera.quaternion);
+            boneMesh.scale.y = boneLength;
+            boneMesh.updateMatrixWorld();
+            boneMesh.visible = true;
+          }
+        }
+      };
 
       return handMesh;
     };
@@ -506,6 +538,14 @@
         mesh.playerId = playerId;
 
         const uniforms = THREE.UniformsUtils.clone(skin.SKIN_SHADER.uniforms);
+
+        const handMeshes = Array(2);
+        for (let i = 0; i < handMeshes.length; i++) {
+          const handMesh = _makeHandMesh();
+          scene.add(handMesh);
+          handMeshes[i] = handMesh;
+        }
+        mesh.handMeshes = handMeshes;
 
         mesh.onBeforeRender = (function(onBeforeRender) {
           return function() {
@@ -567,6 +607,10 @@
             } else {
               armRotation.value.set(0, 0, 0, 1);
             }
+          }
+
+          for (let i = 0; i < handMeshes.length; i++) {
+            handMeshes[i].updatePlayerMatrix(playerMatrix.hands[i].data);
           }
         };
 
