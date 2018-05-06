@@ -2010,6 +2010,14 @@
         menuMesh.urlMesh.updateText();
       }
     });
+    window.addEventListener('dragover', e => {
+      e.preventDefault();
+    });
+    window.addEventListener('drop', e => {
+      e.preventDefault();
+
+      console.log('drop', e);
+    });
   </script>
 </body>
 </html>
