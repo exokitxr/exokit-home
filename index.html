@@ -136,7 +136,7 @@
       _makePlayerMatrixGamepad(),
       _makePlayerMatrixGamepad(),
     ];
-    const _makePlayerMatrixHands = () => {
+    const _makePlayerMatrixHand = () => {
       const enabled = new Uint32Array(playerMatrix, _getPlayerMatrixIndex(Uint32Array.BYTES_PER_ELEMENT), 1);
       const data = new Float32Array(playerMatrix, _getPlayerMatrixIndex(5*4*(3+3)*Float32Array.BYTES_PER_ELEMENT), 5*4*(3+3));
       return {
@@ -147,7 +147,7 @@
     playerMatrix.hands = (() => {
       const hands = Array(2);
       for (let i = 0; i < hands.length; i++) {
-        hands[i] = _makePlayerMatrixHands();
+        hands[i] = _makePlayerMatrixHand();
       }
       return hands;
     })();
