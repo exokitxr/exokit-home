@@ -154,7 +154,7 @@
     };
 
     const playerMeshes = [];
-    const _makePlayerMesh = playerId => {
+    /* const _makeLocalPlayerMesh = playerId => {
       const object = new THREE.Object3D();
 
       const hmdMesh = new THREE.Mesh(new THREE.BoxBufferGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({color: 0x00FFFF}));
@@ -189,7 +189,7 @@
         }
       };
       return object;
-    };
+    }; */
 
     const ws = (() => {
       const multiplayerServer = getQueryVariable('m');
