@@ -193,6 +193,7 @@
         const ws = new WebSocket(multiplayerServer);
         ws.binaryType = 'arraybuffer';
         ws.onopen = () => {
+          console.log('websocket connect');
           const id = Math.random().toString(36).substring(7);
           ws.send(JSON.stringify({id}));
         };
