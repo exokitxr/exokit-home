@@ -103,7 +103,7 @@
     const numPlayerMatrixElements =
       (3+4) + // hmd
       (1 + (3+4)) * 2 + // gamepads
-      (1 + (5 * (3+3))) * 2; // hands
+      (1 + (5*4*(3+3))) * 2; // hands
     const playerMatrix = new ArrayBuffer(numPlayerMatrixElements * Float32Array.BYTES_PER_ELEMENT);
     playerMatrix.setArrayBuffer = (() => {
       const uint8Array = new Uint8Array(playerMatrix);
@@ -138,7 +138,7 @@
     ];
     const _makePlayerMatrixHands = () => {
       const enabled = new Uint32Array(playerMatrix, _getPlayerMatrixIndex(Uint32Array.BYTES_PER_ELEMENT), 1);
-      const data = new Float32Array(playerMatrix, _getPlayerMatrixIndex(5*4*Float32Array.BYTES_PER_ELEMENT), 3);
+      const data = new Float32Array(playerMatrix, _getPlayerMatrixIndex(5*4*(3+3)*Float32Array.BYTES_PER_ELEMENT), 5*4*(3+3));
       return {
         enabled,
         data,
@@ -387,6 +387,9 @@
       const handMesh = new THREE.Mesh(fingerTipGeometry, fingerTipMaterial);
       handMesh.visible = false;
 
+      const handFrameData = new Float32Array(new ArrayBuffer(5*4*(3+3) * Float32Array.BYTES_PER_ELEMENT), 0, 5*4*(3+3));
+      handMesh.handFrameData = handFrameData;
+
       const fingerMeshes = Array(5);
       for (let j = 0; j < fingerMeshes.length; j++) {
         const boneMeshes = Array(4);
@@ -399,15 +402,15 @@
         fingerMeshes[j] = boneMeshes;
       }
 
-      handMesh.update = handArray => {
-        const palmNormal = localVector.set(handArray[3], handArray[4], handArray[5]);
+      handMesh.update = frameHandData => {
+        const palmNormal = localVector.set(frameHandData[3], frameHandData[4], frameHandData[5]);
 
         if (palmNormal.x !== 0 || palmNormal.y !== 0 || palmNormal.z !== 0) {
-          // const palmPosition = localVector.set(handArray[0], handArray[1], handArray[2]);
+          // const palmPosition = localVector.set(frameHandData[0], frameHandData[1], frameHandData[2]);
 
           const fingerBaseIndex = (1 + (1 * 5)) * (3 + 3);
-          const fingerTipPosition = localVector2.set(handArray[fingerBaseIndex + 0], handArray[fingerBaseIndex + 1], handArray[fingerBaseIndex + 2]);
-          const fingerTipDirection = localVector3.set(handArray[fingerBaseIndex + 3], handArray[fingerBaseIndex + 4], handArray[fingerBaseIndex + 5]);
+          const fingerTipPosition = localVector2.set(frameHandData[fingerBaseIndex + 0], frameHandData[fingerBaseIndex + 1], frameHandData[fingerBaseIndex + 2]);
+          const fingerTipDirection = localVector3.set(frameHandData[fingerBaseIndex + 3], frameHandData[fingerBaseIndex + 4], frameHandData[fingerBaseIndex + 5]);
 
           handMesh.position
             .copy(camera.position)
@@ -428,8 +431,11 @@
               const boneMesh = boneMeshes[k];
 
               const boneBaseIndex = (1 + 1 + (j * 5) + k) * (3 + 3);
-              const boneStartPosition = localVector2.set(handArray[boneBaseIndex + 0], handArray[boneBaseIndex + 1], handArray[boneBaseIndex + 2]);
-              const boneEndPosition = localVector3.set(handArray[boneBaseIndex + 3], handArray[boneBaseIndex + 4], handArray[boneBaseIndex + 5]);
+              const boneStartPosition = localVector2.set(frameHandData[boneBaseIndex + 0], frameHandData[boneBaseIndex + 1], frameHandData[boneBaseIndex + 2]);
+              const boneEndPosition = localVector3.set(frameHandData[boneBaseIndex + 3], frameHandData[boneBaseIndex + 4], frameHandData[boneBaseIndex + 5]);
+
+              handFrameData.set(frameHandData.slice(boneBaseIndex, boneBaseIndex + 3+3), j*4*(3+3) + k*(3+3));
+
               const boneCenter = localVector4.copy(boneStartPosition).add(boneEndPosition).divideScalar(2);
               const boneDirection = boneEndPosition
                 .sub(boneStartPosition);
@@ -1609,7 +1615,7 @@
 
           for (let i = 0; i < 2; i++) {
             playerMatrix.hands[i].enabled[0] = 1;
-            // XXX pipe hands data
+            playerMatrix.hands[i].data.set(handMeshes[i].handFrameData);
           }
 
           ws.send(playerMatrix);
