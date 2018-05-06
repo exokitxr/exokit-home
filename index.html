@@ -122,6 +122,7 @@
       },
     ];
 
+    const upVector = new THREE.Vector3(0, 1, 0);
     const localVector = new THREE.Vector3();
     const localVector2 = new THREE.Vector3();
     const localVector3 = new THREE.Vector3();
@@ -393,15 +394,14 @@
       }
 
       handMesh.update = handArray => {
-        const upVector = localVector.set(0, 1, 0);
-        const palmNormal = localVector2.set(handArray[3], handArray[4], handArray[5]);
+        const palmNormal = localVector.set(handArray[3], handArray[4], handArray[5]);
 
         if (palmNormal.x !== 0 || palmNormal.y !== 0 || palmNormal.z !== 0) {
-          // const palmPosition = localVector3.set(handArray[0], handArray[1], handArray[2]);
+          // const palmPosition = localVector.set(handArray[0], handArray[1], handArray[2]);
 
           const fingerBaseIndex = (1 + (1 * 5)) * (3 + 3);
-          const fingerTipPosition = localVector3.set(handArray[fingerBaseIndex + 0], handArray[fingerBaseIndex + 1], handArray[fingerBaseIndex + 2]);
-          const fingerTipDirection = localVector4.set(handArray[fingerBaseIndex + 3], handArray[fingerBaseIndex + 4], handArray[fingerBaseIndex + 5]);
+          const fingerTipPosition = localVector2.set(handArray[fingerBaseIndex + 0], handArray[fingerBaseIndex + 1], handArray[fingerBaseIndex + 2]);
+          const fingerTipDirection = localVector3.set(handArray[fingerBaseIndex + 3], handArray[fingerBaseIndex + 4], handArray[fingerBaseIndex + 5]);
 
           handMesh.position
             .copy(camera.position)
@@ -422,9 +422,9 @@
               const boneMesh = boneMeshes[k];
 
               const boneBaseIndex = (1 + 1 + (j * 5) + k) * (3 + 3);
-              const boneStartPosition = localVector3.set(handArray[boneBaseIndex + 0], handArray[boneBaseIndex + 1], handArray[boneBaseIndex + 2]);
-              const boneEndPosition = localVector4.set(handArray[boneBaseIndex + 3], handArray[boneBaseIndex + 4], handArray[boneBaseIndex + 5]);
-              const boneCenter = localVector5.copy(boneStartPosition).add(boneEndPosition).divideScalar(2);
+              const boneStartPosition = localVector2.set(handArray[boneBaseIndex + 0], handArray[boneBaseIndex + 1], handArray[boneBaseIndex + 2]);
+              const boneEndPosition = localVector3.set(handArray[boneBaseIndex + 3], handArray[boneBaseIndex + 4], handArray[boneBaseIndex + 5]);
+              const boneCenter = localVector4.copy(boneStartPosition).add(boneEndPosition).divideScalar(2);
               const boneDirection = boneEndPosition
                 .sub(boneStartPosition);
               const boneLength = boneDirection.length();
