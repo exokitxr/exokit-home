@@ -100,11 +100,19 @@
     let links = [];
     const _getCurrentLinks = () => links.slice(0, 8);
 
+    const MESSAGE_TYPES = (() => {
+      let id = 0;
+      return {
+        MATRIX: id++,
+        AUDIO: id++,
+      };
+    })();
+
     const numPlayerMatrixElements =
       (3+4) + // hmd
       (1 + (3+4)) * 2 + // gamepads
       (1 + (5*4*(3+3))) * 2; // hands
-    const playerMatrix = new ArrayBuffer(numPlayerMatrixElements * Float32Array.BYTES_PER_ELEMENT);
+    const playerMatrix = new ArrayBuffer(Uint32Array.BYTES_PER_ELEMENT*2 + numPlayerMatrixElements*Float32Array.BYTES_PER_ELEMENT);
     playerMatrix.setArrayBuffer = (() => {
       const uint8Array = new Uint8Array(playerMatrix);
       return newArrayBuffer => {
@@ -117,6 +125,8 @@
       playerMatrixIndex += n;
       return oldPlayerMatrixIndex;
     };
+    playerMatrix.type = new Uint32Array(playerMatrix, _getPlayerMatrixIndex(Uint32Array.BYTES_PER_ELEMENT), 1);
+    playerMatrix.id = new Uint32Array(playerMatrix, _getPlayerMatrixIndex(Uint32Array.BYTES_PER_ELEMENT), 1);
     playerMatrix.hmd = {
       position: new Float32Array(playerMatrix, _getPlayerMatrixIndex(3*Float32Array.BYTES_PER_ELEMENT), 3),
       quaternion: new Float32Array(playerMatrix, _getPlayerMatrixIndex(4*Float32Array.BYTES_PER_ELEMENT), 4),
@@ -186,6 +196,7 @@
       }
     };
 
+    const localPlayerId = Math.floor(Math.random() * 0xFFFFFFFF);
     const playerMeshes = [];
     const ws = (() => {
       const multiplayerServer = getQueryVariable('m');
@@ -194,13 +205,11 @@
         ws.binaryType = 'arraybuffer';
         ws.onopen = () => {
           console.log('websocket connect');
-          const id = Math.random().toString(36).substring(7);
-          ws.send(JSON.stringify({id}));
+          ws.send(JSON.stringify({type: 'playerEnter', id: localPlayerId}));
         };
         ws.onerror = err => {
           console.warn('websocket error', err);
         };
-        let currentId = null;
         ws.onmessage = m => {
           const {data} = m;
           if (typeof data === 'string') {
@@ -239,25 +248,17 @@
                 console.log('player leave', id);
                 break;
               }
-              case 'setContext': {
-                const {id} = j;
-                currentId = id;
-                break;
-              }
               default: {
                 console.warn('got invalid messasge type', type);
                 break;
               }
             }
           } else {
-            if (currentId) {
-              playerMatrix.setArrayBuffer(data);
+            playerMatrix.setArrayBuffer(data);
 
-              const playerMesh = playerMeshes.find(playerMesh => playerMesh.playerId === currentId);
-              playerMesh.update(playerMatrix);
-            } else {
-              console.warn('got player position message without player id context');
-            }
+            const id = playerMatrix.id[0];
+            const playerMesh = playerMeshes.find(playerMesh => playerMesh.playerId === id);
+            playerMesh.update(playerMatrix);
           }
         };
         return ws;
@@ -1678,6 +1679,9 @@
       };
       const _pushPlayerUpdate = () => {
         if (ws && ws.readyState === WebSocket.OPEN) {
+          playerMatrix.type[0] = MESSAGE_TYPES.MATRIX;
+          playerMatrix.id[0] = localPlayerId;
+
           camera.position.toArray(playerMatrix.hmd.position);
           camera.quaternion.toArray(playerMatrix.hmd.quaternion);
 
