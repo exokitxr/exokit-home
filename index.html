@@ -1890,6 +1890,11 @@
               display.constructor.name === 'VRDisplay'
             );
             if (display) {
+              if (window.document.pointerLockElement) {
+                window.document.exitPointerLock();
+              }
+              renderer.vr.setDevice(null);
+
               display.requestPresent([{source: canvas}])
                 .then(() => {
                   renderer.vr.setDevice(display);
@@ -1914,6 +1919,11 @@
               display.constructor.name === 'MLDisplay'
             );
             if (display) {
+              if (window.document.pointerLockElement) {
+                window.document.exitPointerLock();
+              }
+              renderer.vr.setDevice(null);
+
               display.requestPresent([{source: canvas}])
                 .then(() => {
                   renderer.vr.setDevice(display);
