@@ -266,6 +266,7 @@
         return null;
       }
     })();
+    const _isWsOpen = () => !!ws && ws.readyState === WebSocket.OPEN;
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -1650,7 +1651,7 @@
         } */
       };
       const _pushPlayerUpdate = () => {
-        if (ws && ws.readyState === WebSocket.OPEN) {
+        if (_isWsOpen()) {
           playerMatrix.type[0] = MESSAGE_TYPES.MATRIX;
           playerMatrix.id[0] = localPlayerId;
 
