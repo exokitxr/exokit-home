@@ -1847,26 +1847,9 @@
       right: false,
     };
     window.addEventListener('keypress', e => {
-      if (!window.document.pointerLockElement) {
-        // console.log('got key code', e.keyCode);
+      const _handleMode = () => {
         switch (e.keyCode) {
-          case 67: { // C
-            if (e.ctrlKey) {
-              document.execCommand('copy');
-            } else {
-              _handleKey(e.keyCode, e.shiftKey);
-            }
-            break;
-          }
-          case 86: { // V
-            if (e.ctrlKey) {
-              document.execCommand('paste');
-            } else {
-              _handleKey(e.keyCode, e.shiftKey);
-            }
-            break;
-          }
-          case 112: { // F1
+          case 73: { // I
             console.log('enable VR');
 
             const display = displays.find(display =>
@@ -1886,9 +1869,9 @@
                 screenQuad.material.uniforms.uTexture1.value = renderTarget.texture;
                 screenQuad.material.uniforms.uDepth1.value = renderTarget.depthTexture;
               });
-            break;
+            return true;
           }
-          case 113: { // F2
+          case 79: { // O
             console.log('enable ML');
 
             const display = displays.find(display =>
@@ -1900,9 +1883,9 @@
 
                 scene.background = null;
               });
-            break;
+            return true;
           }
-          case 114: { // F3
+          case 80: { // P
             if (!voicechatEnabled) {
               console.log('enable voicechat');
 
@@ -1947,14 +1930,38 @@
                 });
               voicechatEnabled = true;
             }
-            break;
-          }
-          default: {
-            _handleKey(e.keyCode, e.shiftKey);
-            break;
+            return true;
           }
         }
-      }
+        return false;
+      };
+      const _handleNormal = () => {
+        if (!window.document.pointerLockElement) {
+          switch (e.keyCode) {
+            case 67: { // C
+              if (e.ctrlKey) {
+                document.execCommand('copy');
+              } else {
+                _handleKey(e.keyCode, e.shiftKey);
+              }
+              return true;
+            }
+            case 86: { // V
+              if (e.ctrlKey) {
+                document.execCommand('paste');
+              } else {
+                _handleKey(e.keyCode, e.shiftKey);
+              }
+              return true;
+            }
+            default: {
+              _handleKey(e.keyCode, e.shiftKey);
+              return true;
+            }
+          }
+        }
+      };
+      _handleMode() || _handleNormal();
     });
     window.addEventListener('keydown', e => {
       if (window.document.pointerLockElement) {
