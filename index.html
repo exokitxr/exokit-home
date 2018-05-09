@@ -2044,13 +2044,14 @@
     });
     window.document.addEventListener('paste', e => {
       const {clipboardData} = e;
-      const {items} = clipboardData;
+      const items = Array.from(clipboardData.items);
       const item = items.find(item => item.kind === 'string');
       if (item) {
-        const s = item.getAsString();
-        urlText = urlText.slice(0, urlCursor) + s + urlText.slice(urlCursor);
-        urlCursor += s.length;
-        menuMesh.urlMesh.updateText();
+        item.getAsString(s => {
+          urlText = urlText.slice(0, urlCursor) + s + urlText.slice(urlCursor);
+          urlCursor += s.length;
+          menuMesh.urlMesh.updateText();
+        });
       }
     });
     window.addEventListener('dragover', e => {
