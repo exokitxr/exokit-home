@@ -1290,12 +1290,15 @@
           );
 
           for (let i = 0; i < 2; i++) {
-            localVector.copy(fakeDisplay.position)
-              .add(
-                localVector2.set(-0.1 + (i*0.1*2), -0.1, -0.2)
-                  .applyQuaternion(fakeDisplay.quaternion)
-              ).toArray(fakeDisplay.gamepads[i].pose.position);
-            fakeDisplay.quaternion.toArray(fakeDisplay.gamepads[i].pose.orientation);
+            const gamepad = fakeDisplay.gamepads[i];
+            if (gamepad) {
+              localVector.copy(fakeDisplay.position)
+                .add(
+                  localVector2.set(-0.1 + (i*0.1*2), -0.1, -0.2)
+                    .applyQuaternion(fakeDisplay.quaternion)
+                ).toArray(gamepad.pose.position);
+              fakeDisplay.quaternion.toArray(fakeDisplay.gamepads[i].pose.orientation);
+            }
           }
 
           fakeDisplay.update();
