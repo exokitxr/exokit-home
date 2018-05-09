@@ -1233,34 +1233,6 @@
         console.warn(err.stack);
       });
 
-    /* const plane = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry(5, 5, 10, 10),
-      new THREE.MeshPhongMaterial({
-        color: new THREE.Color(0x808080),
-        flatShading: true,
-      })
-    );
-    plane.quaternion.setFromUnitVectors(
-      new THREE.Vector3(0, 0, 1),
-      new THREE.Vector3(0, 1, 0)
-    );
-    const positions = plane.geometry.attributes.position.array;
-    for (let i = 0; i < positions.length / 3; i++) {
-      positions[i * 3 + 0] += (-0.5 + Math.random()) * 0.3;
-      positions[i * 3 + 1] += (-0.5 + Math.random()) * 0.3;
-      positions[i * 3 + 2] += (-0.5 + Math.random()) * 0.3;
-    }
-    plane.geometry.computeVertexNormals();
-    scene.add(plane); */
-
-    const finishMesh = new THREE.Mesh();
-    finishMesh.frustumCulled = false;
-    finishMesh.onAfterRender = () => {
-      // renderer.state.buffers.stencil.setLocked(false);
-      renderer.state.buffers.stencil.setTest(false);
-    };
-    scene.add(finishMesh);
-
     const compositeScene = new THREE.Scene();
 
     const screenQuad = new ScreenQuad({
