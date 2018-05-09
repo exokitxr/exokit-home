@@ -1867,6 +1867,8 @@
             break;
           }
           case 112: { // F1
+            console.log('enable VR');
+
             const display = displays.find(display =>
               display.constructor.name === 'VRDisplay'
             );
@@ -1887,6 +1889,8 @@
             break;
           }
           case 113: { // F2
+            console.log('enable ML');
+
             const display = displays.find(display =>
               display.constructor.name === 'MLDisplay'
             );
@@ -1900,6 +1904,8 @@
           }
           case 114: { // F3
             if (!voicechatEnabled) {
+              console.log('enable voicechat');
+
               const audioCtx = new AudioContext({
                 sampleRate: 44100,
               });
