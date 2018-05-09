@@ -1947,7 +1947,7 @@
                 .then(mediaStream => {
                   const microphoneSourceNode = audioCtx.createMediaStreamSource(mediaStream);
 
-                  const scriptProcessorNode = audioCtx.createScriptProcessor();
+                  const scriptProcessorNode = audioCtx.createScriptProcessor(4096, 1, 1);
                   scriptProcessorNode.onaudioprocess = e => {
                     const float32Array = e.inputBuffer.getChannelData(0);
 
@@ -1964,7 +1964,7 @@
                   microphoneSourceNode.connect(scriptProcessorNode);
                   scriptProcessorNode.connect(audioCtx.destination);
 
-                  const scriptProcessorNode2 = audioCtx.createScriptProcessor();
+                  const scriptProcessorNode2 = audioCtx.createScriptProcessor(4096, 1, 1);
                   scriptProcessorNode2.onaudioprocess = e => {
                     if (buffers.length >= 2) {
                       e.outputBuffer.copyToChannel(buffers.shift(), 0);
