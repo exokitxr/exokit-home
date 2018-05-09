@@ -1944,7 +1944,7 @@
               } else {
                 _handleKey(e.keyCode, e.shiftKey);
               }
-              return true;
+              break;
             }
             case 86: { // V
               if (e.ctrlKey) {
@@ -1952,14 +1952,15 @@
               } else {
                 _handleKey(e.keyCode, e.shiftKey);
               }
-              return true;
+              break;
             }
             default: {
               _handleKey(e.keyCode, e.shiftKey);
-              return true;
+              break;
             }
           }
         }
+        return true;
       };
       _handleMode() || _handleNormal();
     });
