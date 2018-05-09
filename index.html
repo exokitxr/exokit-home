@@ -1850,45 +1850,80 @@
       right: false,
     };
     window.addEventListener('keypress', e => {
-      const _handleMode = () => {
+      const _normalizeKeycode = keyCode => {
+        if (keyCode >= 97 && keyCode <= 122) {
+          return keyCode - 32;
+        } else {
+          return keyCode;
+        }
+      };
+
+      if (!window.document.pointerLockElement) {
         switch (e.keyCode) {
-          case 73: { // I
+          case 99: { // C
+            if (e.ctrlKey) {
+              document.execCommand('copy');
+            } else {
+              _handleKey(_normalizeKeycode(e.keyCode), e.shiftKey);
+            }
+            break;
+          }
+          case 118: { // V
+            if (e.ctrlKey) {
+              document.execCommand('paste');
+            } else {
+              _handleKey(_normalizeKeycode(e.keyCode), e.shiftKey);
+            }
+            break;
+          }
+          default: {
+            _handleKey(_normalizeKeycode(e.keyCode), e.shiftKey);
+            break;
+          }
+        }
+      } else {
+        switch (e.keyCode) {
+          case 105: { // I
             console.log('enable VR');
 
             const display = displays.find(display =>
               display.constructor.name === 'VRDisplay'
             );
-            display.requestPresent([{source: canvas}])
-              .then(() => {
-                renderer.vr.setDevice(display);
+            if (display) {
+              display.requestPresent([{source: canvas}])
+                .then(() => {
+                  renderer.vr.setDevice(display);
 
-                const eyeParameters = display.getEyeParameters('left');
-                const width = eyeParameters.renderWidth * 2;
-                const height = eyeParameters.renderHeight;
+                  const eyeParameters = display.getEyeParameters('left');
+                  const width = eyeParameters.renderWidth * 2;
+                  const height = eyeParameters.renderHeight;
 
-                // renderTarget.dispose(); // XXX
-                renderTarget = _makeRenderTarget(width, height);
+                  // renderTarget.dispose(); // XXX
+                  renderTarget = _makeRenderTarget(width, height);
 
-                screenQuad.material.uniforms.uTexture1.value = renderTarget.texture;
-                screenQuad.material.uniforms.uDepth1.value = renderTarget.depthTexture;
-              });
-            return true;
+                  screenQuad.material.uniforms.uTexture1.value = renderTarget.texture;
+                  screenQuad.material.uniforms.uDepth1.value = renderTarget.depthTexture;
+                });
+            }
+            break;
           }
-          case 79: { // O
+          case 111: { // O
             console.log('enable ML');
 
             const display = displays.find(display =>
               display.constructor.name === 'MLDisplay'
             );
-            display.requestPresent([{source: canvas}])
-              .then(() => {
-                renderer.vr.setDevice(display);
+            if (display) {
+              display.requestPresent([{source: canvas}])
+                .then(() => {
+                  renderer.vr.setDevice(display);
 
-                scene.background = null;
-              });
-            return true;
+                  scene.background = null;
+                });
+            }
+            break;
           }
-          case 80: { // P
+          case 112: { // P
             if (!voicechatEnabled) {
               console.log('enable voicechat');
 
@@ -1933,39 +1968,10 @@
                 });
               voicechatEnabled = true;
             }
-            return true;
+            break;
           }
         }
-        return false;
-      };
-      const _handleNormal = () => {
-        if (!window.document.pointerLockElement) {
-          switch (e.keyCode) {
-            case 67: { // C
-              if (e.ctrlKey) {
-                document.execCommand('copy');
-              } else {
-                _handleKey(e.keyCode, e.shiftKey);
-              }
-              break;
-            }
-            case 86: { // V
-              if (e.ctrlKey) {
-                document.execCommand('paste');
-              } else {
-                _handleKey(e.keyCode, e.shiftKey);
-              }
-              break;
-            }
-            default: {
-              _handleKey(e.keyCode, e.shiftKey);
-              break;
-            }
-          }
-        }
-        return true;
-      };
-      _handleMode() || _handleNormal();
+      }
     });
     window.addEventListener('keydown', e => {
       if (window.document.pointerLockElement) {
