@@ -2051,11 +2051,17 @@
       if (!window.document.pointerLockElement) {
         renderer.domElement.requestPointerLock();
       } else {
-        fakeDisplay.gamepads[1].buttons[1].pressed = true;
+        const gamepad = fakeDisplay.gamepads[1];
+        if (gamepad) {
+          fakeDisplay.gamepads[1].buttons[1].pressed = true;
+        }
       }
     });
     window.addEventListener('mouseup', () => {
-      fakeDisplay.gamepads[1].buttons[1].pressed = false;
+      const gamepad = fakeDisplay.gamepads[1];
+      if (gamepad) {
+        gamepad.buttons[1].pressed = false;
+      }
     });
     window.addEventListener('mousemove', e => {
       if (window.document.pointerLockElement) {
