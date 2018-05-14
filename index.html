@@ -1558,8 +1558,10 @@
           const lastPressed = lastPresseds[i];
           lastPresseds[i] = pressed;
           if (pressed && !lastPressed) {
-            for (let j = 0; j < gamepad.hapticActuators.length; j++) {
-              gamepad.hapticActuators[j].pulse(1, 100);
+            if (gamepad.hapticActuators) {
+              for (let j = 0; j < gamepad.hapticActuators.length; j++) {
+                gamepad.hapticActuators[j].pulse(1, 100);
+              }
             }
 
             if (intersectionKey) {
