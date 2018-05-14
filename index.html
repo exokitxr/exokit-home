@@ -198,8 +198,26 @@
 
     const localPlayerId = Math.floor(Math.random() * 0xFFFFFFFF);
     const playerMeshes = [];
-    const buffers = [];
     let voicechatEnabled = false;
+    let audioCtx = null;
+    let audioListener = null;
+    let microphoneMediaStream = null;
+    const _bindPlayerMeshAudio = playerMesh => {
+      const scriptProcessorNode = audioCtx.createScriptProcessor(4096, 1, 1);
+      scriptProcessorNode.onaudioprocess = e => {
+        if (playerMesh.audioBuffers.length >= 2) {
+          e.outputBuffer.copyToChannel(playerMesh.audioBuffers.shift(), 0);
+        } else {
+          e.outputBuffer.getChannelData(0).fill(0);
+        }
+      };
+      const microphoneSourceNode = audioCtx.createMediaStreamSource(microphoneMediaStream);
+      microphoneSourceNode.connect(scriptProcessorNode);
+
+      const positionalAudio = new THREE.PositionalAudio(audioListener);
+      positionalAudio.setNodeSource(scriptProcessorNode);
+      playerMesh.add(positionalAudio);
+    };
     const ws = (() => {
       const multiplayerServer = getQueryVariable('m');
       if (multiplayerServer) {
@@ -225,6 +243,9 @@
                 const playerMesh = _makeRemotePlayerMesh(id);
                 scene.add(playerMesh);
                 playerMeshes.push(playerMesh);
+                if (audioCtx) {
+                  _bindPlayerMeshAudio(playerMesh);
+                }
 
                 const skinImg = new Image();
                 skinImg.crossOrigin = 'Anonymous';
@@ -266,13 +287,15 @@
             } else if (type === MESSAGE_TYPES.AUDIO) {
               if (voicechatEnabled) {
                 const id = new Uint32Array(data, Uint32Array.BYTES_PER_ELEMENT, 1)[0];
+                const playerMesh = playerMeshes.find(playerMesh => playerMesh.playerId === id);
+
                 const float32Array = new Float32Array(data, Uint32Array.BYTES_PER_ELEMENT*2, (data.byteLength - Uint32Array.BYTES_PER_ELEMENT*2) / Float32Array.BYTES_PER_ELEMENT);
-                buffers.push(float32Array);
+
+                playerMesh.audioBuffers.push(float32Array);
               }
             } else {
               console.warn('unknown message type', {type});
             }
-
           }
         };
         return ws;
@@ -655,6 +678,9 @@
             handMeshes[i].updatePlayerMatrix(playerMatrix.hands[i]);
           }
         };
+
+        mesh.positionalAudio = null;
+        mesh.audioBuffers = [];
 
         return mesh;
       };
@@ -1943,14 +1969,20 @@
             if (!voicechatEnabled) {
               console.log('enable voicechat');
 
-              const audioCtx = new AudioContext({
+              audioCtx = new AudioContext({
                 sampleRate: 48000,
               });
+              THREE.AudioContext.setContext(audioCtx);
+
+              audioListener = new THREE.AudioListener();
+              camera.add(audioListener);
 
               navigator.mediaDevices.getUserMedia({
                 audio: true,
               })
                 .then(mediaStream => {
+                  microphoneMediaStream = mediaStream;
+
                   const microphoneSourceNode = audioCtx.createMediaStreamSource(mediaStream);
 
                   const scriptProcessorNode = audioCtx.createScriptProcessor(4096, 1, 1);
@@ -1970,17 +2002,9 @@
                   microphoneSourceNode.connect(scriptProcessorNode);
                   scriptProcessorNode.connect(audioCtx.destination);
 
-                  const scriptProcessorNode2 = audioCtx.createScriptProcessor(4096, 1, 1);
-                  scriptProcessorNode2.onaudioprocess = e => {
-                    if (buffers.length >= 2) {
-                      e.outputBuffer.copyToChannel(buffers.shift(), 0);
-                    } else {
-                      e.outputBuffer.getChannelData(0).fill(0);
-                    }
-                  };
-                  const microphoneSourceNode2 = audioCtx.createMediaStreamSource(mediaStream);
-                  microphoneSourceNode2.connect(scriptProcessorNode2);
-                  scriptProcessorNode2.connect(audioCtx.destination);
+                  for (let i = 0; i < playerMeshes.length; i++) {
+                    _bindPlayerMeshAudio(playerMeshes[i]);
+                  }
                 });
               voicechatEnabled = true;
             }
