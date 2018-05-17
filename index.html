@@ -221,11 +221,11 @@
     const ws = (() => {
       const multiplayerServer = getQueryVariable('m');
       if (multiplayerServer) {
-        const ws = new WebSocket(multiplayerServer);
+        const ws = new WebSocket(multiplayerServer + '?id=' + localPlayerId);
         ws.binaryType = 'arraybuffer';
         ws.onopen = () => {
           console.log('websocket open');
-          ws.send(JSON.stringify({type: 'playerEnter', id: localPlayerId}));
+          ws.send(JSON.stringify({type: 'playerEnter'}));
         };
         ws.onclose = err => {
           console.log('websocket close');
