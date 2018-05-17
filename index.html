@@ -224,8 +224,11 @@
         const ws = new WebSocket(multiplayerServer);
         ws.binaryType = 'arraybuffer';
         ws.onopen = () => {
-          console.log('websocket connect');
+          console.log('websocket open');
           ws.send(JSON.stringify({type: 'playerEnter', id: localPlayerId}));
+        };
+        ws.onclose = err => {
+          console.log('websocket close');
         };
         ws.onerror = err => {
           console.warn('websocket error', err);
