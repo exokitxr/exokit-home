@@ -416,6 +416,8 @@
     const controllerMeshes = [null, null];
     const lastPresseds = [false, false];
     const lastMenuPresseds = [false, false];
+    const lastGrabbeds = [false, false];
+    const grabbedObjects = [null, null];
     for (let i = 0; i < 2; i++) {
       const controllerMesh = new THREE.Object3D();
       controllerMesh.position.set(i === 0 ? -0.1 : 0.1, 1, 0.5);
@@ -1449,9 +1451,11 @@
 
           const gamepad = gamepads[i];
           let pressed = false;
+          let grabbed = false;
           let menuPressed = false;
           if (gamepad) {
             pressed = gamepad.buttons[1].pressed;
+            grabbed = gamepad.buttons[2].pressed;
             menuPressed = gamepad.buttons[3].pressed;
           }
 
@@ -1667,6 +1671,22 @@
             };
           }
 
+          const lastGrabbed = lastGrabbeds[i];
+          lastGrabbeds[i] = grabbed;
+          if (grabbed && !lastGrabbed) {
+            const targetObject = objectMeshes.find(objectMesh =>
+              objectMesh.position.distanceTo(controllerMesh.position) < 0.1
+            );
+            if (targetObject) {
+              grabbedObjects[i] = targetObject;
+            }
+          } else if (!grabbed && lastGrabbed) {
+            const grabbedObject = grabbedObjects[i];
+            if (grabbedObject) {
+              grabbedObjects[i] = null;
+            }
+          }
+
           const lastPressed = lastPresseds[i];
           lastPresseds[i] = pressed;
           if (pressed && !lastPressed) {
@@ -1809,16 +1829,29 @@
         }
       };
       const _updateObjects = () => {
+        const gamepads = _getGamepads();
+        for (let i = 0; i < grabbedObjects.length; i++) {
+          const grabbedObject = grabbedObjects[i];
+
+          if (grabbedObject) {
+            const gamepad = gamepads[i];
+
+            grabbedObject.position.fromArray(gamepad.pose.position);
+            grabbedObject.quaternion.fromArray(gamepad.pose.orientation);
+            grabbedObject.updateMatrixWorld();
+          }
+        }
+
         if (_isWsOpen()) {
-          const now = Date.now();
-          const x = Math.sin(((now % 3000) / 3000) * Math.PI * 2);
+          // const now = Date.now();
+          // const x = Math.sin(((now % 3000) / 3000) * Math.PI * 2);
 
           for (let i = 0; i < objectMeshes.length; i++) {
             const objectMesh = objectMeshes[i];
 
             if (objectMesh.ownerId === localPlayerId) {
-              objectMesh.position.set(x, 0, 0);
-              objectMesh.updateMatrixWorld();
+              // objectMesh.position.set(x, 0, 0);
+              // objectMesh.updateMatrixWorld();
 
               const {ownerId} = objectMesh;
               const {objectId} = objectMesh;
