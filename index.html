@@ -103,8 +103,9 @@
     const MESSAGE_TYPES = (() => {
       let id = 0;
       return {
-        MATRIX: id++,
+        PLAYER_MATRIX: id++,
         AUDIO: id++,
+        OBJECT_MATRIX: id++,
       };
     })();
 
@@ -112,54 +113,77 @@
       (3+4) + // hmd
       (1 + (3+4)) * 2 + // gamepads
       (1 + (5*4*(3+3))) * 2; // hands
-    const playerMatrix = new ArrayBuffer(Uint32Array.BYTES_PER_ELEMENT*2 + numPlayerMatrixElements*Float32Array.BYTES_PER_ELEMENT);
-    playerMatrix.setArrayBuffer = (() => {
-      const uint8Array = new Uint8Array(playerMatrix);
-      return newArrayBuffer => {
-        uint8Array.set(new Uint8Array(newArrayBuffer));
+    const playerMatrix = (() => {
+      const playerMatrix = new ArrayBuffer(Uint32Array.BYTES_PER_ELEMENT*2 + numPlayerMatrixElements*Float32Array.BYTES_PER_ELEMENT);
+      playerMatrix.setArrayBuffer = (() => {
+        const uint8Array = new Uint8Array(playerMatrix);
+        return newArrayBuffer => {
+          uint8Array.set(new Uint8Array(newArrayBuffer));
+        };
+      })();
+      let playerMatrixIndex = 0;
+      const _getPlayerMatrixIndex = n => {
+        const oldPlayerMatrixIndex = playerMatrixIndex;
+        playerMatrixIndex += n;
+        return oldPlayerMatrixIndex;
       };
-    })();
-    let playerMatrixIndex = 0;
-    const _getPlayerMatrixIndex = n => {
-      const oldPlayerMatrixIndex = playerMatrixIndex;
-      playerMatrixIndex += n;
-      return oldPlayerMatrixIndex;
-    };
-    playerMatrix.type = new Uint32Array(playerMatrix, _getPlayerMatrixIndex(Uint32Array.BYTES_PER_ELEMENT), 1);
-    playerMatrix.id = new Uint32Array(playerMatrix, _getPlayerMatrixIndex(Uint32Array.BYTES_PER_ELEMENT), 1);
-    playerMatrix.hmd = {
-      position: new Float32Array(playerMatrix, _getPlayerMatrixIndex(3*Float32Array.BYTES_PER_ELEMENT), 3),
-      quaternion: new Float32Array(playerMatrix, _getPlayerMatrixIndex(4*Float32Array.BYTES_PER_ELEMENT), 4),
-    };
-    const _makePlayerMatrixGamepad = () => {
-      const enabled = new Uint32Array(playerMatrix, _getPlayerMatrixIndex(Uint32Array.BYTES_PER_ELEMENT), 1);
-      const position = new Float32Array(playerMatrix, _getPlayerMatrixIndex(3*Float32Array.BYTES_PER_ELEMENT), 3);
-      const quaternion = new Float32Array(playerMatrix, _getPlayerMatrixIndex(4*Float32Array.BYTES_PER_ELEMENT), 4);
+      playerMatrix.type = new Uint32Array(playerMatrix, _getPlayerMatrixIndex(Uint32Array.BYTES_PER_ELEMENT), 1);
+      playerMatrix.id = new Uint32Array(playerMatrix, _getPlayerMatrixIndex(Uint32Array.BYTES_PER_ELEMENT), 1);
+      playerMatrix.hmd = {
+        position: new Float32Array(playerMatrix, _getPlayerMatrixIndex(3*Float32Array.BYTES_PER_ELEMENT), 3),
+        quaternion: new Float32Array(playerMatrix, _getPlayerMatrixIndex(4*Float32Array.BYTES_PER_ELEMENT), 4),
+      };
+      const _makePlayerMatrixGamepad = () => {
+        const enabled = new Uint32Array(playerMatrix, _getPlayerMatrixIndex(Uint32Array.BYTES_PER_ELEMENT), 1);
+        const position = new Float32Array(playerMatrix, _getPlayerMatrixIndex(3*Float32Array.BYTES_PER_ELEMENT), 3);
+        const quaternion = new Float32Array(playerMatrix, _getPlayerMatrixIndex(4*Float32Array.BYTES_PER_ELEMENT), 4);
 
-      return {
-        enabled,
-        position,
-        quaternion,
+        return {
+          enabled,
+          position,
+          quaternion,
+        };
       };
-    };
-    playerMatrix.gamepads = [
-      _makePlayerMatrixGamepad(),
-      _makePlayerMatrixGamepad(),
-    ];
-    const _makePlayerMatrixHand = () => {
-      const enabled = new Uint32Array(playerMatrix, _getPlayerMatrixIndex(Uint32Array.BYTES_PER_ELEMENT), 1);
-      const data = new Float32Array(playerMatrix, _getPlayerMatrixIndex(5*4*(3+3)*Float32Array.BYTES_PER_ELEMENT), 5*4*(3+3));
-      return {
-        enabled,
-        data,
+      playerMatrix.gamepads = [
+        _makePlayerMatrixGamepad(),
+        _makePlayerMatrixGamepad(),
+      ];
+      const _makePlayerMatrixHand = () => {
+        const enabled = new Uint32Array(playerMatrix, _getPlayerMatrixIndex(Uint32Array.BYTES_PER_ELEMENT), 1);
+        const data = new Float32Array(playerMatrix, _getPlayerMatrixIndex(5*4*(3+3)*Float32Array.BYTES_PER_ELEMENT), 5*4*(3+3));
+        return {
+          enabled,
+          data,
+        };
       };
-    };
-    playerMatrix.hands = (() => {
-      const hands = Array(2);
-      for (let i = 0; i < hands.length; i++) {
-        hands[i] = _makePlayerMatrixHand();
-      }
-      return hands;
+      playerMatrix.hands = (() => {
+        const hands = Array(2);
+        for (let i = 0; i < hands.length; i++) {
+          hands[i] = _makePlayerMatrixHand();
+        }
+        return hands;
+      })();
+      return playerMatrix;
+    })();
+    const objectMatrix = (() => {
+      const objectMatrix = new ArrayBuffer(Uint32Array.BYTES_PER_ELEMENT*2 + (3+4)*Float32Array.BYTES_PER_ELEMENT);
+      objectMatrix.setArrayBuffer = (() => {
+        const uint8Array = new Uint8Array(objectMatrix);
+        return newArrayBuffer => {
+          uint8Array.set(new Uint8Array(newArrayBuffer));
+        };
+      })();
+      let objectMatrixIndex = 0;
+      const _getObjectMatrixIndex = n => {
+        const oldPbjectMatrixIndex = objectMatrixIndex;
+        objectMatrixIndex += n;
+        return oldPbjectMatrixIndex;
+      };
+      objectMatrix.type = new Uint32Array(objectMatrix, _getObjectMatrixIndex(Uint32Array.BYTES_PER_ELEMENT), 1);
+      objectMatrix.id = new Uint32Array(objectMatrix, _getObjectMatrixIndex(Uint32Array.BYTES_PER_ELEMENT), 1);
+      objectMatrix.position = new Float32Array(objectMatrix, _getObjectMatrixIndex(3*Float32Array.BYTES_PER_ELEMENT), 3);
+      objectMatrix.quaternion = new Float32Array(objectMatrix, _getObjectMatrixIndex(4*Float32Array.BYTES_PER_ELEMENT), 4);
+      return objectMatrix;
     })();
 
     const upVector = new THREE.Vector3(0, 1, 0);
@@ -198,6 +222,7 @@
 
     const localPlayerId = Math.floor(Math.random() * 0xFFFFFFFF);
     const playerMeshes = [];
+    const objectMeshes = [];
     let voicechatEnabled = false;
     let audioCtx = null;
     let audioListener = null;
@@ -225,6 +250,7 @@
         ws.binaryType = 'arraybuffer';
         ws.onopen = () => {
           console.log('websocket open');
+
           ws.send(JSON.stringify({type: 'playerEnter'}));
         };
         ws.onclose = err => {
@@ -274,14 +300,44 @@
                 console.log('player leave', id);
                 break;
               }
+              case 'objectAdd': {
+                const {id, owner} = j;
+
+                console.log('object add message', {id, owner});
+
+                const objectMesh = _makeObjectMesh(id, owner);
+                scene.add(objectMesh);
+                objectMeshes.push(objectMesh);
+                break;
+              }
+              case 'objectRemove': {
+                const {id, owner} = j;
+
+                console.log('object remove', id, owner);
+
+                const objectMeshIndex = objectMeshes.findIndex(objectMesh => objectMesh.objectId === id);
+                const objectMesh = objectMeshes[objectMeshIndex];
+                scene.remove(objectMesh);
+                objectMeshes.splice(objectMeshes, 1);
+                break;
+              }
+              case 'sync': {
+                const objectMesh = objectMeshes.find(objectMesh => objectMesh.objectId === 1);
+                if (!objectMesh) {
+                  _addObject(1, localPlayerId);
+
+                  ws.send(JSON.stringify({type: 'objectAdd', id: 1, owner: localPlayerId}));
+                }
+                break;
+              }
               default: {
-                console.warn('got invalid messasge type', type);
+                console.warn('got invalid json messasge type', type);
                 break;
               }
             }
           } else {
             const type = new Uint32Array(data, 0, 1)[0];
-            if (type === MESSAGE_TYPES.MATRIX) {
+            if (type === MESSAGE_TYPES.PLAYER_MATRIX) {
               const id = new Uint32Array(data, Uint32Array.BYTES_PER_ELEMENT, 1)[0];
               const playerMesh = playerMeshes.find(playerMesh => playerMesh.playerId === id);
 
@@ -296,8 +352,14 @@
 
                 playerMesh.audioBuffers.push(float32Array);
               }
+            } else if (type === MESSAGE_TYPES.OBJECT_MATRIX) {
+              const id = new Uint32Array(data, Uint32Array.BYTES_PER_ELEMENT, 1)[0];
+              const objectMesh = objectMeshes.find(objectMesh => objectMesh.objectId === id);
+
+              objectMatrix.setArrayBuffer(data);
+              objectMesh.update(objectMatrix);
             } else {
-              console.warn('unknown message type', {type});
+              console.warn('unknown binary message type', {type});
             }
           }
         };
@@ -688,6 +750,27 @@
         return mesh;
       };
     })();
+    const _makeObjectMesh = (objectId, ownerId) => {
+      const geometry = new THREE.BoxBufferGeometry(0.1, 0.1, 0.1);
+      const material = new THREE.MeshPhongMaterial({
+        color: 0xFF0000,
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.objectId = objectId;
+      mesh.ownerId = ownerId;
+      mesh.update = objectMatrix => {
+        mesh.position.fromArray(new Float32Array(objectMatrix, 2*Uint32Array.BYTES_PER_ELEMENT, 3));
+        mesh.quaternion.fromArray(new Float32Array(objectMatrix, 2*Uint32Array.BYTES_PER_ELEMENT + 3*Float32Array.BYTES_PER_ELEMENT, 4));
+
+        mesh.updateMatrixWorld();
+      };
+      return mesh;
+    };
+    const _addObject = (objectId, ownerId) => {
+      const objectMesh = _makeObjectMesh(objectId, ownerId);
+      scene.add(objectMesh);
+      objectMeshes.push(objectMesh);
+    };
 
     const portalGeometry = new THREE.PlaneBufferGeometry(gridWorldSize, gridWorldSize);
     const portalBackGeometry = portalGeometry.clone()
@@ -1704,7 +1787,7 @@
       };
       const _pushPlayerUpdate = () => {
         if (_isWsOpen()) {
-          playerMatrix.type[0] = MESSAGE_TYPES.MATRIX;
+          playerMatrix.type[0] = MESSAGE_TYPES.PLAYER_MATRIX;
           playerMatrix.id[0] = localPlayerId;
 
           camera.position.toArray(playerMatrix.hmd.position);
@@ -1725,6 +1808,31 @@
           ws.send(playerMatrix);
         }
       };
+      const _updateObjects = () => {
+        if (_isWsOpen()) {
+          const now = Date.now();
+          const x = -0.5 + Math.sin(((now % 3000) / 3000) * Math.PI);
+
+          for (let i = 0; i < objectMeshes.length; i++) {
+            const objectMesh = objectMeshes[i];
+
+            if (objectMesh.ownerId === localPlayerId) {
+              objectMesh.position.set(x, 0, 0);
+              objectMesh.updateMatrixWorld();
+
+              const {ownerId} = objectMesh;
+              const {objectId} = objectMesh;
+
+              objectMatrix.type[0] = MESSAGE_TYPES.OBJECT_MATRIX;
+              objectMatrix.id[0] = objectId;
+              objectMesh.position.toArray(objectMatrix.position);
+              objectMesh.quaternion.toArray(objectMatrix.quaternion);
+
+              ws.send(objectMatrix);
+            }
+          }
+        }
+      };
       _updateControls();
       _updateControllers();
       _updateHands();
@@ -1732,6 +1840,7 @@
       _animateKeyboard();
       _animateControllers();
       _pushPlayerUpdate();
+      _updateObjects();
 
       const device = renderer.vr.getDevice();
       if (device && device.constructor.name === 'FakeVRDisplay') {
