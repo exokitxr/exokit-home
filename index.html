@@ -165,8 +165,9 @@
       })();
       return playerMatrix;
     })();
+    const numObjectMatrixElements = 3+4;
     const objectMatrix = (() => {
-      const objectMatrix = new ArrayBuffer(Uint32Array.BYTES_PER_ELEMENT*2 + (3+4)*Float32Array.BYTES_PER_ELEMENT);
+      const objectMatrix = new ArrayBuffer(Uint32Array.BYTES_PER_ELEMENT*2 + numObjectMatrixElements*Float32Array.BYTES_PER_ELEMENT);
       objectMatrix.setArrayBuffer = (() => {
         const uint8Array = new Uint8Array(objectMatrix);
         return newArrayBuffer => {
@@ -301,19 +302,15 @@
                 break;
               }
               case 'objectAdd': {
-                const {id, owner} = j;
+                const {id} = j;
 
-                console.log('object add message', {id, owner});
-
-                const objectMesh = _makeObjectMesh(id, owner);
+                const objectMesh = _makeObjectMesh(id);
                 scene.add(objectMesh);
                 objectMeshes.push(objectMesh);
                 break;
               }
               case 'objectRemove': {
                 const {id, owner} = j;
-
-                console.log('object remove', id, owner);
 
                 const objectMeshIndex = objectMeshes.findIndex(objectMesh => objectMesh.objectId === id);
                 const objectMesh = objectMeshes[objectMeshIndex];
@@ -322,11 +319,13 @@
                 break;
               }
               case 'sync': {
-                const objectMesh = objectMeshes.find(objectMesh => objectMesh.objectId === 1);
+                const objectId = 1;
+                const objectMesh = objectMeshes.find(objectMesh => objectMesh.objectId === objectId);
                 if (!objectMesh) {
-                  _addObject(1, localPlayerId);
+                  _addObject(objectId);
 
-                  ws.send(JSON.stringify({type: 'objectAdd', id: 1, owner: localPlayerId}));
+                  ws.send(JSON.stringify({type: 'objectAdd', id: objectId}));
+                  ws.send(JSON.stringify({type: 'objectSetUpdateExpression', id: objectId, expression: '[1,2,3]'}));
                 }
                 break;
               }
@@ -349,7 +348,6 @@
                 const playerMesh = playerMeshes.find(playerMesh => playerMesh.playerId === id);
 
                 const float32Array = new Float32Array(data, Uint32Array.BYTES_PER_ELEMENT*2, (data.byteLength - Uint32Array.BYTES_PER_ELEMENT*2) / Float32Array.BYTES_PER_ELEMENT);
-
                 playerMesh.audioBuffers.push(float32Array);
               }
             } else if (type === MESSAGE_TYPES.OBJECT_MATRIX) {
@@ -752,24 +750,23 @@
         return mesh;
       };
     })();
-    const _makeObjectMesh = (objectId, ownerId) => {
+    const _makeObjectMesh = objectId => {
       const geometry = new THREE.BoxBufferGeometry(0.1, 0.1, 0.1);
       const material = new THREE.MeshPhongMaterial({
         color: 0xFF0000,
       });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.objectId = objectId;
-      mesh.ownerId = ownerId;
       mesh.update = objectMatrix => {
-        mesh.position.fromArray(new Float32Array(objectMatrix, 2*Uint32Array.BYTES_PER_ELEMENT, 3));
-        mesh.quaternion.fromArray(new Float32Array(objectMatrix, 2*Uint32Array.BYTES_PER_ELEMENT + 3*Float32Array.BYTES_PER_ELEMENT, 4));
+        mesh.position.fromArray(objectMatrix.position);
+        mesh.quaternion.fromArray(objectMatrix.quaternion);
 
         mesh.updateMatrixWorld();
       };
       return mesh;
     };
-    const _addObject = (objectId, ownerId) => {
-      const objectMesh = _makeObjectMesh(objectId, ownerId);
+    const _addObject = objectId => {
+      const objectMesh = _makeObjectMesh(objectId);
       scene.add(objectMesh);
       objectMeshes.push(objectMesh);
     };
@@ -1839,19 +1836,10 @@
             grabbedObject.position.fromArray(gamepad.pose.position);
             grabbedObject.quaternion.fromArray(gamepad.pose.orientation);
             grabbedObject.updateMatrixWorld();
-          }
-        }
 
-        if (_isWsOpen()) {
-          for (let i = 0; i < objectMeshes.length; i++) {
-            const objectMesh = objectMeshes[i];
-
-            if (objectMesh.ownerId === localPlayerId) {
-              const {ownerId} = objectMesh;
-              const {objectId} = objectMesh;
-
+            if (_isWsOpen()) {
               objectMatrix.type[0] = MESSAGE_TYPES.OBJECT_MATRIX;
-              objectMatrix.id[0] = objectId;
+              objectMatrix.id[0] = objectMesh.objectId;
               objectMesh.position.toArray(objectMatrix.position);
               objectMesh.quaternion.toArray(objectMatrix.quaternion);
 
