@@ -1843,16 +1843,10 @@
         }
 
         if (_isWsOpen()) {
-          // const now = Date.now();
-          // const x = Math.sin(((now % 3000) / 3000) * Math.PI * 2);
-
           for (let i = 0; i < objectMeshes.length; i++) {
             const objectMesh = objectMeshes[i];
 
             if (objectMesh.ownerId === localPlayerId) {
-              // objectMesh.position.set(x, 0, 0);
-              // objectMesh.updateMatrixWorld();
-
               const {ownerId} = objectMesh;
               const {objectId} = objectMesh;
 
