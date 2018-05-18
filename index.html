@@ -1811,7 +1811,7 @@
       const _updateObjects = () => {
         if (_isWsOpen()) {
           const now = Date.now();
-          const x = -0.5 + Math.sin(((now % 3000) / 3000) * Math.PI);
+          const x = Math.sin(((now % 3000) / 3000) * Math.PI * 2);
 
           for (let i = 0; i < objectMeshes.length; i++) {
             const objectMesh = objectMeshes[i];
