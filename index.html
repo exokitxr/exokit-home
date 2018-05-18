@@ -37,7 +37,7 @@
       return null;
     };
 
-    const registryUrl = 'http://zeovr.io:9000';
+    // const registryUrl = 'http://zeovr.io:9000';
     const SIDES = ['left', 'right'];
     const RAY_COLOR = 0x44c2ff;
     const RAY_HIGHLIGHT_COLOR = new THREE.Color(RAY_COLOR).multiplyScalar(0.5).getHex();
@@ -1108,7 +1108,7 @@
     })();
     scene.add(menuMesh);
 
-    fetch(registryUrl)
+    /* fetch(registryUrl)
       .then(res => {
         if (res.status >= 200 && res.status < 300) {
           return res.json();
@@ -1127,7 +1127,7 @@
       })
       .catch(err => {
         console.warn(err.stack);
-      });
+      }); */
 
     const keyboardMesh = (() => {
       const object = new THREE.Object3D();
