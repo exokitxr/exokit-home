@@ -784,6 +784,8 @@ class XRMultiplayer extends EventEmitter {
     const id = Math.floor(Math.random() * 0xFFFFFFFF);
     this.id = id;
 
+    this.open = false;
+
     this.localPlayers = [];
     this.remotePlayers = [];
     this.objects = [];
@@ -795,6 +797,8 @@ class XRMultiplayer extends EventEmitter {
       this.emit(e.type, e);
     }
     ws.onclose = err => {
+      this.open = false;
+
       const e = new XRMultiplayerEvent('close');
       this.emit(e.type, e);
     };
@@ -859,6 +863,8 @@ class XRMultiplayer extends EventEmitter {
             break;
           }
           case 'sync': {
+            this.open = true;
+
             const e = new XRMultiplayerEvent('sync');
             this.emit(e.type, e);
             break;
@@ -912,7 +918,8 @@ class XRMultiplayer extends EventEmitter {
     this.ws.close();
   }
   isOpen() {
-    return this.ws.readyState === WebSocket.OPEN;
+    // return this.ws.readyState === WebSocket.OPEN
+    return this.open;
   }
   addPlayer() {
     const localPlayer = new XRLocalPlayer(this);
