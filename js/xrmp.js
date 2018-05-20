@@ -1,8 +1,8 @@
-const xrmp = (() => {
-
-const module = {
-  exports: {},
-};
+const xrmp = ((
+  module = ({
+    exports: {},
+  })
+) => {
 
 const events = (() => {
 
@@ -1004,7 +1004,7 @@ module.exports.XRMultiplayer = XRMultiplayer;
 
 return module.exports;
 
-})();
+})(typeof module !== 'undefined' ? module : undefined);
 
 if (typeof window !== 'undefined') {
   window.XRLocalPlayer = xrmp.XRLocalPlayer;
