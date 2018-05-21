@@ -736,7 +736,7 @@ class XRObject extends EventEmitter {
       id: this.id,
     }));
   }
-  setExpression(expression) {
+  setUpdateExpression(expression) {
     this.xrmp.ws.send(JSON.stringify({
       type: 'objectSetUpdateExpression',
       id: this.id,
