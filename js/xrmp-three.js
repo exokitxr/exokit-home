@@ -241,7 +241,7 @@ class XRMultiplayerTHREE {
     const audioCtx = this.getAudioContext();
     const scriptProcessorNode = audioCtx.createScriptProcessor(4096, 1, 1);
     scriptProcessorNode.onaudioprocess = e => {
-      if (playerMesh.audioBuffers.length >= 2) {
+      if (playerMesh.audioBuffers.length > 0) {
         e.outputBuffer.copyToChannel(playerMesh.audioBuffers.shift(), 0);
       } else {
         e.outputBuffer.getChannelData(0).fill(0);
