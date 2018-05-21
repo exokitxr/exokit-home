@@ -72,7 +72,7 @@ class XRMultiplayerTHREE {
       remotePlayerMesh.onupdate = null;
 
       const positionalAudio = new THREE.PositionalAudio(this.getAudioListener());
-      remotePlayerMesh.add(positionalAudio);
+      remotePlayerMesh.hmd.add(positionalAudio);
       remotePlayerMesh.positionalAudio = positionalAudio;
 
       remotePlayerMesh.audioBuffers = [];
