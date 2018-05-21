@@ -740,7 +740,7 @@ class XRObject extends EventEmitter {
     this.xrmp.ws.send(JSON.stringify({
       type: 'objectSetUpdateExpression',
       id: this.id,
-      expression: '[1,2,3]',
+      expression,
     }));
   }
   pullUpdate(objectMatrix) {
