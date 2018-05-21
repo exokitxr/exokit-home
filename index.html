@@ -1712,6 +1712,14 @@
     window.addEventListener('vrdisplayconnect', _updateDisplays);
     window.addEventListener('vrdisplaydisconnect', _updateDisplays);
 
+    const audioCtx = new AudioContext({
+      sampleRate: 48000,
+    });
+    THREE.AudioContext.setContext(audioCtx);
+
+    const audioListener = new THREE.AudioListener();
+    camera.add(audioListener);
+
     const keys = {
       up: false,
       down: false,
@@ -1805,14 +1813,6 @@
           case 112: { // P
             if (_isMpOpen() && !voicechatEnabled) {
               console.log('enable voicechat');
-
-              const audioCtx = new AudioContext({
-                sampleRate: 48000,
-              });
-              THREE.AudioContext.setContext(audioCtx);
-
-              const audioListener = mp.getAudioListener();
-              camera.add(audioListener);
 
               navigator.mediaDevices.getUserMedia({
                 audio: true,
