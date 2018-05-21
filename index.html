@@ -162,6 +162,8 @@
         const xrmpThree = new XRMultiplayerTHREE(xrmp);
         xrmpThree.localPlayerMesh = null;
         xrmpThree.onsync = () => {
+          camera.add(xrmpThree.getAudioListener());
+
           const localPlayerMesh = xrmpThree.createLocalPlayerMesh();
           xrmpThree.localPlayerMesh = localPlayerMesh;
 
@@ -1716,9 +1718,6 @@
       sampleRate: 48000,
     });
     THREE.AudioContext.setContext(audioCtx);
-
-    const audioListener = new THREE.AudioListener();
-    camera.add(audioListener);
 
     const keys = {
       up: false,
