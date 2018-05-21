@@ -4,6 +4,8 @@ const xrmpThree = ((
   })
 ) => {
 
+const AUDIO_BUFFER_SIZE = 512;
+
 const _makePlayerMesh = () => {
   const result = new THREE.Object3D();
 
@@ -154,7 +156,7 @@ class XRMultiplayerTHREE {
 
       const audioCtx = this.getAudioContext();
       const microphoneSourceNode = audioCtx.createMediaStreamSource(mediaStream);
-      const scriptProcessorNode = audioCtx.createScriptProcessor(4096, 1, 1);
+      const scriptProcessorNode = audioCtx.createScriptProcessor(AUDIO_BUFFER_SIZE, 1, 1);
       scriptProcessorNode.onaudioprocess = e => {
         localPlayer.pushAudio(e.inputBuffer.getChannelData(0));
 
@@ -239,7 +241,7 @@ class XRMultiplayerTHREE {
   }
   _bindPlayerMeshAudio(playerMesh, mediaStream) {
     const audioCtx = this.getAudioContext();
-    const scriptProcessorNode = audioCtx.createScriptProcessor(4096, 1, 1);
+    const scriptProcessorNode = audioCtx.createScriptProcessor(AUDIO_BUFFER_SIZE, 1, 1);
     scriptProcessorNode.onaudioprocess = e => {
       if (playerMesh.audioBuffers.length > 0) {
         e.outputBuffer.copyToChannel(playerMesh.audioBuffers.shift(), 0);
