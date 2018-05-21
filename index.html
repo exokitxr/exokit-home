@@ -22,6 +22,7 @@
   <script src="js/keycode.js"></script>
   <script src="js/svg-boundings.js"></script>
   <script src="js/xrmp.js"></script>
+  <script src="js/xrmp-three.js"></script>
   <script>
     const container = document.getElementById('container');
     const canvas = document.getElementById('canvas');
@@ -144,121 +145,70 @@
       }
     };
 
-    const playerMeshes = [];
-    const objectMeshes = [];
     let voicechatEnabled = false;
-    let audioCtx = null;
-    let audioListener = null;
-    let microphoneMediaStream = null;
-    const _bindPlayerMeshAudio = playerMesh => {
-      const scriptProcessorNode = audioCtx.createScriptProcessor(4096, 1, 1);
-      scriptProcessorNode.onaudioprocess = e => {
-        if (playerMesh.audioBuffers.length >= 2) {
-          e.outputBuffer.copyToChannel(playerMesh.audioBuffers.shift(), 0);
-        } else {
-          e.outputBuffer.getChannelData(0).fill(0);
-        }
-      };
-      const microphoneSourceNode = audioCtx.createMediaStreamSource(microphoneMediaStream);
-      microphoneSourceNode.connect(scriptProcessorNode);
-
-      playerMesh.player.onaudio = e => {
-        playerMesh.audioBuffers.push(e.buffer);
-      };
-
-      const positionalAudio = new THREE.PositionalAudio(audioListener);
-      positionalAudio.setNodeSource(scriptProcessorNode);
-      playerMesh.add(positionalAudio);
-    };
     const mp = (() => {
       const url = getQueryVariable('m');
       if (url) {
-        const mp = new XRMultiplayer(url);
-        mp.localPlayer = null;
-        mp.onsync = () => {
-          mp.localPlayer = mp.addPlayer(mp.id);
+        const _makeCubeMesh = () => {
+          const geometry = new THREE.BoxBufferGeometry(0.1, 0.1, 0.1);
+          const material = new THREE.MeshPhongMaterial({
+            color: 0xFF0000,
+          });
+          const mesh = new THREE.Mesh(geometry, material);
+          return mesh;
+        };
+
+        const xrmp = new XRMultiplayer(url);
+        const xrmpThree = new XRMultiplayerTHREE(xrmp);
+        xrmpThree.localPlayerMesh = null;
+        xrmpThree.onsync = () => {
+          const localPlayerMesh = xrmpThree.createLocalPlayerMesh();
+          xrmpThree.localPlayerMesh = localPlayerMesh;
 
           const objectId = 1;
+          const objectMeshes = xrmpThree.getObjectMeshes();
           const objectMesh = objectMeshes.find(objectMesh => objectMesh.object.id === objectId);
           if (!objectMesh) {
-            const object = mp.addObject(objectId);
-            object.setExpression('[1,2,3]');
+            const objectMesh = mp.createObjectMesh(objectId);
 
-            _addObjectMesh(object);
+            const cubeMesh = _makeCubeMesh();
+            objectMesh.add(cubeMesh);
+
+            objectMesh.object.setExpression('[1,2,3]');
+
+            scene.add(objectMesh);
           }
         };
-        mp.onclose = () => {
+        xrmpThree.onclose = () => {
           console.log('mp close');
         };
-        mp.onerror = e => {
+        xrmpThree.onerror = e => {
           console.warn('mp error', e.error);
         };
-        mp.onplayerenter = e => {
-          const {player} = e;
-          const {id} = player;
+        xrmpThree.onplayerenter = playerMesh => {
+          const skinMesh = _makeSkinMesh(playerMesh);
+          playerMesh.add(skinMesh);
 
-          const playerMesh = _makeRemotePlayerMesh(player);
           scene.add(playerMesh);
-          playerMeshes.push(playerMesh);
-
-          player.onupdate = e => {
-            playerMesh.update(e.matrix);
-          };
-
-          if (audioCtx) {
-            _bindPlayerMeshAudio(playerMesh);
-          }
-
-          const skinImg = new Image();
-          skinImg.crossOrigin = 'Anonymous';
-          skinImg.src = 'img/skins/male.png';
-          skinImg.onload = () => {
-            playerMesh.setImage(skinImg);
-          };
-          skinImg.onerror = err => {
-            console.warn('skin image error', err.stack);
-          };
-
-          // console.log('player enter', id);
         };
-        mp.onplayerleave = e => {
-          const {player} = e;
-          const {id} = player;
-
-          const playerMeshIndex = playerMeshes.findIndex(playerMesh => playerMesh.player.id === id);
-          const playerMesh = playerMeshes[playerMeshIndex];
+        xrmpThree.onplayerleave = playerMesh => {
           scene.remove(playerMesh);
-          playerMeshes.splice(playerMeshIndex, 1);
-
-          // console.log('player leave', id);
         };
-        mp.onobjectadd = e => {
-          const {object} = e;
-          const {id} = object;
+        xrmpThree.onobjectadd = objectMesh => {
+          const cubeMesh = _makeCubeMesh();
+          objectMesh.add(cubeMesh);
 
-          const objectMesh = _makeObjectMesh(object);
           scene.add(objectMesh);
-          objectMeshes.push(objectMesh);
-
-          object.onupdate = e => {
-            objectMesh.update(e.matrix);
-          };
         };
-        mp.onobjectremove = e => {
-          const {object} = e;
-          const {id} = object;
-
-          const objectMeshIndex = objectMeshes.findIndex(objectMesh => objectMesh.object.id === id);
-          const objectMesh = objectMeshes[objectMeshIndex];
+        xrmpThree.onobjectremove = objectMesh => {
           scene.remove(objectMesh);
-          objectMeshes.splice(objectMeshes, 1);
         };
-        return mp;
+        return xrmpThree;
       } else {
         return null;
       }
     })();
-    const _isMpOpen = () => Boolean(mp) && mp.isOpen();
+    const _isMpOpen = () => Boolean(mp && mp.localPlayerMesh);
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -286,7 +236,6 @@
       );
       return renderTarget;
     };
-
     let renderTarget = _makeRenderTarget(canvas.width, canvas.height);
 
     const scene = new THREE.Scene();
@@ -530,8 +479,7 @@
       handMeshes[i] = handMesh;
     }
 
-    const _makeRemotePlayerMesh = (() => {
-      const hmdQuaternion = new THREE.Quaternion();
+    const _makeSkinMesh = (() => {
       const hmdEuler = new THREE.Euler();
       const controllerPosition = new THREE.Vector3();
       const controllerQuaternion = new THREE.Quaternion();
@@ -553,11 +501,10 @@
       };
       const _angleDiff = (a, b) => _mod((b - a) + Math.PI, Math.PI * 2) - Math.PI;
 
-      return player => {
+      return playerMesh => {
         const mesh = skin({
           limbs: true,
         });
-        mesh.player = player;
 
         const uniforms = THREE.UniformsUtils.clone(skin.SKIN_SHADER.uniforms);
 
@@ -581,9 +528,9 @@
             onBeforeRender.apply(this, arguments);
           };
         })(mesh.onBeforeRender);
-        mesh.update = playerMatrix => {
-          hmdQuaternion.fromArray(playerMatrix.hmd.quaternion);
-          hmdEuler.setFromQuaternion(hmdQuaternion, camera.rotation.order);
+
+        playerMesh.onupdate = () => {
+          hmdEuler.setFromQuaternion(playerMesh.hmd.quaternion, camera.rotation.order);
           playerEuler.setFromQuaternion(mesh.quaternion, camera.rotation.order);
           const angleDiff = _angleDiff(hmdEuler.y, playerEuler.y);
           const angleDiffAbs = Math.abs(angleDiff);
@@ -594,24 +541,24 @@
 
           mesh.getWorldPosition(meshWorldPosition);
           mesh.eye.getWorldPosition(meshEyeWorldPosition);
-          mesh.position.fromArray(playerMatrix.hmd.position)
+          mesh.position.copy(playerMesh.hmd.position)
             .sub(meshEyeWorldPosition)
             .add(meshWorldPosition);
 
           playerQuaternionInverse.copy(mesh.quaternion).inverse();
-          headQuaternion.copy(playerQuaternionInverse).multiply(hmdQuaternion);
+          headQuaternion.copy(playerQuaternionInverse).multiply(playerMesh.hmd.quaternion);
           headQuaternionInverse.copy(headQuaternion).inverse();
           uniforms.headRotation.value.set(headQuaternionInverse.x, headQuaternionInverse.y, headQuaternionInverse.z, headQuaternionInverse.w);
           mesh.head.quaternion.copy(headQuaternion);
           mesh.updateMatrixWorld();
 
-          for (let i = 0; i < SIDES.length; i++) {
+          for (let i = 0; i < 2; i++) {
             const side = SIDES[i];
             const armRotation = uniforms[side === 'left' ? 'leftArmRotation' : 'rightArmRotation'];
 
-            if (playerMatrix.gamepads[i].enabled[0]) {
-              controllerPosition.fromArray(playerMatrix.gamepads[i].position);
-              controllerQuaternion.fromArray(playerMatrix.gamepads[i].quaternion);
+            if (playerMesh.gamepads[i].visible) {
+              controllerPosition.copy(playerMesh.gamepads[i].position);
+              controllerQuaternion.copy(playerMesh.gamepads[i].quaternion);
               localUpVector.copy(upVector).applyQuaternion(controllerQuaternion);
 
               mesh.arms[side].getWorldPosition(armWorldPosition);
@@ -631,47 +578,29 @@
             }
           }
 
-          for (let i = 0; i < handMeshes.length; i++) {
+          /* for (let i = 0; i < handMeshes.length; i++) { // XXX
             handMeshes[i].updatePlayerMatrix(playerMatrix.hands[i]);
-          }
+          } */
         };
 
-        mesh.positionalAudio = null;
-        mesh.audioBuffers = [];
+        const skinImg = new Image();
+        skinImg.crossOrigin = 'Anonymous';
+        skinImg.src = 'img/skins/male.png';
+        skinImg.onload = () => {
+          mesh.setImage(skinImg);
+        };
+        skinImg.onerror = err => {
+          console.warn('skin image error', err.stack);
+        };
 
         return mesh;
       };
     })();
-    const _makeObjectMesh = object => {
-      const geometry = new THREE.BoxBufferGeometry(0.1, 0.1, 0.1);
-      const material = new THREE.MeshPhongMaterial({
-        color: 0xFF0000,
-      });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.object = object;
-      mesh.update = objectMatrix => {
-        mesh.position.fromArray(objectMatrix.position);
-        mesh.quaternion.fromArray(objectMatrix.quaternion);
-
-        mesh.updateMatrixWorld();
-      };
-      return mesh;
-    };
-    const _addObjectMesh = object => {
-      const objectMesh = _makeObjectMesh(object);
-      scene.add(objectMesh);
-      objectMeshes.push(objectMesh);
-
-      object.onupdate = e => {
-        objectMesh.update(e.matrix);
-      };
-    };
 
     const portalGeometry = new THREE.PlaneBufferGeometry(gridWorldSize, gridWorldSize);
     const portalBackGeometry = portalGeometry.clone()
       .applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1))));
     const skyboxGeometry = new THREE.BoxBufferGeometry(100, 100, 100);
-
     (() => {
       const currentLinks = _getCurrentLinks();
       for (let i = 0; i < currentLinks.length; i++) {
@@ -735,116 +664,6 @@
         backMeshes.push(backMesh);
       }
     })();
-
-    function concatBufferGeometry(geometries) {
-      geometries = geometries.map(geometry => unindexBufferGeometry(geometry));
-
-      const positions = (() => {
-        const geometryPositions = geometries.map(geometry => geometry.getAttribute('position').array);
-        const numPositions = sum(geometryPositions.map(geometryPosition => geometryPosition.length));
-
-        const result = new Float32Array(numPositions);
-        let i = 0;
-        geometryPositions.forEach(geometryPosition => {
-          result.set(geometryPosition, i);
-          i += geometryPosition.length;
-        });
-        return result;
-      })();
-      const normals = (() => {
-        const geometryNormals = geometries.map(geometry => geometry.getAttribute('normal').array);
-        const numNormals = sum(geometryNormals.map(geometryNormal => geometryNormal.length));
-
-        const result = new Float32Array(numNormals);
-        let i = 0;
-        geometryNormals.forEach(geometryNormal => {
-          result.set(geometryNormal, i);
-          i += geometryNormal.length;
-        });
-        return result;
-      })();
-      const uvs = (() => {
-        const geometryUvs = geometries.map(geometry => geometry.getAttribute('uv').array);
-        const numUvs = sum(geometryUvs.map(geometryUv => geometryUv.length));
-
-        const result = new Float32Array(numUvs);
-        let i = 0;
-        geometryUvs.forEach(geometryUv => {
-          result.set(geometryUv, i);
-          i += geometryUv.length;
-        });
-        return result;
-      })();
-
-      const geometry = new THREE.BufferGeometry();
-      geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
-      geometry.addAttribute('normal', new THREE.BufferAttribute(normals, 3));
-      geometry.addAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-      return geometry;
-    }
-    function unindexBufferGeometry(geometry) {
-      if (geometry.index) {
-        const indexes = geometry.index.array;
-        const numIndexes = indexes.length;
-        const positionAttribute = geometry.getAttribute('position');
-        const oldPositions = positionAttribute ? positionAttribute.array : null;
-        const positions = positionAttribute ? new Float32Array(numIndexes * 3) : null;
-        const normalAttribute = geometry.getAttribute('normal');
-        const oldNormals = normalAttribute ? normalAttribute.array : null;
-        const normals = normalAttribute ? new Float32Array(numIndexes * 3) : null;
-        const colorAttribute = geometry.getAttribute('color');
-        const oldColors = colorAttribute ? colorAttribute.array : null;
-        const colors = colorAttribute ? new Float32Array(numIndexes * 3) : null;
-        const uvAttribute = geometry.getAttribute('uv');
-        const oldUvs = uvAttribute ? uvAttribute.array : null;
-        const uvs = uvAttribute ? new Float32Array(numIndexes * 2) : null;
-        for (let i = 0; i < numIndexes; i++) {
-          const index = indexes[i];
-
-          if (positions !== null) {
-            positions[(i * 3) + 0] = oldPositions[(index * 3) + 0];
-            positions[(i * 3) + 1] = oldPositions[(index * 3) + 1];
-            positions[(i * 3) + 2] = oldPositions[(index * 3) + 2];
-          }
-          if (normals !== null) {
-            normals[(i * 3) + 0] = oldNormals[(index * 3) + 0];
-            normals[(i * 3) + 1] = oldNormals[(index * 3) + 1];
-            normals[(i * 3) + 2] = oldNormals[(index * 3) + 2];
-          }
-          if (colors !== null) {
-            colors[(i * 3) + 0] = oldColors[(index * 3) + 0];
-            colors[(i * 3) + 1] = oldColors[(index * 3) + 1];
-            colors[(i * 3) + 2] = oldColors[(index * 3) + 2];
-          }
-          if (uvs !== null) {
-            uvs[(i * 2) + 0] = oldUvs[(index * 2) + 0];
-            uvs[(i * 2) + 1] = oldUvs[(index * 2) + 1];
-          }
-        }
-        if (positions !== null) {
-          geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
-        }
-        if (normals !== null) {
-          geometry.addAttribute('normal', new THREE.BufferAttribute(normals, 3));
-        }
-        if (colors !== null) {
-          geometry.addAttribute('color', new THREE.BufferAttribute(colors, 3));
-        }
-        if (uvs !== null) {
-          geometry.addAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-        }
-        geometry.index = null;
-      }
-
-      return geometry;
-    }
-    function sum(a) {
-      let result = 0;
-      for (let i = 0; i < a.length; i++) {
-        result += a[i];
-      }
-      return result;
-    }
 
     const menuMesh = (() => {
       const object = new THREE.Object3D();
@@ -1698,32 +1517,9 @@
           );
         } */
       };
-      const _pushPlayerUpdate = () => {
-        if (_isMpOpen()) {
-          // playerMatrix.type[0] = MESSAGE_TYPES.PLAYER_MATRIX;
-          // playerMatrix.id[0] = localPlayerId;
-
-          camera.position.toArray(mp.localPlayer.playerMatrix.hmd.position);
-          camera.quaternion.toArray(mp.localPlayer.playerMatrix.hmd.quaternion);
-
-          for (let i = 0; i < controllerMeshes.length; i++) {
-            const controllerMesh = controllerMeshes[i];
-            mp.localPlayer.playerMatrix.gamepads[i].enabled[0] = 1;
-            controllerMesh.position.toArray(mp.localPlayer.playerMatrix.gamepads[i].position);
-            controllerMesh.quaternion.toArray(mp.localPlayer.playerMatrix.gamepads[i].quaternion);
-          }
-
-          for (let i = 0; i < 2; i++) {
-            mp.localPlayer.playerMatrix.hands[i].enabled[0] = +handMeshes[i].visible;
-            mp.localPlayer.playerMatrix.hands[i].data.set(handMeshes[i].handFrameData);
-          }
-
-          mp.localPlayer.pushUpdate();
-        }
-      };
       const _updateObjects = () => {
         const gamepads = _getGamepads();
-        for (let i = 0; i < grabbedObjects.length; i++) {
+        for (let i = 0; i < 2; i++) {
           const grabbedObject = grabbedObjects[i];
 
           if (grabbedObject) {
@@ -1742,14 +1538,34 @@
           }
         }
       };
+      const _updateMp = () => {
+        if (_isMpOpen()) {
+          mp.localPlayerMesh.hmd.position.copy(camera.position);
+          mp.localPlayerMesh.hmd.quaternion.copy(camera.quaternion);
+
+          for (let i = 0; i < 2; i++) {
+            const controllerMesh = controllerMeshes[i];
+            mp.localPlayerMesh.gamepads[i].visible = true;
+            mp.localPlayerMesh.gamepads[i].position.copy(controllerMesh.position);
+            mp.localPlayerMesh.gamepads[i].quaternion.copy(controllerMesh.quaternion);
+          }
+
+          /* for (let i = 0; i < 2; i++) { // XXX
+            mp.localPlayer.playerMatrix.hands[i].enabled[0] = +handMeshes[i].visible;
+            mp.localPlayer.playerMatrix.hands[i].data.set(handMeshes[i].handFrameData);
+          } */
+
+          mp.pushUpdate();
+        }
+      };
       _updateControls();
       _updateControllers();
       _updateHands();
       _updateIntersections();
       _animateKeyboard();
       _animateControllers();
-      _pushPlayerUpdate();
       _updateObjects();
+      _updateMp();
 
       const device = renderer.vr.getDevice();
       if (device && device.constructor.name === 'FakeVRDisplay') {
@@ -1987,41 +1803,22 @@
             break;
           }
           case 112: { // P
-            if (!voicechatEnabled) {
+            if (_isMpOpen() && !voicechatEnabled) {
               console.log('enable voicechat');
 
-              audioCtx = new AudioContext({
+              const audioCtx = new AudioContext({
                 sampleRate: 48000,
               });
               THREE.AudioContext.setContext(audioCtx);
 
-              audioListener = new THREE.AudioListener();
+              const audioListener = mp.getAudioListener();
               camera.add(audioListener);
 
               navigator.mediaDevices.getUserMedia({
                 audio: true,
               })
                 .then(mediaStream => {
-                  microphoneMediaStream = mediaStream;
-
-                  const microphoneSourceNode = audioCtx.createMediaStreamSource(mediaStream);
-
-                  const scriptProcessorNode = audioCtx.createScriptProcessor(4096, 1, 1);
-                  scriptProcessorNode.onaudioprocess = e => {
-                    const float32Array = e.inputBuffer.getChannelData(0);
-
-                    if (_isMpOpen()) {
-                      mp.localPlayer.pushAudio(float32Array);
-                    }
-
-                    e.outputBuffer.getChannelData(0).fill(0);
-                  };
-                  microphoneSourceNode.connect(scriptProcessorNode);
-                  scriptProcessorNode.connect(audioCtx.destination);
-
-                  for (let i = 0; i < playerMeshes.length; i++) {
-                    _bindPlayerMeshAudio(playerMeshes[i]);
-                  }
+                  mp.localPlayerMesh.setMediaStream(mediaStream);
                 });
               voicechatEnabled = true;
             }
