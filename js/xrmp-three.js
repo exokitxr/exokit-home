@@ -68,10 +68,14 @@ class XRMultiplayerTHREE {
       const {player} = e;
 
       const remotePlayerMesh = _makePlayerMesh();
-      remotePlayerMesh.onupdate = null;
-      remotePlayerMesh.positionalAudio = null;
-      remotePlayerMesh.audioBuffers = [];
       remotePlayerMesh.player = player;
+      remotePlayerMesh.onupdate = null;
+
+      const positionalAudio = new THREE.PositionalAudio(this.getAudioListener());
+      remotePlayerMesh.add(positionalAudio);
+      remotePlayerMesh.positionalAudio = positionalAudio;
+
+      remotePlayerMesh.audioBuffers = [];
 
       player.onupdate = e => {
         const {matrix: playerMatrix} = e;
@@ -98,10 +102,7 @@ class XRMultiplayerTHREE {
 
       this.remotePlayerMeshes.push(remotePlayerMesh);
 
-      const mediaStream = this.getMediaStream();
-      if (mediaStream) {
-        this._bindPlayerMeshAudio(remotePlayerMesh, mediaStream);
-      }
+      this._bindPlayerMeshAudio(remotePlayerMesh);
 
       if (this.onplayerenter) {
         this.onplayerenter(remotePlayerMesh);
@@ -150,10 +151,7 @@ class XRMultiplayerTHREE {
     const localPlayer = this.xrmp.addPlayer(id);
     localPlayerMesh.player = localPlayer;
 
-    localPlayerMesh.mediaStream = null;
     localPlayerMesh.setMediaStream = mediaStream => {
-      localPlayerMesh.mediaStream = mediaStream;
-
       const audioCtx = this.getAudioContext();
       const microphoneSourceNode = audioCtx.createMediaStreamSource(mediaStream);
       const scriptProcessorNode = audioCtx.createScriptProcessor(AUDIO_BUFFER_SIZE, 1, 1);
@@ -166,7 +164,7 @@ class XRMultiplayerTHREE {
       scriptProcessorNode.connect(audioCtx.destination);
 
       for (let i = 0; i < this.remotePlayerMeshes.length; i++) {
-        this._bindPlayerMeshAudio(this.remotePlayerMeshes[i], mediaStream);
+        this._bindPlayerMeshAudio(this.remotePlayerMeshes[i]);
       }
     };
 
@@ -204,15 +202,6 @@ class XRMultiplayerTHREE {
     }
     return this.audioListener;
   }
-  getMediaStream() {
-    for (let i = 0; i < this.localPlayerMeshes.length; i++) {
-      const localPlayerMesh = this.localPlayerMeshes[i];
-      if (localPlayerMesh.mediaStream) {
-        return localPlayerMesh.mediaStream;
-      }
-    }
-    return null;
-  }
   pushUpdate() {
     for (let i = 0; i < this.localPlayerMeshes.length; i++) {
       const localPlayerMesh = this.localPlayerMeshes[i];
@@ -239,7 +228,7 @@ class XRMultiplayerTHREE {
       objectMesh.object.pushUpdate();
     }
   }
-  _bindPlayerMeshAudio(playerMesh, mediaStream) {
+  _bindPlayerMeshAudio(playerMesh) {
     const audioCtx = this.getAudioContext();
     const scriptProcessorNode = audioCtx.createScriptProcessor(AUDIO_BUFFER_SIZE, 1, 1);
     scriptProcessorNode.onaudioprocess = e => {
@@ -249,13 +238,10 @@ class XRMultiplayerTHREE {
         e.outputBuffer.getChannelData(0).fill(0);
       }
     };
-    const microphoneSourceNode = audioCtx.createMediaStreamSource(mediaStream);
-    microphoneSourceNode.connect(scriptProcessorNode);
+    // const microphoneSourceNode = audioCtx.createMediaStreamSource(mediaStream);
+    // microphoneSourceNode.connect(scriptProcessorNode);
 
-    const positionalAudio = new THREE.PositionalAudio(this.getAudioListener());
-    positionalAudio.setNodeSource(scriptProcessorNode);
-    playerMesh.add(positionalAudio);
-    playerMesh.positionalAudio = positionalAudio;
+    playerMesh.positionalAudio.setNodeSource(scriptProcessorNode);
 
     playerMesh.player.onaudio = e => {
       playerMesh.audioBuffers.push(e.buffer);
