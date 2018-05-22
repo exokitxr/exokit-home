@@ -102,15 +102,6 @@
     let links = [];
     const _getCurrentLinks = () => links.slice(0, 8);
 
-    const MESSAGE_TYPES = (() => {
-      let id = 0;
-      return {
-        PLAYER_MATRIX: id++,
-        AUDIO: id++,
-        OBJECT_MATRIX: id++,
-      };
-    })();
-
     const upVector = new THREE.Vector3(0, 1, 0);
     const armQuaternionOffset = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, -1));
 
