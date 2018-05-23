@@ -43,6 +43,7 @@ class XRMultiplayerTHREE {
     this.onplayerleave = null;
     this.onobjectadd = null;
     this.onobjectremove = null;
+    this.ongeometry = null;
 
     xrmp.onopen = e => {
       if (this.onopen) {
@@ -125,6 +126,7 @@ class XRMultiplayerTHREE {
       const objectMesh = new THREE.Object3D();
       objectMesh.object = object;
       objectMesh.onupdate = null;
+      objectMesh.needsUpdate = false;
       this.objectMeshes.push(objectMesh);
 
       this._bindObjectMesh(objectMesh);
@@ -142,6 +144,11 @@ class XRMultiplayerTHREE {
 
       if (this.onobjectremove) {
         this.onobjectremove(objectMesh);
+      }
+    };
+    xrmp.ongeometry = e => {
+      if (this.ongeometry) {
+        this.ongeometry(e);
       }
     };
   }
@@ -172,8 +179,7 @@ class XRMultiplayerTHREE {
 
     return localPlayerMesh;
   }
-  createObjectMesh(id) {
-    const objectMesh = new THREE.Object3D();
+  createObjectMesh(id, objectMesh = new THREE.Object3D()) {
     const object = this.xrmp.addObject(id);
     objectMesh.object = object;
     objectMesh.onupdate = null;
@@ -183,6 +189,9 @@ class XRMultiplayerTHREE {
     this.objectMeshes.push(objectMesh);
 
     return objectMesh;
+  }
+  removeObjectMesh(objectMesh) {
+    this.xrmp.removeObject(objectMesh.object);
   }
   getLocalPlayerMeshes() {
     return this.localPlayerMeshes;
@@ -223,9 +232,16 @@ class XRMultiplayerTHREE {
 
     for (let i = 0; i < this.objectMeshes.length; i++) {
       const objectMesh = this.objectMeshes[i];
-      objectMesh.position.toArray(objectMesh.object.objectMatrix.position);
-      objectMesh.quaternion.toArray(objectMesh.object.objectMatrix.quaternion);
-      objectMesh.object.pushUpdate();
+
+      // console.log('check needs update', objectMesh.needsUpdate);
+
+      if (objectMesh.needsUpdate) {
+        objectMesh.position.toArray(objectMesh.object.objectMatrix.position);
+        objectMesh.quaternion.toArray(objectMesh.object.objectMatrix.quaternion);
+
+        objectMesh.object.pushUpdate();
+        objectMesh.needsUpdate = false;
+      }
     }
   }
   _bindPlayerMeshAudio(playerMesh) {

@@ -1,3 +1,5 @@
+(() => {
+
 const xrmp = ((
   module = ({
     exports: {},
@@ -547,6 +549,7 @@ const MESSAGE_TYPES = (() => {
     PLAYER_MATRIX: id++,
     AUDIO: id++,
     OBJECT_MATRIX: id++,
+    GEOMETRY: id++,
   };
 })();
 const _makeId = () => Math.floor(Math.random() * 0xFFFFFFFF);
@@ -722,18 +725,33 @@ class XRRemotePlayer extends EventEmitter {
 module.exports.XRRemotePlayer = XRRemotePlayer;
 
 class XRObject extends EventEmitter {
-  constructor(id = _makeId(), xrmp) {
+  constructor(id = _makeId(), state = {}, xrmp) {
     super();
 
     this.id = id;
+    this.state = state;
     this.xrmp = xrmp;
 
     this.objectMatrix = _makeObjectMatrix();
     this.objectMatrix.id[0] = id;
-
-    xrmp.ws.send(JSON.stringify({
+  }
+  sendAdd() {
+    this.xrmp.ws.send(JSON.stringify({
       type: 'objectAdd',
       id: this.id,
+    }));
+  }
+  sendRemove() {
+    this.xrmp.ws.send(JSON.stringify({
+      type: 'objectRemove',
+      id: this.id,
+    }));
+  }
+  setState(state) {
+    this.xrmp.ws.send(JSON.stringify({
+      type: 'objectSetState',
+      id: this.id,
+      state,
     }));
   }
   setUpdateExpression(expression) {
@@ -839,9 +857,9 @@ class XRMultiplayer extends EventEmitter {
             break;
           }
           case 'objectAdd': {
-            const {id} = j;
+            const {id, state} = j;
 
-            const object = new XRObject(id, this);
+            const object = new XRObject(id, state, this);
             this.objects.push(object);
 
             const e = new XRMultiplayerEvent('objectadd');
@@ -852,8 +870,12 @@ class XRMultiplayer extends EventEmitter {
           case 'objectRemove': {
             const {id} = j;
 
-            const object = this.objects.find(object => object.id === id);
-            if (object) {
+            const index = this.objects.findIndex(object => object.id === id);
+            if (index !== -1) {
+              const object = this.objects[index];
+
+              this.objects.splice(index, 1);
+
               const e = new XRMultiplayerEvent('objectremove');
               e.object = object;
               this.emit(e.type, e);
@@ -907,6 +929,21 @@ class XRMultiplayer extends EventEmitter {
           } else {
             console.warn('got unknown object update message', {id});
           }
+        } else if (type === MESSAGE_TYPES.GEOMETRY) {
+          const header = new Uint32Array(data, Uint32Array.BYTES_PER_ELEMENT, 3);
+          const numPositions = header[0];
+          const numNormals = header[1];
+          const numIndices = header[2];
+
+          const positions = new Float32Array(data, Uint32Array.BYTES_PER_ELEMENT + 3*Uint32Array.BYTES_PER_ELEMENT, numPositions);
+          const normals = new Float32Array(data, Uint32Array.BYTES_PER_ELEMENT + 3*Uint32Array.BYTES_PER_ELEMENT + positions.byteLength, numNormals);
+          const indices = new Uint32Array(data, Uint32Array.BYTES_PER_ELEMENT + 3*Uint32Array.BYTES_PER_ELEMENT + positions.byteLength + normals.byteLength, numIndices);
+
+          const e = new XRMultiplayerEvent('geometry');
+          e.positions = positions;
+          e.normals = normals;
+          e.indices = indices;
+          this.emit(e.type, e);
         } else {
           console.warn('unknown binary message type', {type});
         }
@@ -935,8 +972,9 @@ class XRMultiplayer extends EventEmitter {
       throw new Error('player not added');
     }
   }
-  addObject(id) {
-    const object = new XRObject(id, this);
+  addObject(id, state) {
+    const object = new XRObject(id, state, this);
+    object.sendAdd();
     this.objects.push(object);
     return object;
   }
@@ -944,10 +982,29 @@ class XRMultiplayer extends EventEmitter {
     const {id} = object;
     const index = this.objects.findIndex(object => object.id === id);
     if (index !== -1) {
+      const object = this.objects[index];
+      object.sendRemove();
+
       this.objects.splice(index, 1);
     } else {
-      throw new Error('object not added');
+      throw new Error('object not removed');
     }
+  }
+  pushGeometry(positions, normals, indices) {
+    const geometryBuffer = new ArrayBuffer(Uint32Array.BYTES_PER_ELEMENT + 3*Uint32Array.BYTES_PER_ELEMENT + positions.byteLength + normals.byteLength + indices.byteLength);
+
+    new Uint32Array(geometryBuffer, 0, 1)[0] = MESSAGE_TYPES.GEOMETRY;
+
+    const header = new Uint32Array(geometryBuffer, Uint32Array.BYTES_PER_ELEMENT, 3);
+    header[0] = positions.length;
+    header[1] = normals.length;
+    header[2] = indices.length;
+
+    new Float32Array(geometryBuffer, Uint32Array.BYTES_PER_ELEMENT + 3*Uint32Array.BYTES_PER_ELEMENT, positions.length).set(positions);
+    new Float32Array(geometryBuffer, Uint32Array.BYTES_PER_ELEMENT + 3*Uint32Array.BYTES_PER_ELEMENT + positions.byteLength, normals.length).set(normals);
+    new Uint32Array(geometryBuffer, Uint32Array.BYTES_PER_ELEMENT + 3*Uint32Array.BYTES_PER_ELEMENT + positions.byteLength + normals.byteLength, indices.length).set(indices);
+
+    this.ws.send(geometryBuffer);
   }
   addEventListener(name, fn) {
     return this.on(name, fn);
@@ -1000,6 +1057,12 @@ class XRMultiplayer extends EventEmitter {
   set onobjectremove(onobjectremove) {
     _elementSetter(this, 'objectremove', onobjectremove);
   }
+  get ongeometry() {
+    return _elementGetter(this, 'geometry');
+  }
+  set ongeometry(ongeometry) {
+    _elementSetter(this, 'geometry', ongeometry);
+  }
   get onsync() {
     return _elementGetter(this, 'sync');
   }
@@ -1019,3 +1082,5 @@ if (typeof window !== 'undefined') {
   window.XRObject = xrmp.XRObject;
   window.XRMultiplayer = xrmp.XRMultiplayer;
 }
+
+})();
