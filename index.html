@@ -783,7 +783,7 @@
             for (let i = 0; i < apps.length; i++) {
               const app = apps[i];
 
-              const selected = currentApps.includes(i);
+              const selected = currentApps.includes(app);
               if (selected) {
                 ctx.fillStyle = '#03a9f4';
                 ctx.fillRect(0, urlBarOffset + i*fontSize, urlBarWidth, fontSize);
@@ -1419,9 +1419,10 @@
                 menuMesh.urlMesh.updateText();
               }
             } else if (appIndex !== -1) {
-              const currentAppIndex = currentApps.indexOf(appIndex);
+              const app = apps[appIndex];
+              const currentAppIndex = currentApps.indexOf(app);
               if (currentAppIndex === -1) {
-                currentApps.push(appIndex);
+                currentApps.push(app);
               } else {
                 currentApps.splice(currentAppIndex, 1);
               }
