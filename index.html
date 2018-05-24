@@ -42,6 +42,7 @@
 
     const REGISTRY_QUERY_URL = 'https://registry.webmr.io/q';
     const SIDES = ['left', 'right'];
+    const FLOOR_SIZE = 20;
     const RAY_COLOR = 0x44c2ff;
     const RAY_HIGHLIGHT_COLOR = new THREE.Color(RAY_COLOR).multiplyScalar(0.5).getHex();
     const rayDistance = 10;
@@ -472,6 +473,52 @@
       scene.add(handMesh);
       handMeshes[i] = handMesh;
     }
+
+    (() => {
+      const graphImg = new Image();
+      graphImg.src = 'img/graphy.png';
+      graphImg.crossOrigin = 'Anonymous';
+      graphImg.onload = () => {
+        const floorMesh = (() => {
+          const geometry = new THREE.PlaneBufferGeometry(FLOOR_SIZE, FLOOR_SIZE)
+            .applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(
+              new THREE.Quaternion().setFromUnitVectors(
+                new THREE.Vector3(0, 0, 1),
+                new THREE.Vector3(0, 1, 0)
+              )
+            ));
+          const uvs = geometry.attributes.uv.array;
+          const numUvs = uvs.length / 2;
+          for (let i = 0; i < numUvs; i++) {
+            uvs[i * 2 + 0] *= FLOOR_SIZE / 10 * 2;
+            uvs[i * 2 + 1] *= FLOOR_SIZE / 10;
+          }
+
+          const texture = new THREE.Texture(
+            graphImg,
+            THREE.UVMapping,
+            THREE.RepeatWrapping,
+            THREE.RepeatWrapping,
+            THREE.NearestFilter,
+            THREE.NearestFilter,
+            THREE.RGBAFormat,
+            THREE.UnsignedByteType,
+            1
+          );
+          texture.needsUpdate = true;
+          const material = new THREE.MeshBasicMaterial({
+            map: texture,
+            side: THREE.DoubleSide,
+          });
+          const mesh = new THREE.Mesh(geometry, material);
+          return mesh;
+        })();
+        scene.add(floorMesh);
+      };
+      graphImg.onerror = err => {
+        console.warn(err.stack);
+      };
+    })();
 
     const _makeSkinMesh = (() => {
       const hmdEuler = new THREE.Euler();
