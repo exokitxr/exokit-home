@@ -970,9 +970,11 @@
 
                 for (let i = 0; i < servers.length; i++) {
                   const server = servers[i];
-                  const {name} = server;
+                  const {name, players, objects} = server;
                   result.push({
                     url: prefix + '/' + name,
+                    players,
+                    objects,
                   });
                 }
               })
@@ -983,7 +985,11 @@
             .then(() => result);
         })
         .then(servers => {
-          console.log(servers);
+          for (let i = 0; i < servers.length; i++) {
+            const server = servers[i];
+            const {url, players, objects} = server;
+            console.log('got server', server); // XXX
+          }
         })
         .catch(err => {
           console.warn(err.stack);
