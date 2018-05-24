@@ -748,20 +748,15 @@ class XRObject extends EventEmitter {
     }));
   }
   setState(update) {
+    for (const k in update) {
+      this.state[k] = update[k];
+    }
+
     this.xrmp.ws.send(JSON.stringify({
       type: 'objectSetState',
       id: this.id,
       state: update,
     }));
-
-    for (const k in update) {
-      this.state[k] = update[k];
-    }
-
-    const e = new XRMultiplayerEvent('stateupdate');
-    e.state = this.state;
-    e.update = update;
-    this.emit(e.type, e);
   }
   setUpdateExpression(expression) {
     this.xrmp.ws.send(JSON.stringify({
@@ -1056,7 +1051,7 @@ class XRMultiplayer extends EventEmitter {
     }
   }
   setState(update) {
-    this.xrmp.ws.send(JSON.stringify({
+    this.ws.send(JSON.stringify({
       type: 'setState',
       state: update,
     }));
@@ -1064,11 +1059,6 @@ class XRMultiplayer extends EventEmitter {
     for (const k in update) {
       this.state[k] = update[k];
     }
-
-    const e = new XRMultiplayerEvent('stateupdate');
-    e.state = this.state;
-    e.update = update;
-    this.emit(e.type, e);
   }
   pushGeometry(positions, normals, indices) {
     const geometryBuffer = new ArrayBuffer(Uint32Array.BYTES_PER_ELEMENT + 3*Uint32Array.BYTES_PER_ELEMENT + positions.byteLength + normals.byteLength + indices.byteLength);
@@ -1132,10 +1122,16 @@ class XRMultiplayer extends EventEmitter {
     _elementSetter(this, 'objectadd', onobjectadd);
   }
   get onobjectremove() {
-    return _elementGetter(this, 'onobjectremove');
+    return _elementGetter(this, 'objectremove');
   }
   set onobjectremove(onobjectremove) {
     _elementSetter(this, 'objectremove', onobjectremove);
+  }
+  get onstateupdate() {
+    return _elementGetter(this, 'stateupdate');
+  }
+  set onstateupdate(onstateupdate) {
+    _elementSetter(this, 'stateupdate', onstateupdate);
   }
   get ongeometry() {
     return _elementGetter(this, 'geometry');

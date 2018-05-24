@@ -43,6 +43,7 @@ class XRMultiplayerTHREE {
     this.onplayerleave = null;
     this.onobjectadd = null;
     this.onobjectremove = null;
+    this.onstateupdate = null;
     this.ongeometry = null;
 
     xrmp.onopen = e => {
@@ -144,6 +145,11 @@ class XRMultiplayerTHREE {
 
       if (this.onobjectremove) {
         this.onobjectremove(objectMesh);
+      }
+    };
+    xrmp.onstateupdate = e => {
+      if (this.onstateupdate) {
+        this.onstateupdate(e);
       }
     };
     xrmp.ongeometry = e => {
