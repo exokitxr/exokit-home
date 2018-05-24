@@ -747,12 +747,21 @@ class XRObject extends EventEmitter {
       id: this.id,
     }));
   }
-  setState(state) {
+  setState(update) {
     this.xrmp.ws.send(JSON.stringify({
       type: 'objectSetState',
       id: this.id,
-      state,
+      state: update,
     }));
+
+    for (const k in update) {
+      this.state[k] = update[k];
+    }
+
+    const e = new XRMultiplayerEvent('stateupdate');
+    e.state = this.state;
+    e.update = update;
+    this.emit(e.type, e);
   }
   setUpdateExpression(expression) {
     this.xrmp.ws.send(JSON.stringify({
@@ -807,6 +816,7 @@ class XRMultiplayer extends EventEmitter {
     this.localPlayers = [];
     this.remotePlayers = [];
     this.objects = [];
+    this.state = {};
 
     const ws = new WebSocket(url + '?id=' + id);
     ws.binaryType = 'arraybuffer';
@@ -906,6 +916,37 @@ class XRMultiplayer extends EventEmitter {
             } else {
               console.warn('got event for unknown object', {id});
             }
+            break;
+          }
+          case 'objectSetState': {
+            const {id, state: update} = j;
+
+            const object = this.objects.find(object => object.id === id);
+            if (object) {
+              for (const k in update) {
+                object.state[k] = update[k];
+              }
+
+              const e = new XRMultiplayerEvent('stateupdate');
+              e.state = object.state;
+              e.update = update;
+              object.emit(e.type, e);
+            } else {
+              console.warn('got event for unknown object', {id});
+            }
+            break;
+          }
+          case 'setState': {
+            const {state: update} = j;
+
+            for (const k in update) {
+              this.state[k] = update[k];
+            }
+
+            const e = new XRMultiplayerEvent('stateupdate');
+            e.state = this.state;
+            e.update = update;
+            this.emit(e.type, e);
             break;
           }
           case 'sync': {
@@ -1013,6 +1054,21 @@ class XRMultiplayer extends EventEmitter {
     } else {
       throw new Error('object not removed');
     }
+  }
+  setState(update) {
+    this.xrmp.ws.send(JSON.stringify({
+      type: 'setState',
+      state: update,
+    }));
+
+    for (const k in update) {
+      this.state[k] = update[k];
+    }
+
+    const e = new XRMultiplayerEvent('stateupdate');
+    e.state = this.state;
+    e.update = update;
+    this.emit(e.type, e);
   }
   pushGeometry(positions, normals, indices) {
     const geometryBuffer = new ArrayBuffer(Uint32Array.BYTES_PER_ELEMENT + 3*Uint32Array.BYTES_PER_ELEMENT + positions.byteLength + normals.byteLength + indices.byteLength);
