@@ -40,7 +40,7 @@
       return null;
     };
 
-    const REGISTRY_QUERY_URL = 'https://registry.webmr.io/q';
+    const REGISTRY_QUERY_URL = 'http://127.0.0.1:9000/q';
     const SIDES = ['left', 'right'];
     const FLOOR_SIZE = 20;
     const RAY_COLOR = 0x44c2ff;
@@ -704,41 +704,48 @@
             }
           }
 
-          ctx.fillStyle = '#333';
-          ctx.fillRect(0, urlBarOffset, urlBarWidth, urlBarHeight);
-          ctx.fillStyle = '#FFF';
-          ctx.fillRect(5, urlBarOffset + 5, urlBarWidth - 10, urlBarHeight - 10);
-          ctx.fillStyle = '#333';
-          ctx.font = `${fontSize}px Arial`;
-          ctx.fillText(urlText, 10, urlBarOffset + urlBarHeight - 10*2 - 30);
-
-          urlMeasures.length = 0;
-          urlMeasures.push(0);
-          const {width: barWidth} = ctx.measureText('[');
-          for (let i = 1; i <= urlText.length; i++) {
-            const {width} = ctx.measureText('[' + urlText.slice(0, i) + ']');
-            urlMeasures.push(width - barWidth*2);
-          }
-
-          ctx.fillStyle = '#03a9f4';
-          const cursorWidth = 10;
-          ctx.fillRect(10 + urlMeasures[urlCursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
-
-          for (let i = 0; i < servers.length; i++) {
-            const server = servers[i];
-            const {url, players, objects} = server;
-
-            const selected = i === currentServerIndex;
-            if (selected) {
-              ctx.fillStyle = '#03a9f4';
-              ctx.fillRect(0, urlBarOffset*2 + i*fontSize, urlBarWidth, fontSize);
-            }
+          const tab = tabs[currentTabIndex];
+          if (tab === 'URL') {
             ctx.fillStyle = '#333';
-            ctx.fillRect(0, urlBarOffset*2 + i*fontSize, fontSize, fontSize);
-            if (selected) {
-              ctx.fillStyle = '#FFF';
+            ctx.fillRect(0, urlBarOffset, urlBarWidth, urlBarHeight);
+            ctx.fillStyle = '#FFF';
+            ctx.fillRect(5, urlBarOffset + 5, urlBarWidth - 10, urlBarHeight - 10);
+            ctx.fillStyle = '#333';
+            ctx.font = `${fontSize}px Arial`;
+            ctx.fillText(urlText, 10, urlBarOffset + urlBarHeight - 10*2 - 30);
+
+            urlMeasures.length = 0;
+            urlMeasures.push(0);
+            const {width: barWidth} = ctx.measureText('[');
+            for (let i = 1; i <= urlText.length; i++) {
+              const {width} = ctx.measureText('[' + urlText.slice(0, i) + ']');
+              urlMeasures.push(width - barWidth*2);
             }
-            ctx.fillText(url, fontSize * 1.2, urlBarOffset*2 + (i+1)*fontSize);
+
+            ctx.fillStyle = '#03a9f4';
+            const cursorWidth = 10;
+            ctx.fillRect(10 + urlMeasures[urlCursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
+          } else if (tab === 'Apps') {
+            // XXX
+          } else if (tab === 'Party') {
+            for (let i = 0; i < servers.length; i++) {
+              const server = servers[i];
+              const {url, players, objects} = server;
+
+              const selected = i === currentServerIndex;
+              if (selected) {
+                ctx.fillStyle = '#03a9f4';
+                ctx.fillRect(0, urlBarOffset + i*fontSize, urlBarWidth, fontSize);
+              }
+              ctx.fillStyle = '#333';
+              ctx.fillRect(0, urlBarOffset + i*fontSize, fontSize, fontSize);
+              if (selected) {
+                ctx.fillStyle = '#FFF';
+              }
+              ctx.fillText(url, fontSize * 1.2, urlBarOffset + (i+1)*fontSize);
+            }
+          } else if (tab === 'Config') {
+            // XXX
           }
 
           texture.needsUpdate = true;
@@ -1122,6 +1129,7 @@
                 const x = xFactor * menuWidth;
                 const y = yFactor * menuHeight;
 
+                const tab = tabs[currentTabIndex];
                 if (y < urlBarOffset) {
                   const newTabIndex = Math.floor(x / tabWidth);
                   if (newTabIndex < tabs.length) {
@@ -1136,35 +1144,41 @@
                   } else {
                     intersectionPoint = null;
                   }
-                } else if (y < urlBarOffset * 2) {
-                  urlCoords = [x, y];
-
-                  controllerMesh.rayMesh.scale.z = distance;
-                  controllerMesh.updateMatrixWorld();
-
-                  controllerMesh.rayDot.position.z = -distance;
-                  controllerMesh.updateMatrixWorld();
-                  controllerMesh.rayDot.visible = true;
                 } else {
-                  let j = 0;
-                  for (j = 0; j < servers.length; j++) {
-                    const yTop = urlBarOffset*2 + j*fontSize;
-                    const yBottom = urlBarOffset*2 + (j+1)*fontSize;
+                  if (tab === 'URL' && y < urlBarOffset*2) {
+                    urlCoords = [x, y];
 
-                    if (y >= yTop && y < yBottom) {
-                      serverIndex = j;
+                    controllerMesh.rayMesh.scale.z = distance;
+                    controllerMesh.updateMatrixWorld();
 
-                      controllerMesh.rayMesh.scale.z = distance;
-                      controllerMesh.updateMatrixWorld();
+                    controllerMesh.rayDot.position.z = -distance;
+                    controllerMesh.updateMatrixWorld();
+                    controllerMesh.rayDot.visible = true;
+                  } else if (tab === 'Apps' && y < urlBarOffset*2) {
+                    // XXX
+                  } else if (tab === 'Party' && y < urlBarOffset*2) {
+                    let j = 0;
+                    for (j = 0; j < servers.length; j++) {
+                      const yTop = urlBarOffset + j*fontSize;
+                      const yBottom = urlBarOffset + (j+1)*fontSize;
 
-                      controllerMesh.rayDot.position.z = -distance;
-                      controllerMesh.updateMatrixWorld();
-                      controllerMesh.rayDot.visible = true;
+                      if (y >= yTop && y < yBottom) {
+                        serverIndex = j;
 
-                      break;
+                        controllerMesh.rayMesh.scale.z = distance;
+                        controllerMesh.updateMatrixWorld();
+
+                        controllerMesh.rayDot.position.z = -distance;
+                        controllerMesh.updateMatrixWorld();
+                        controllerMesh.rayDot.visible = true;
+
+                        break;
+                      }
                     }
-                  }
-                  if (j === servers.length) {
+                    if (j === servers.length) {
+                      intersectionPoint = null;
+                    }
+                  } else {
                     intersectionPoint = null;
                   }
                 }
