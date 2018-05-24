@@ -40,14 +40,14 @@
       return null;
     };
 
-    const REGISTRY_QUERY_URL = 'https://registry.webmr.io/q';
+    const REGISTRY_QUERY_URL = 'http://127.0.0.1:9000/q';
     const SIDES = ['left', 'right'];
     const FLOOR_SIZE = 20;
     const RAY_COLOR = 0x44c2ff;
     const RAY_HIGHLIGHT_COLOR = new THREE.Color(RAY_COLOR).multiplyScalar(0.5).getHex();
     const rayDistance = 10;
     const urlBarWidth = 2048;
-    const urlBarHeight = 256;
+    const urlBarHeight = 200;
     const urlBarWorldWidth = 2;
     const urlBarWorldHeight = urlBarWorldWidth * urlBarHeight / urlBarWidth;
     const fontSize = 120;
@@ -746,7 +746,7 @@
           ctx.fillRect(10, 10, urlBarWidth - 10*2, urlBarHeight - 10*2);
           ctx.fillStyle = '#333';
           ctx.font = `${fontSize}px Arial`;
-          ctx.fillText(urlText, 10, urlBarHeight - 10*2 - 50);
+          ctx.fillText(urlText, 10, urlBarHeight - 10*2 - 30);
 
           urlMeasures.length = 0;
           urlMeasures.push(0);
