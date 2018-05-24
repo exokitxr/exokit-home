@@ -40,7 +40,7 @@
       return null;
     };
 
-    // const registryUrl = 'http://zeovr.io:9000';
+    const REGISTRY_QUERY_URL = 'https://registry.webmr.io/q';
     const SIDES = ['left', 'right'];
     const RAY_COLOR = 0x44c2ff;
     const RAY_HIGHLIGHT_COLOR = new THREE.Color(RAY_COLOR).multiplyScalar(0.5).getHex();
@@ -899,14 +899,52 @@
     })();
     scene.add(menuMesh);
 
+    const _resJson = res => {
+      if (res.status >= 200 && res.status < 300) {
+        return res.json();
+      } else {
+        return Promise.reject(new Error('invalid status code: ' + res.status));
+      }
+    };
+    (() => {
+      fetch(REGISTRY_QUERY_URL)
+        .then(_resJson)
+        .then(j => {
+          const {xrmultiplayerHosts} = j;
+
+          const result = [];
+          return Promise.all(xrmultiplayerHosts.map(xrmpHost => {
+            const prefix = xrmpHost + '/servers';
+
+            return fetch('https://' + prefix)
+              .then(_resJson)
+              .then(j => {
+                const {servers} = j;
+
+                for (let i = 0; i < servers.length; i++) {
+                  const server = servers[i];
+                  const {name} = server;
+                  result.push({
+                    url: prefix + '/' + name,
+                  });
+                }
+              })
+              .catch(err => {
+                console.warn(err.stack);
+              });
+          }))
+            .then(() => result);
+        })
+        .then(servers => {
+          console.log(servers);
+        })
+        .catch(err => {
+          console.warn(err.stack);
+        });
+    })();
+
     /* fetch(registryUrl)
-      .then(res => {
-        if (res.status >= 200 && res.status < 300) {
-          return res.json();
-        } else {
-          return Promise.reject(new Error('invalid status code: ' + res.status));
-        }
-      })
+      .then(_resJson)
       .then(newLinks => {
         links = newLinks;
 
