@@ -51,7 +51,7 @@
     const menuWorldWidth = 2;
     const menuWorldHeight = menuWorldWidth * menuHeight / menuWidth;
     const urlBarWidth = menuWidth;
-    const tabWidth = 500;
+    const tabWidth = 300;
     const urlBarHeight = 200;
     const urlBarOffset = urlBarHeight*1.4;
     const fontSize = 120;
@@ -606,7 +606,7 @@
       };
     })();
 
-    const tabs = ['URL', 'Multiplayer'];
+    const tabs = ['URL', 'Apps', 'Party', 'Config'];
     let servers = [];
     let currentTabIndex = 0;
     let currentServerIndex = -1;
@@ -695,6 +695,7 @@
 
           for (let i = 0; i < tabs.length; i++) {
             ctx.fillStyle = '#333';
+            ctx.font = `${fontSize*0.8}px Arial`;
             ctx.fillText(tabs[i], i * tabWidth, urlBarOffset);
 
             if (i === currentTabIndex) {
@@ -1266,8 +1267,6 @@
               _handleKey(code, false);
             } else if (tabIndex !== -1) {
               currentTabIndex = tabIndex;
-
-              console.log('click current tab', tabIndex);
 
               menuMesh.urlMesh.updateText();
             } else if (urlCoords) {
