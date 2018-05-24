@@ -46,18 +46,13 @@
     const RAY_COLOR = 0x44c2ff;
     const RAY_HIGHLIGHT_COLOR = new THREE.Color(RAY_COLOR).multiplyScalar(0.5).getHex();
     const rayDistance = 10;
-    const urlBarWidth = 2048;
+    const menuWidth = 2048;
+    const menuHeight = menuWidth;
+    const menuWorldWidth = 2;
+    const menuWorldHeight = menuWorldWidth * menuHeight / menuWidth;
+    const urlBarWidth = menuWidth;
     const urlBarHeight = 200;
-    const urlBarWorldWidth = 2;
-    const urlBarWorldHeight = urlBarWorldWidth * urlBarHeight / urlBarWidth;
     const fontSize = 120;
-    let currentPortal = -1;
-    const gridSize = urlBarHeight;
-    const gridWidth = urlBarWidth;
-    const gridHeight = gridSize * 8;
-    const gridWorldWidth = urlBarWorldWidth;
-    const gridWorldHeight = gridWorldWidth * gridHeight / gridWidth;
-    const gridWorldSize = gridSize * gridWorldWidth / gridWidth;
     const keyboardWidth = 2048;
     const keyboardHeight = 716;
     const keyboardMatrix = [keyboardWidth / 963.266, keyboardHeight / 337.215];
@@ -102,8 +97,6 @@
     let urlText = 'http://';
     let urlCursor = urlText.length;
     const urlMeasures = [];
-    let links = [];
-    const _getCurrentLinks = () => links.slice(0, 8);
 
     const upVector = new THREE.Vector3(0, 1, 0);
     const armQuaternionOffset = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, -1));
@@ -639,85 +632,68 @@
       };
     })();
 
-    const portalGeometry = new THREE.PlaneBufferGeometry(gridWorldSize, gridWorldSize);
-    const portalBackGeometry = portalGeometry.clone()
-      .applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1))));
-    const skyboxGeometry = new THREE.BoxBufferGeometry(100, 100, 100);
-    (() => {
-      const currentLinks = _getCurrentLinks();
-      for (let i = 0; i < currentLinks.length; i++) {
-        const y = i;
-        const coords = {y};
-
-        const frontMesh = (() => {
-          const geometry = portalGeometry;
-          const texture = new THREE.Texture(
-            null,
-            THREE.UVMapping,
-            THREE.ClampToEdgeWrapping,
-            THREE.ClampToEdgeWrapping,
-            THREE.LinearFilter,
-            THREE.LinearFilter,
-            THREE.RGBAFormat,
-            THREE.UnsignedByteType,
-            1
-          );
-          const material = new THREE.MeshBasicMaterial({
-            map: texture,
-          });
-          const mesh = new THREE.Mesh(geometry, material);
-          mesh.frustumCulled = false;
-          mesh.coords = coords;
-
-          const _updateTab = () => {
-            const img = new Image();
-            img.src = `img/skybox/cube-5.png`;
-            img.onload = () => {
-              if (texture.image === null || texture.image.tagName === 'IMG') {
-                texture.image = img;
-                texture.needsUpdate = true;
-              }
-            };
-            img.error = err => {
-              console.warn(err.stack);
-            };
-          };
-          _updateTab();
-          mesh.updateTab = _updateTab;
-
-          return mesh;
-        })();
-        scene.add(frontMesh);
-        portalMeshes.push(frontMesh);
-        frontMeshes.push(frontMesh);
-
-        const backMesh = (() => {
-          const geometry = portalBackGeometry;
-          const material = new THREE.MeshBasicMaterial({
-            color: 0x111111,
-          });
-          const mesh = new THREE.Mesh(geometry, material);
-          mesh.frustumCulled = false;
-          mesh.coords = coords;
-          return mesh;
-        })();
-        scene.add(backMesh);
-        portalMeshes.push(backMesh);
-        backMeshes.push(backMesh);
+    const _resJson = res => {
+      if (res.status >= 200 && res.status < 300) {
+        return res.json();
+      } else {
+        return Promise.reject(new Error('invalid status code: ' + res.status));
       }
-    })();
+    };
+    let servers = [];
+    (() => {
+      fetch(REGISTRY_QUERY_URL)
+        .then(_resJson)
+        .then(j => {
+          const {xrmultiplayerHosts} = j;
 
+          const result = [];
+          return Promise.all(xrmultiplayerHosts.map(xrmpHost => {
+            const prefix = xrmpHost + '/servers';
+
+            return fetch('https://' + prefix)
+              .then(_resJson)
+              .then(j => {
+                const {servers} = j;
+
+                for (let i = 0; i < servers.length; i++) {
+                  const server = servers[i];
+                  const {name, players, objects} = server;
+                  result.push({
+                    name,
+                    url: prefix + '/servers/' + name,
+                    players,
+                    objects,
+                  });
+                }
+              })
+              .catch(err => {
+                console.warn(err.stack);
+              });
+          }))
+            .then(() => result);
+        })
+        .then(newServers => {
+          servers = newServers;
+
+          console.log('update servers', servers); // XXX
+
+          menuMesh.urlMesh.updateText();
+        })
+        .catch(err => {
+          console.warn(err.stack);
+        });
+    })();
     const menuMesh = (() => {
       const object = new THREE.Object3D();
       object.position.copy(camera.position).add(new THREE.Vector3(0, 0.5, -2));
 
       const urlMesh = (() => {
         const canvas = document.createElement('canvas');
-        canvas.width = urlBarWidth;
-        canvas.height = urlBarHeight;
+        canvas.width = menuWidth;
+        canvas.height = menuHeight;
         const ctx = canvas.getContext('2d');
 
-        const geometry = new THREE.PlaneBufferGeometry(urlBarWorldWidth, urlBarWorldHeight);
+        const geometry = new THREE.PlaneBufferGeometry(menuWorldWidth, menuWorldHeight);
         const texture = new THREE.Texture(
           canvas,
           THREE.UVMapping,
@@ -725,7 +701,6 @@
           THREE.ClampToEdgeWrapping,
           THREE.NearestFilter,
           THREE.NearestFilter,
-          // THREE.LinearMipMapLinearFilter,
           THREE.RGBAFormat,
           THREE.UnsignedByteType,
           1
@@ -734,6 +709,8 @@
         const material = new THREE.MeshBasicMaterial({
           map: texture,
           side: THREE.DoubleSide,
+          transparent: true,
+          alphaTest: 0.9,
         });
         const mesh = new THREE.Mesh(geometry, material);
 
@@ -760,6 +737,15 @@
           const cursorWidth = 10;
           ctx.fillRect(10 + urlMeasures[urlCursor] - cursorWidth/2, 20, cursorWidth, urlBarHeight - 20*2);
 
+          ctx.fillStyle = '#333';
+          for (let i = 0; i < servers.length; i++) {
+            const server = servers[i];
+            const {url, players, objects} = server;
+            ctx.fillStyle = '#333';
+            ctx.fillRect(0, urlBarHeight*1.2 + i*fontSize, fontSize, fontSize);
+            ctx.fillText(url, fontSize * 1.2, urlBarHeight*1.2 + (i+1)*fontSize);
+          }
+
           texture.needsUpdate = true;
         };
         _updateText();
@@ -770,17 +756,17 @@
         mesh.topLine = new THREE.Line3();
         mesh.update = () => {
           mesh.leftLine.start
-            .set(-urlBarWorldWidth/2, urlBarWorldHeight/2, 0)
+            .set(-menuWorldWidth/2, menuWorldHeight/2, 0)
             .applyMatrix4(mesh.matrixWorld);
           mesh.leftLine.end
-            .set(-urlBarWorldWidth/2, -urlBarWorldHeight/2, 0)
+            .set(-menuWorldWidth/2, -menuWorldHeight/2, 0)
             .applyMatrix4(mesh.matrixWorld);
 
           mesh.topLine.start
-            .set(-urlBarWorldWidth/2, urlBarWorldHeight/2, 0)
+            .set(-menuWorldWidth/2, menuWorldHeight/2, 0)
             .applyMatrix4(mesh.matrixWorld);
           mesh.topLine.end
-            .set(urlBarWorldWidth/2, urlBarWorldHeight / 2, 0)
+            .set(menuWorldWidth/2, menuWorldHeight / 2, 0)
             .applyMatrix4(mesh.matrixWorld);
 
           mesh.plane.setFromCoplanarPoints(
@@ -795,222 +781,9 @@
       object.add(urlMesh);
       object.urlMesh = urlMesh;
 
-      const gridMesh = (() => {
-        const canvas = document.createElement('canvas');
-        canvas.width = gridWidth;
-        canvas.height = gridHeight;
-        const ctx = canvas.getContext('2d');
-
-        const geometry = new THREE.PlaneBufferGeometry(gridWorldWidth, gridWorldHeight);
-        const texture = new THREE.Texture(
-          canvas,
-          THREE.UVMapping,
-          THREE.ClampToEdgeWrapping,
-          THREE.ClampToEdgeWrapping,
-          THREE.NearestFilter,
-          THREE.NearestFilter,
-          THREE.RGBAFormat,
-          THREE.UnsignedByteType,
-          1
-        );
-        texture.needsUpdate = true;
-        const material = new THREE.MeshBasicMaterial({
-          map: texture,
-          // side: THREE.DoubleSide,
-          transparent: true,
-          alphaTest: 0.9,
-        });
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.y = -(urlBarWorldHeight + gridWorldHeight/2);
-
-        const _updateGrid = () => {
-          ctx.clearRect(0, 0, gridWidth, gridHeight);
-
-          const currentLinks = _getCurrentLinks();
-          for (let i = 0; i < currentLinks.length; i++) {
-            const y = i;
-
-            const xOffsetRect = gridSize;
-            const yOffsetRect = y * gridSize;
-            ctx.fillStyle = '#333';
-            ctx.fillRect(xOffsetRect, yOffsetRect, gridWidth - xOffsetRect, gridSize);
-
-            const xOffsetText = gridSize;
-            const yOffsetText = y * gridSize;
-            ctx.font = '100px Arial';
-            ctx.fillStyle = '#FFF';
-            ctx.fillText(currentLinks[i], xOffsetText + 80, yOffsetText + gridSize - 80);
-          }
-          texture.needsUpdate = true;
-        };
-        _updateGrid();
-        mesh.updateGrid = _updateGrid;
-
-        mesh.planes = [];
-        const _updatePlanes = () => {
-          mesh.planes.length = 0;
-
-          const currentLinks = _getCurrentLinks();
-          for (let i = 0; i < currentLinks.length; i++) {
-            const x = 0;
-            const y = i;
-
-            const yOffsetRectTop = y * gridSize;
-            const yOffsetRectBottom = (y+1) * gridSize;
-
-            const leftLine = new THREE.Line3();
-            leftLine.start
-              .set(
-                 -gridWorldWidth/2,
-                 gridWorldHeight/2 - (yOffsetRectTop * gridWorldHeight / gridHeight),
-                 0
-              )
-              .applyMatrix4(mesh.matrixWorld);
-            leftLine.end
-              .set(
-                 -gridWorldWidth/2,
-                 gridWorldHeight/2 - (yOffsetRectBottom * gridWorldHeight / gridHeight),
-                 0
-              )
-              .applyMatrix4(mesh.matrixWorld);
-
-            const topLine = new THREE.Line3();
-            topLine.start
-              .set(
-                -gridWorldWidth/2,
-                gridWorldHeight/2 - (yOffsetRectTop * gridWorldHeight / gridHeight),
-                0
-              )
-              .applyMatrix4(mesh.matrixWorld);
-            topLine.end
-              .set(
-                gridWorldWidth/2,
-                gridWorldHeight/2 + (yOffsetRectTop * gridWorldHeight / gridHeight),
-                0
-              )
-              .applyMatrix4(mesh.matrixWorld);
-
-            const plane = new THREE.Plane().setFromCoplanarPoints(
-              leftLine.start,
-              leftLine.end,
-              topLine.end
-            );
-
-            mesh.planes.push({
-              plane,
-              leftLine,
-              topLine,
-            });
-          }
-        };
-        _updatePlanes();
-        mesh.updatePlanes = _updatePlanes;
-
-        return mesh;
-      })();
-      object.add(gridMesh);
-      object.gridMesh = gridMesh;
-
-      object.updatePortalMeshes = () => {
-        menuMesh.updateMatrixWorld();
-
-        const position = new THREE.Vector3();
-        const quaternion = new THREE.Quaternion();
-        const scale = new THREE.Vector3();
-        menuMesh.matrixWorld.decompose(position, quaternion, scale);
-        const delta = new THREE.Vector3();
-
-        const allPortalMeshes = portalMeshes;
-        for (let i = 0; i < allPortalMeshes.length; i++) {
-          const portalMesh = allPortalMeshes[i];
-          const {y} = portalMesh.coords;
-
-          portalMesh.position.copy(position);
-          portalMesh.quaternion.copy(quaternion);
-          portalMesh.scale.copy(scale);
-
-          delta.set(-urlBarWorldWidth/2 + gridWorldSize/2, -urlBarWorldHeight - gridWorldSize/2 - y*gridWorldSize, 0);
-          delta.applyQuaternion(quaternion);
-          portalMesh.position.add(delta);
-
-          if (currentPortal !== -1 && (frontMeshes.indexOf(portalMesh) !== -1 || backMeshes.indexOf(portalMesh) !== -1)) {
-            portalMesh.quaternion.premultiply(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1)));
-          }
-
-          portalMesh.matrix.compose(portalMesh.position, portalMesh.quaternion, portalMesh.scale);
-          portalMesh.matrixWorld.copy(portalMesh.matrix);
-          portalMesh.visible = true;
-        }
-      };
-
       return object;
     })();
     scene.add(menuMesh);
-
-    const _resJson = res => {
-      if (res.status >= 200 && res.status < 300) {
-        return res.json();
-      } else {
-        return Promise.reject(new Error('invalid status code: ' + res.status));
-      }
-    };
-    (() => {
-      fetch(REGISTRY_QUERY_URL)
-        .then(_resJson)
-        .then(j => {
-          const {xrmultiplayerHosts} = j;
-
-          const result = [];
-          return Promise.all(xrmultiplayerHosts.map(xrmpHost => {
-            const prefix = xrmpHost + '/servers';
-
-            return fetch('https://' + prefix)
-              .then(_resJson)
-              .then(j => {
-                const {servers} = j;
-
-                for (let i = 0; i < servers.length; i++) {
-                  const server = servers[i];
-                  const {name, players, objects} = server;
-                  result.push({
-                    url: prefix + '/' + name,
-                    players,
-                    objects,
-                  });
-                }
-              })
-              .catch(err => {
-                console.warn(err.stack);
-              });
-          }))
-            .then(() => result);
-        })
-        .then(servers => {
-          for (let i = 0; i < servers.length; i++) {
-            const server = servers[i];
-            const {url, players, objects} = server;
-            console.log('got server', server); // XXX
-          }
-        })
-        .catch(err => {
-          console.warn(err.stack);
-        });
-    })();
-
-    /* fetch(registryUrl)
-      .then(_resJson)
-      .then(newLinks => {
-        links = newLinks;
-
-        for (let i = 0; i < frontMeshes.length; i++) {
-          frontMeshes[i].updateTab();
-        }
-        menuMesh.gridMesh.updateGrid();
-        menuMesh.gridMesh.updatePlanes();
-      })
-      .catch(err => {
-        console.warn(err.stack);
-      }); */
 
     const keyboardMesh = (() => {
       const object = new THREE.Object3D();
@@ -1239,7 +1012,6 @@
       const _updateIntersections = () => {
         keyboardMesh.update();
         menuMesh.urlMesh.update();
-        menuMesh.gridMesh.updatePlanes();
 
         const gamepads = _getGamepads();
 
@@ -1345,63 +1117,48 @@
 
               const topIntersectionPoint = menuMesh.urlMesh.topLine.closestPointToPoint(intersectionPoint, true, localVector3);
 
-              const xFactor = topIntersectionPoint.distanceTo(menuMesh.urlMesh.topLine.start) / urlBarWorldWidth;
-              const yFactor = leftIntersectionPoint.distanceTo(menuMesh.urlMesh.leftLine.start) / urlBarWorldHeight;
+              const xFactor = topIntersectionPoint.distanceTo(menuMesh.urlMesh.topLine.start) / menuWorldWidth;
+              const yFactor = leftIntersectionPoint.distanceTo(menuMesh.urlMesh.leftLine.start) / menuWorldHeight;
               const distance = controllerMesh.ray.origin.distanceTo(intersectionPoint);
 
               if (xFactor > 0 && xFactor <= 0.99 && yFactor > 0 && yFactor <= 0.99 && distance < rayDistance) {
-                const x = xFactor * urlBarWidth;
-                const y = yFactor * urlBarHeight;
+                const x = xFactor * menuWidth;
+                const y = yFactor * menuHeight;
 
-                urlCoords = [x, y];
+                if (y < urlBarHeight) {
+                  urlCoords = [x, y];
 
-                controllerMesh.rayMesh.scale.z = distance;
-                controllerMesh.updateMatrixWorld();
+                  controllerMesh.rayMesh.scale.z = distance;
+                  controllerMesh.updateMatrixWorld();
 
-                controllerMesh.rayDot.position.z = -distance;
-                controllerMesh.updateMatrixWorld();
-                controllerMesh.rayDot.visible = true;
-              } else {
-                intersectionPoint = null;
-              }
-            }
-          }
+                  controllerMesh.rayDot.position.z = -distance;
+                  controllerMesh.updateMatrixWorld();
+                  controllerMesh.rayDot.visible = true;
+                } else {
+                  let j = 0;
+                  for (j = 0; j < servers.length; j++) {
+                    const yTop = urlBarHeight*1.2 + j*fontSize;
+                    const yBottom = urlBarHeight*1.2 + (j+1)*fontSize;
 
-          // grid
-          let intersectionLinkIndex = -1;
-          if (!intersectionPoint) {
-            if (menuMesh.visible) {
-              const currentLinks = _getCurrentLinks();
+                    if (y >= yTop && y < yBottom) {
+                      urlCoords = [x, y];
 
-              for (let i = 0; i < currentLinks.length; i++) {
-                const planeSpec = menuMesh.gridMesh.planes[i];
-                const {plane, leftLine, topLine} = planeSpec;
-                intersectionPoint = controllerMesh.ray.intersectPlane(plane, localVector);
+                      controllerMesh.rayMesh.scale.z = distance;
+                      controllerMesh.updateMatrixWorld();
 
-                if (intersectionPoint) {
-                  const leftIntersectionPoint = leftLine.closestPointToPoint(intersectionPoint, true, localVector2);
+                      controllerMesh.rayDot.position.z = -distance;
+                      controllerMesh.updateMatrixWorld();
+                      controllerMesh.rayDot.visible = true;
 
-                  const topIntersectionPoint = topLine.closestPointToPoint(intersectionPoint, true, localVector3);
-
-                  const xFactor = topIntersectionPoint.distanceTo(topLine.start) / gridWorldWidth;
-                  const yFactor = leftIntersectionPoint.distanceTo(leftLine.start) / gridWorldHeight;
-                  const distance = controllerMesh.ray.origin.distanceTo(intersectionPoint);
-
-                  if (xFactor > 0 && xFactor <= 0.99 && yFactor > 0 && yFactor <= 0.99 && distance < rayDistance) {
-                    controllerMesh.rayMesh.scale.z = distance;
-                    controllerMesh.updateMatrixWorld();
-
-                    controllerMesh.rayDot.position.z = -distance;
-                    controllerMesh.updateMatrixWorld();
-                    controllerMesh.rayDot.visible = true;
-
-                    intersectionLinkIndex = i;
-
-                    break;
-                  } else {
+                      break;
+                    }
+                  }
+                  if (j === servers.length) {
                     intersectionPoint = null;
                   }
                 }
+              } else {
+                intersectionPoint = null;
               }
             }
           }
@@ -1412,7 +1169,7 @@
 
           const lastMenuPressed = lastMenuPresseds[i];
           lastMenuPresseds[i] = menuPressed;
-          if (menuPressed && !lastMenuPressed && currentPortal === -1) {
+          if (menuPressed && !lastMenuPressed) {
             const opening = keyboardMesh.planeMesh.scale.y < 0.5;
             if (opening) {
               localEuler.setFromQuaternion(camera.quaternion, localEuler.order);
@@ -1515,32 +1272,6 @@
               if (closestIndex !== -1) {
                 urlCursor = closestIndex;
                 menuMesh.urlMesh.updateText();
-              }
-            } else if (intersectionLinkIndex !== -1) {
-              const oldIframe = (() => {
-                for (let i = 0; i < container.childNodes.length; i++) {
-                  const iframe = container.childNodes[i];
-                  if (iframe.index === intersectionLinkIndex) {
-                    return iframe;
-                  }
-                }
-                return null;
-              })();
-
-              if (!oldIframe) {
-                const currentLinks = _getCurrentLinks();
-                _openUrl(currentLinks[intersectionLinkIndex], intersectionLinkIndex, framebuffer => {
-                  const texture = frontMeshes[intersectionLinkIndex].material.map;
-
-                  const properties = renderer.properties.get(texture);
-                  properties.__webglTexture = framebuffer.colorTexture;
-                  properties.__webglInit = true;
-
-                  intersectionLinkIndex;
-                });
-              } else {
-                oldIframe.destroy();
-                oldIframe.parentNode.removeChild(oldIframe);
               }
             }
           }
@@ -1669,8 +1400,6 @@
       renderer.vr.enabled = false;
       renderer.render(compositeScene, camera);
       renderer.vr.enabled = true;
-
-      menuMesh.updatePortalMeshes();
 
       window.requestAnimationFrame(animate);
     }
