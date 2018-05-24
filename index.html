@@ -46,10 +46,11 @@
     const RAY_COLOR = 0x44c2ff;
     const RAY_HIGHLIGHT_COLOR = new THREE.Color(RAY_COLOR).multiplyScalar(0.5).getHex();
     const rayDistance = 10;
-    const urlBarWidth = 4096;
+    const urlBarWidth = 2048;
     const urlBarHeight = 256;
-    const urlBarWorldWidth = 3;
+    const urlBarWorldWidth = 2;
     const urlBarWorldHeight = urlBarWorldWidth * urlBarHeight / urlBarWidth;
+    const fontSize = 120;
     let currentPortal = -1;
     const gridSize = urlBarHeight;
     const gridWidth = urlBarWidth;
@@ -744,8 +745,8 @@
           ctx.fillStyle = '#FFF';
           ctx.fillRect(10, 10, urlBarWidth - 10*2, urlBarHeight - 10*2);
           ctx.fillStyle = '#333';
-          ctx.font = `${urlBarHeight - 20}px Arial`;
-          ctx.fillText(urlText, 10, urlBarHeight - 10);
+          ctx.font = `${fontSize}px Arial`;
+          ctx.fillText(urlText, 10, urlBarHeight - 10*2 - 50);
 
           urlMeasures.length = 0;
           urlMeasures.push(0);
@@ -756,7 +757,7 @@
           }
 
           ctx.fillStyle = '#03a9f4';
-          const cursorWidth = 20;
+          const cursorWidth = 10;
           ctx.fillRect(10 + urlMeasures[urlCursor] - cursorWidth/2, 20, cursorWidth, urlBarHeight - 20*2);
 
           texture.needsUpdate = true;
