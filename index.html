@@ -184,7 +184,7 @@
       voicechatEnabled = true;
     };
     const _closeMic = () => {
-      // XXX
+      xrmp.localPlayerMesh.unsetMediaStream();
 
       voicechatEnabled = false;
     };

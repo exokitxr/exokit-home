@@ -158,7 +158,10 @@ class XRMultiplayerTHREE {
     const localPlayer = this.xrmp.addPlayer(id);
     localPlayerMesh.player = localPlayer;
 
+    let unsetMediaStream = null;
     localPlayerMesh.setMediaStream = mediaStream => {
+      localPlayerMesh.unsetMediaStream();
+
       const audioCtx = this.getAudioContext();
       const microphoneSourceNode = audioCtx.createMediaStreamSource(mediaStream);
       const scriptProcessorNode = audioCtx.createScriptProcessor(AUDIO_BUFFER_SIZE, 1, 1);
@@ -170,8 +173,19 @@ class XRMultiplayerTHREE {
       microphoneSourceNode.connect(scriptProcessorNode);
       scriptProcessorNode.connect(audioCtx.destination);
 
-      for (let i = 0; i < this.remotePlayerMeshes.length; i++) {
-        this._bindPlayerMeshAudio(this.remotePlayerMeshes[i]);
+      unsetMediaStream = () => {
+        scriptProcessorNode.disconnect();
+
+        const tracks = mediaStream.getTracks();
+        for (let i = 0; i < tracks.length; i++) {
+          tracks[i].stop();
+        }
+      };
+    };
+    localPlayerMesh.unsetMediaStream = () => {
+      if (unsetMediaStream) {
+        unsetMediaStream();
+        unsetMediaStream = null;
       }
     };
 
