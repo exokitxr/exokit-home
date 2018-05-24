@@ -623,8 +623,10 @@
     })();
 
     const tabs = ['URL', 'Apps', 'Party', 'Config'];
+    let apps = [];
     let servers = [];
     let currentTabIndex = 0;
+    const currentApps = [];
     let currentServerIndex = -1;
     const _resJson = res => {
       if (res.status >= 200 && res.status < 300) {
@@ -637,9 +639,9 @@
       fetch(REGISTRY_QUERY_URL)
         .then(_resJson)
         .then(j => {
-          const {xrmultiplayerHosts} = j;
+          const {xrmultiplayerHosts, xrUrls} = j;
 
-          const result = [];
+          const newServers = [];
           return Promise.all(xrmultiplayerHosts.map(xrmpHost => {
             const prefix = xrmpHost + '/servers';
 
@@ -651,7 +653,7 @@
                 for (let i = 0; i < servers.length; i++) {
                   const server = servers[i];
                   const {name, players, objects} = server;
-                  result.push({
+                  newServers.push({
                     name,
                     url: prefix + '/' + name,
                     players,
@@ -663,11 +665,12 @@
                 console.warn(err.stack);
               });
           }))
-            .then(() => result);
+            .then(() => {
+              apps = xrUrls;
+              servers = newServers;
+            });
         })
-        .then(newServers => {
-          servers = newServers;
-
+        .then(() => {
           menuMesh.urlMesh.updateText();
         })
         .catch(err => {
@@ -742,7 +745,21 @@
             const cursorWidth = 10;
             ctx.fillRect(10 + urlMeasures[urlCursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
           } else if (tab === 'Apps') {
-            // XXX
+            for (let i = 0; i < apps.length; i++) {
+              const app = apps[i];
+
+              const selected = currentApps.includes(i);
+              if (selected) {
+                ctx.fillStyle = '#03a9f4';
+                ctx.fillRect(0, urlBarOffset + i*fontSize, urlBarWidth, fontSize);
+              }
+              ctx.fillStyle = '#333';
+              ctx.fillRect(0, urlBarOffset + i*fontSize, fontSize, fontSize);
+              if (selected) {
+                ctx.fillStyle = '#FFF';
+              }
+              ctx.fillText(app, fontSize * 1.2, urlBarOffset + (i+1)*fontSize);
+            }
           } else if (tab === 'Party') {
             for (let i = 0; i < servers.length; i++) {
               const server = servers[i];
@@ -1136,6 +1153,7 @@
           // menu mesh
           let tabIndex = -1;
           let urlCoords = null;
+          let appIndex = -1;
           let serverIndex = -1;
           let voicechatHovered = false;
           if (!intersectionPoint) {
@@ -1169,18 +1187,42 @@
                     intersectionPoint = null;
                   }
                 } else {
-                  if (tab === 'URL' && y < urlBarOffset*2) {
-                    urlCoords = [x, y];
+                  if (tab === 'URL') {
+                    if (y < urlBarOffset*2) {
+                      urlCoords = [x, y];
 
-                    controllerMesh.rayMesh.scale.z = distance;
-                    controllerMesh.updateMatrixWorld();
+                      controllerMesh.rayMesh.scale.z = distance;
+                      controllerMesh.updateMatrixWorld();
 
-                    controllerMesh.rayDot.position.z = -distance;
-                    controllerMesh.updateMatrixWorld();
-                    controllerMesh.rayDot.visible = true;
-                  } else if (tab === 'Apps' && y < urlBarOffset*2) {
-                    // XXX
-                  } else if (tab === 'Party' && y < urlBarOffset*2) {
+                      controllerMesh.rayDot.position.z = -distance;
+                      controllerMesh.updateMatrixWorld();
+                      controllerMesh.rayDot.visible = true;
+                    } else {
+                      intersectionPoint = null;
+                    }
+                  } else if (tab === 'Apps') {
+                    let j = 0;
+                    for (j = 0; j < apps.length; j++) {
+                      const yTop = urlBarOffset + j*fontSize;
+                      const yBottom = urlBarOffset + (j+1)*fontSize;
+
+                      if (y >= yTop && y < yBottom) {
+                        appIndex = j;
+
+                        controllerMesh.rayMesh.scale.z = distance;
+                        controllerMesh.updateMatrixWorld();
+
+                        controllerMesh.rayDot.position.z = -distance;
+                        controllerMesh.updateMatrixWorld();
+                        controllerMesh.rayDot.visible = true;
+
+                        break;
+                      }
+                    }
+                    if (j === apps.length) {
+                      intersectionPoint = null;
+                    }
+                  } else if (tab === 'Party') {
                     let j = 0;
                     for (j = 0; j < servers.length; j++) {
                       const yTop = urlBarOffset + j*fontSize;
@@ -1202,7 +1244,7 @@
                     if (j === servers.length) {
                       intersectionPoint = null;
                     }
-                  } else if (tab === 'Config' && y < urlBarOffset*2) {
+                  } else if (tab === 'Config') {
                     const yTop = urlBarOffset;
                     const yBottom = urlBarOffset + fontSize;
 
@@ -1341,6 +1383,15 @@
                 urlCursor = closestIndex;
                 menuMesh.urlMesh.updateText();
               }
+            } else if (appIndex !== -1) {
+              const currentAppIndex = currentApps.indexOf(appIndex);
+              if (currentAppIndex === -1) {
+                currentApps.push(appIndex);
+              } else {
+                currentApps.splice(currentAppIndex, 1);
+              }
+
+              menuMesh.urlMesh.updateText();
             } else if (serverIndex !== -1) {
               if (currentServerIndex !== serverIndex) {
                 currentServerIndex = serverIndex;
