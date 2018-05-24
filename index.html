@@ -173,6 +173,22 @@
     };
     const _isMpOpen = () => Boolean(xrmp && xrmp.localPlayerMesh);
 
+    const _openMic = () => {
+      navigator.mediaDevices.getUserMedia({
+        audio: true,
+      })
+        .then(mediaStream => {
+          xrmp.localPlayerMesh.setMediaStream(mediaStream);
+        });
+
+      voicechatEnabled = true;
+    };
+    const _closeMic = () => {
+      // XXX
+
+      voicechatEnabled = false;
+    };
+
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     const renderer = new THREE.WebGLRenderer({
@@ -745,7 +761,14 @@
               ctx.fillText(url, fontSize * 1.2, urlBarOffset + (i+1)*fontSize);
             }
           } else if (tab === 'Config') {
-            // XXX
+            if (voicechatEnabled) {
+              ctx.fillStyle = '#03a9f4';
+              ctx.fillRect(0, urlBarOffset, urlBarWidth, fontSize);
+              ctx.fillStyle = '#FFF';
+            } else {
+              ctx.fillStyle = '#333';
+            }
+            ctx.fillText('Voice', 0, urlBarOffset + fontSize);
           }
 
           texture.needsUpdate = true;
@@ -1114,6 +1137,7 @@
           let tabIndex = -1;
           let urlCoords = null;
           let serverIndex = -1;
+          let voicechatHovered = false;
           if (!intersectionPoint) {
             intersectionPoint = menuMesh.visible ? controllerMesh.ray.intersectPlane(menuMesh.urlMesh.plane, localVector) : null;
             if (intersectionPoint) {
@@ -1176,6 +1200,22 @@
                       }
                     }
                     if (j === servers.length) {
+                      intersectionPoint = null;
+                    }
+                  } else if (tab === 'Config' && y < urlBarOffset*2) {
+                    const yTop = urlBarOffset;
+                    const yBottom = urlBarOffset + fontSize;
+
+                    if (y >= yTop && y < yBottom) {
+                      voicechatHovered = true;
+
+                      controllerMesh.rayMesh.scale.z = distance;
+                      controllerMesh.updateMatrixWorld();
+
+                      controllerMesh.rayDot.position.z = -distance;
+                      controllerMesh.updateMatrixWorld();
+                      controllerMesh.rayDot.visible = true;
+                    } else {
                       intersectionPoint = null;
                     }
                   } else {
@@ -1313,6 +1353,18 @@
               }
 
               menuMesh.urlMesh.updateText();
+            } else if (voicechatHovered) {
+              if (_isMpOpen()) {
+                if (!voicechatEnabled) {
+                  _openMic();
+
+                  menuMesh.urlMesh.updateText();
+                } else {
+                  _closeMic();
+
+                  menuMesh.urlMesh.updateText();
+                }
+              }
             }
           }
         }
@@ -1659,21 +1711,6 @@
 
                   scene.background = null;
                 });
-            }
-            break;
-          }
-          case 112: { // P
-            if (_isMpOpen() && !voicechatEnabled) {
-              console.log('enable voicechat');
-
-              navigator.mediaDevices.getUserMedia({
-                audio: true,
-              })
-                .then(mediaStream => {
-                  xrmp.localPlayerMesh.setMediaStream(mediaStream);
-                });
-
-              voicechatEnabled = true;
             }
             break;
           }
