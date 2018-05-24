@@ -51,7 +51,9 @@
     const menuWorldWidth = 2;
     const menuWorldHeight = menuWorldWidth * menuHeight / menuWidth;
     const urlBarWidth = menuWidth;
+    const tabWidth = 500;
     const urlBarHeight = 200;
+    const urlBarOffset = urlBarHeight*1.4;
     const fontSize = 120;
     const keyboardWidth = 2048;
     const keyboardHeight = 716;
@@ -604,6 +606,10 @@
       };
     })();
 
+    const tabs = ['URL', 'Multiplayer'];
+    let servers = [];
+    let currentTabIndex = 0;
+    let currentServerIndex = -1;
     const _resJson = res => {
       if (res.status >= 200 && res.status < 300) {
         return res.json();
@@ -611,8 +617,6 @@
         return Promise.reject(new Error('invalid status code: ' + res.status));
       }
     };
-    let servers = [];
-    let currentServerIndex = -1;
     (() => {
       fetch(REGISTRY_QUERY_URL)
         .then(_resJson)
@@ -686,15 +690,26 @@
         const mesh = new THREE.Mesh(geometry, material);
 
         const _updateText = () => {
-          ctx.clearRect(0, 0, menuWidth, menuHeight);
+          ctx.fillStyle = '#EEE';
+          ctx.fillRect(0, 0, menuWidth, menuHeight);
+
+          for (let i = 0; i < tabs.length; i++) {
+            ctx.fillStyle = '#333';
+            ctx.fillText(tabs[i], i * tabWidth, urlBarOffset);
+
+            if (i === currentTabIndex) {
+              ctx.fillStyle = '#e53935';
+              ctx.fillRect(i * tabWidth, urlBarOffset - 10, tabWidth, 10);
+            }
+          }
 
           ctx.fillStyle = '#333';
-          ctx.fillRect(0, 0, urlBarWidth, urlBarHeight);
+          ctx.fillRect(0, urlBarOffset, urlBarWidth, urlBarHeight);
           ctx.fillStyle = '#FFF';
-          ctx.fillRect(5, 5, urlBarWidth - 10, urlBarHeight - 10);
+          ctx.fillRect(5, urlBarOffset + 5, urlBarWidth - 10, urlBarHeight - 10);
           ctx.fillStyle = '#333';
           ctx.font = `${fontSize}px Arial`;
-          ctx.fillText(urlText, 10, urlBarHeight - 10*2 - 30);
+          ctx.fillText(urlText, 10, urlBarOffset + urlBarHeight - 10*2 - 30);
 
           urlMeasures.length = 0;
           urlMeasures.push(0);
@@ -706,7 +721,7 @@
 
           ctx.fillStyle = '#03a9f4';
           const cursorWidth = 10;
-          ctx.fillRect(10 + urlMeasures[urlCursor] - cursorWidth/2, 20, cursorWidth, urlBarHeight - 20*2);
+          ctx.fillRect(10 + urlMeasures[urlCursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
 
           for (let i = 0; i < servers.length; i++) {
             const server = servers[i];
@@ -715,14 +730,14 @@
             const selected = i === currentServerIndex;
             if (selected) {
               ctx.fillStyle = '#03a9f4';
-              ctx.fillRect(0, urlBarHeight*1.2 + i*fontSize, urlBarWidth, fontSize);
+              ctx.fillRect(0, urlBarOffset*2 + i*fontSize, urlBarWidth, fontSize);
             }
             ctx.fillStyle = '#333';
-            ctx.fillRect(0, urlBarHeight*1.2 + i*fontSize, fontSize, fontSize);
+            ctx.fillRect(0, urlBarOffset*2 + i*fontSize, fontSize, fontSize);
             if (selected) {
               ctx.fillStyle = '#FFF';
             }
-            ctx.fillText(url, fontSize * 1.2, urlBarHeight*1.2 + (i+1)*fontSize);
+            ctx.fillText(url, fontSize * 1.2, urlBarOffset*2 + (i+1)*fontSize);
           }
 
           texture.needsUpdate = true;
@@ -1088,6 +1103,7 @@
           }
 
           // menu mesh
+          let tabIndex = -1;
           let urlCoords = null;
           let serverIndex = -1;
           if (!intersectionPoint) {
@@ -1105,7 +1121,21 @@
                 const x = xFactor * menuWidth;
                 const y = yFactor * menuHeight;
 
-                if (y < urlBarHeight) {
+                if (y < urlBarOffset) {
+                  const newTabIndex = Math.floor(x / tabWidth);
+                  if (newTabIndex < tabs.length) {
+                    tabIndex = newTabIndex;
+
+                    controllerMesh.rayMesh.scale.z = distance;
+                    controllerMesh.updateMatrixWorld();
+
+                    controllerMesh.rayDot.position.z = -distance;
+                    controllerMesh.updateMatrixWorld();
+                    controllerMesh.rayDot.visible = true;
+                  } else {
+                    intersectionPoint = null;
+                  }
+                } else if (y < urlBarOffset * 2) {
                   urlCoords = [x, y];
 
                   controllerMesh.rayMesh.scale.z = distance;
@@ -1117,8 +1147,8 @@
                 } else {
                   let j = 0;
                   for (j = 0; j < servers.length; j++) {
-                    const yTop = urlBarHeight*1.2 + j*fontSize;
-                    const yBottom = urlBarHeight*1.2 + (j+1)*fontSize;
+                    const yTop = urlBarOffset*2 + j*fontSize;
+                    const yBottom = urlBarOffset*2 + (j+1)*fontSize;
 
                     if (y >= yTop && y < yBottom) {
                       serverIndex = j;
@@ -1234,6 +1264,12 @@
             if (intersectionKey) {
               const code = keyCode(intersectionKey);
               _handleKey(code, false);
+            } else if (tabIndex !== -1) {
+              currentTabIndex = tabIndex;
+
+              console.log('click current tab', tabIndex);
+
+              menuMesh.urlMesh.updateText();
             } else if (urlCoords) {
               const [x, y] = urlCoords;
               const textX = x - 10;
