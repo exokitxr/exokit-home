@@ -133,71 +133,43 @@
     };
 
     let voicechatEnabled = false;
-    const mp = (() => {
-      const url = getQueryVariable('m');
-      if (url) {
-        const _makeCubeMesh = () => {
-          const geometry = new THREE.BoxBufferGeometry(0.1, 0.1, 0.1);
-          const material = new THREE.MeshPhongMaterial({
-            color: 0xFF0000,
-          });
-          const mesh = new THREE.Mesh(geometry, material);
-          return mesh;
-        };
+    let xrmp = null;
+    const _openMp = url => {
+      xrmp = new XRMultiplayerTHREE(new XRMultiplayer(url));
+      xrmp.localPlayerMesh = null;
+      xrmp.onsync = () => {
+        camera.add(xrmp.getAudioListener());
 
-        const xrmp = new XRMultiplayer(url);
-        const xrmpThree = new XRMultiplayerTHREE(xrmp);
-        xrmpThree.localPlayerMesh = null;
-        xrmpThree.onsync = () => {
-          camera.add(xrmpThree.getAudioListener());
+        xrmp.localPlayerMesh = xrmp.createLocalPlayerMesh();
+      };
+      xrmp.onclose = () => {
+        // console.log('mp close');
+      };
+      xrmp.onerror = e => {
+        console.warn('mp error', e.error);
+      };
+      xrmp.onplayerenter = playerMesh => {
+        const skinMesh = _makeSkinMesh(playerMesh);
+        playerMesh.add(skinMesh);
 
-          const localPlayerMesh = xrmpThree.createLocalPlayerMesh();
-          xrmpThree.localPlayerMesh = localPlayerMesh;
+        scene.add(playerMesh);
+      };
+      xrmp.onplayerleave = playerMesh => {
+        scene.remove(playerMesh);
+      };
+      /* xrmp.onobjectadd = objectMesh => {
+        scene.add(objectMesh);
+      };
+      xrmp.onobjectremove = objectMesh => {
+        scene.remove(objectMesh);
+      }; */
+    };
+    const _closeMp = () => {
+      xrmp.close();
 
-          /* const objectId = 1;
-          const objectMeshes = xrmpThree.getObjectMeshes();
-          const objectMesh = objectMeshes.find(objectMesh => objectMesh.object.id === objectId);
-          if (!objectMesh) {
-            const objectMesh = mp.createObjectMesh(objectId);
-
-            const cubeMesh = _makeCubeMesh();
-            objectMesh.add(cubeMesh);
-
-            objectMesh.object.setUpdateExpression('[1,2,3]');
-
-            scene.add(objectMesh);
-          } */
-        };
-        xrmpThree.onclose = () => {
-          console.log('mp close');
-        };
-        xrmpThree.onerror = e => {
-          console.warn('mp error', e.error);
-        };
-        xrmpThree.onplayerenter = playerMesh => {
-          const skinMesh = _makeSkinMesh(playerMesh);
-          playerMesh.add(skinMesh);
-
-          scene.add(playerMesh);
-        };
-        xrmpThree.onplayerleave = playerMesh => {
-          scene.remove(playerMesh);
-        };
-        xrmpThree.onobjectadd = objectMesh => {
-          const cubeMesh = _makeCubeMesh();
-          objectMesh.add(cubeMesh);
-
-          scene.add(objectMesh);
-        };
-        xrmpThree.onobjectremove = objectMesh => {
-          scene.remove(objectMesh);
-        };
-        return xrmpThree;
-      } else {
-        return null;
-      }
-    })();
-    const _isMpOpen = () => Boolean(mp && mp.localPlayerMesh);
+      xrmp = null;
+    };
+    const _isMpOpen = () => Boolean(xrmp && xrmp.localPlayerMesh);
 
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -661,7 +633,7 @@
                   const {name, players, objects} = server;
                   result.push({
                     name,
-                    url: prefix + '/servers/' + name,
+                    url: prefix + '/' + name,
                     players,
                     objects,
                   });
@@ -675,8 +647,6 @@
         })
         .then(newServers => {
           servers = newServers;
-
-          console.log('update servers', servers); // XXX
 
           menuMesh.urlMesh.updateText();
         })
@@ -1285,8 +1255,12 @@
             } else if (serverIndex !== -1) {
               if (currentServerIndex !== serverIndex) {
                 currentServerIndex = serverIndex;
+
+                _openMp(window.location.protocol.replace(/^http/, 'ws') + '//' + servers[serverIndex].url);
               } else {
                 currentServerIndex = -1;
+
+                _closeMp();
               }
 
               menuMesh.urlMesh.updateText();
@@ -1374,22 +1348,22 @@
       };
       const _updateMp = () => {
         if (_isMpOpen()) {
-          mp.localPlayerMesh.hmd.position.copy(camera.position);
-          mp.localPlayerMesh.hmd.quaternion.copy(camera.quaternion);
+          xrmp.localPlayerMesh.hmd.position.copy(camera.position);
+          xrmp.localPlayerMesh.hmd.quaternion.copy(camera.quaternion);
 
           for (let i = 0; i < 2; i++) {
             const controllerMesh = controllerMeshes[i];
-            mp.localPlayerMesh.gamepads[i].visible = true;
-            mp.localPlayerMesh.gamepads[i].position.copy(controllerMesh.position);
-            mp.localPlayerMesh.gamepads[i].quaternion.copy(controllerMesh.quaternion);
+            xrmp.localPlayerMesh.gamepads[i].visible = true;
+            xrmp.localPlayerMesh.gamepads[i].position.copy(controllerMesh.position);
+            xrmp.localPlayerMesh.gamepads[i].quaternion.copy(controllerMesh.quaternion);
           }
 
           /* for (let i = 0; i < 2; i++) { // XXX
-            mp.localPlayer.playerMatrix.hands[i].enabled[0] = +handMeshes[i].visible;
-            mp.localPlayer.playerMatrix.hands[i].data.set(handMeshes[i].handFrameData);
+            xrmp.localPlayer.playerMatrix.hands[i].enabled[0] = +handMeshes[i].visible;
+            xrmp.localPlayer.playerMatrix.hands[i].data.set(handMeshes[i].handFrameData);
           } */
 
-          mp.pushUpdate();
+          xrmp.pushUpdate();
         }
       };
       _updateControls();
@@ -1647,7 +1621,7 @@
                 audio: true,
               })
                 .then(mediaStream => {
-                  mp.localPlayerMesh.setMediaStream(mediaStream);
+                  xrmp.localPlayerMesh.setMediaStream(mediaStream);
                 });
 
               voicechatEnabled = true;
