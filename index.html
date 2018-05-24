@@ -640,6 +640,7 @@
       }
     };
     let servers = [];
+    let currentServerIndex = -1;
     (() => {
       fetch(REGISTRY_QUERY_URL)
         .then(_resJson)
@@ -715,7 +716,7 @@
         const mesh = new THREE.Mesh(geometry, material);
 
         const _updateText = () => {
-          ctx.clearRect(0, 0, urlBarWidth, urlBarHeight);
+          ctx.clearRect(0, 0, menuWidth, menuHeight);
 
           ctx.fillStyle = '#333';
           ctx.fillRect(0, 0, urlBarWidth, urlBarHeight);
@@ -737,12 +738,20 @@
           const cursorWidth = 10;
           ctx.fillRect(10 + urlMeasures[urlCursor] - cursorWidth/2, 20, cursorWidth, urlBarHeight - 20*2);
 
-          ctx.fillStyle = '#333';
           for (let i = 0; i < servers.length; i++) {
             const server = servers[i];
             const {url, players, objects} = server;
+
+            const selected = i === currentServerIndex;
+            if (selected) {
+              ctx.fillStyle = '#03a9f4';
+              ctx.fillRect(0, urlBarHeight*1.2 + i*fontSize, urlBarWidth, fontSize);
+            }
             ctx.fillStyle = '#333';
             ctx.fillRect(0, urlBarHeight*1.2 + i*fontSize, fontSize, fontSize);
+            if (selected) {
+              ctx.fillStyle = '#FFF';
+            }
             ctx.fillText(url, fontSize * 1.2, urlBarHeight*1.2 + (i+1)*fontSize);
           }
 
@@ -1108,8 +1117,9 @@
             }
           }
 
-          // url bar
+          // menu mesh
           let urlCoords = null;
+          let serverIndex = -1;
           if (!intersectionPoint) {
             intersectionPoint = menuMesh.visible ? controllerMesh.ray.intersectPlane(menuMesh.urlMesh.plane, localVector) : null;
             if (intersectionPoint) {
@@ -1141,7 +1151,7 @@
                     const yBottom = urlBarHeight*1.2 + (j+1)*fontSize;
 
                     if (y >= yTop && y < yBottom) {
-                      urlCoords = [x, y];
+                      serverIndex = j;
 
                       controllerMesh.rayMesh.scale.z = distance;
                       controllerMesh.updateMatrixWorld();
@@ -1253,7 +1263,6 @@
 
             if (intersectionKey) {
               const code = keyCode(intersectionKey);
-              // console.log('click', JSON.stringify(intersectionKey), JSON.stringify(code)); // XXX
               _handleKey(code, false);
             } else if (urlCoords) {
               const [x, y] = urlCoords;
@@ -1273,6 +1282,14 @@
                 urlCursor = closestIndex;
                 menuMesh.urlMesh.updateText();
               }
+            } else if (serverIndex !== -1) {
+              if (currentServerIndex !== serverIndex) {
+                currentServerIndex = serverIndex;
+              } else {
+                currentServerIndex = -1;
+              }
+
+              menuMesh.urlMesh.updateText();
             }
           }
         }
