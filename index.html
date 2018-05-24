@@ -220,10 +220,6 @@
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xFFFFFF);
 
-    const portalMeshes = [];
-    const frontMeshes = [];
-    const backMeshes = [];
-
     const ambientLight = new THREE.AmbientLight(0x808080);
     scene.add(ambientLight);
 
@@ -1435,16 +1431,10 @@
             menuMesh.scale.y = scaleY;
             menuMesh.updateMatrixWorld();
             menuMesh.visible = true;
-            for (let i = 0; i < portalMeshes.length; i++) {
-              portalMeshes[i].visible = true;
-            }
           } else {
             const visible = keyboardMesh.planeMesh.scale.y > 0.5;
             keyboardMesh.visible = visible;
             menuMesh.visible = visible;
-            for (let i = 0; i < portalMeshes.length; i++) {
-              portalMeshes[i].visible = visible;
-            }
 
             keyboardMeshAnimation = null;
           }
@@ -1626,15 +1616,6 @@
       });
       iframe.addEventListener('destroy', () => {
         screenQuad.material.uniforms.numTextures.value = 1;
-
-        const frontMesh = frontMeshes[index];
-        const texture = frontMesh.material.map;
-
-        const properties = renderer.properties.get(texture);
-        properties.__webglTexture = null;
-        properties.__webglInit = false;
-
-        frontMesh.updateTab();
       });
       container.appendChild(iframe);
     };
