@@ -817,6 +817,28 @@ class XRMultiplayer extends EventEmitter {
     ws.onclose = err => {
       this.open = false;
 
+      const oldRemotePlayers = this.remotePlayers.slice();
+      this.remotePlayers.length = 0;
+      for (let i = 0; i < oldRemotePlayers.length; i++) {
+        const remotePlayer = oldRemotePlayers[i];
+        if (remotePlayer) {
+          const e = new XRMultiplayerEvent('playerleave');
+          e.player = remotePlayer;
+          this.emit(e.type, e);
+        }
+      }
+
+      const oldObjects = this.objects.slice();
+      this.objects.length = 0;
+      for (let i = 0; i < oldObjects.length; i++) {
+        const object = oldObjects[i];
+        if (object) {
+          const e = new XRMultiplayerEvent('objectremove');
+          e.object = object;
+          this.emit(e.type, e);
+        }
+      }
+
       const e = new XRMultiplayerEvent('close');
       this.emit(e.type, e);
     };
@@ -846,8 +868,11 @@ class XRMultiplayer extends EventEmitter {
           case 'playerLeave': {
             const {id} = j;
 
-            const remotePlayer = this.remotePlayers.find(remotePlayer => remotePlayer.id === id);
-            if (remotePlayer) {
+            const remotePlayerIndex = this.remotePlayers.findIndex(remotePlayer => remotePlayer.id === id);
+            if (remotePlayerIndex !== -1) {
+              const remotePlayer = this.remotePlayers[remotePlayerIndex];
+              this.remotePlayers.splice(remotePlayerIndex, 1);
+
               const e = new XRMultiplayerEvent('playerleave');
               e.player = remotePlayer;
               this.emit(e.type, e);
@@ -873,7 +898,6 @@ class XRMultiplayer extends EventEmitter {
             const index = this.objects.findIndex(object => object.id === id);
             if (index !== -1) {
               const object = this.objects[index];
-
               this.objects.splice(index, 1);
 
               const e = new XRMultiplayerEvent('objectremove');

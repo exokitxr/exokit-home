@@ -244,6 +244,9 @@ class XRMultiplayerTHREE {
       }
     }
   }
+  close() {
+    this.xrmp.close();
+  }
   _bindPlayerMeshAudio(playerMesh) {
     const audioCtx = this.getAudioContext();
     const scriptProcessorNode = audioCtx.createScriptProcessor(AUDIO_BUFFER_SIZE, 1, 1);
