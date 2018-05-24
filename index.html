@@ -160,7 +160,7 @@
           const localPlayerMesh = xrmpThree.createLocalPlayerMesh();
           xrmpThree.localPlayerMesh = localPlayerMesh;
 
-          const objectId = 1;
+          /* const objectId = 1;
           const objectMeshes = xrmpThree.getObjectMeshes();
           const objectMesh = objectMeshes.find(objectMesh => objectMesh.object.id === objectId);
           if (!objectMesh) {
@@ -172,7 +172,7 @@
             objectMesh.object.setUpdateExpression('[1,2,3]');
 
             scene.add(objectMesh);
-          }
+          } */
         };
         xrmpThree.onclose = () => {
           console.log('mp close');
