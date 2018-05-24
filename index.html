@@ -140,6 +140,9 @@
       xrmp = new XRMultiplayerTHREE(new XRMultiplayer(url));
       xrmp.localPlayerMesh = null;
       xrmp.onsync = () => {
+        xrmp.pullApps(xrmp.xrmp.state.apps || []);
+        xrmp.pushApps(currentApps);
+
         camera.add(xrmp.getAudioListener());
 
         xrmp.localPlayerMesh = xrmp.createLocalPlayerMesh();
@@ -165,6 +168,42 @@
       xrmp.onobjectremove = objectMesh => {
         scene.remove(objectMesh);
       }; */
+      xrmp.onstateupdate = e => {
+        const {update} = e;
+
+        if (update.apps) {
+          xrmp.pullApps(update.apps);
+        }
+      };
+      xrmp.pullApps = srcApps => {
+        for (let i = 0; i < srcApps.length; i++) {
+          const srcApp = srcApps[i];
+          if (!currentApps.includes(srcApp)) {
+            currentApps.push(srcApp);
+          }
+        }
+      };
+      xrmp.pushApps = currentApps => {
+        const stateApps = xrmp.xrmp.state.apps ? xrmp.xrmp.state.apps.slice() : [];
+        let stateAppsUpdated = false;
+        for (let i = 0; i < currentApps.length; i++) {
+          const currentApp = currentApps[i];
+          if (!stateApps.includes(currentApp)) {
+            stateApps.push(currentApp);
+            stateAppsUpdated = true;
+          }
+        }
+        if (stateAppsUpdated) {
+          xrmp.xrmp.setState({
+            apps: stateApps,
+          });
+        }
+      };
+      xrmp.forcePushApps = currentApps => {
+        xrmp.xrmp.setState({
+          apps: currentApps,
+        });
+      };
     };
     const _closeMp = () => {
       xrmp.close();
@@ -1385,6 +1424,10 @@
                 currentApps.push(appIndex);
               } else {
                 currentApps.splice(currentAppIndex, 1);
+              }
+
+              if (_isMpOpen()) {
+                xrmp.forcePushApps(currentApps);
               }
 
               menuMesh.urlMesh.updateText();
