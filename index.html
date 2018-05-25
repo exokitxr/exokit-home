@@ -1655,8 +1655,12 @@
               const currentAppIndex = currentApps.indexOf(app);
               if (currentAppIndex === -1) {
                 currentApps.push(app);
+
+                _openUrl(app); // XXX
               } else {
                 currentApps.splice(currentAppIndex, 1);
+
+                _closeUrl(); // XXX
               }
 
               if (_isMpOpen()) {
@@ -1918,6 +1922,7 @@
         menuMesh.urlMesh.updateText();
       }
     };
+    const iframes = [];
     const _openUrl = (u, index = -1, cb = null) => {
       const iframe = document.createElement('iframe');
       iframe.src = u;
@@ -1950,6 +1955,20 @@
         screenQuad.material.uniforms.numTextures.value = 1;
       });
       container.appendChild(iframe);
+
+      iframes.push(iframe);
+    };
+    const _closeUrl = () => {
+      for (let i = 0; i < iframes.length; i++) {
+        const iframe = iframes[i];
+        iframe.destroy();
+
+        container.removeChild(iframe);
+      }
+
+      screenQuad.material.uniforms.numTextures.value = 1;
+      screenQuad.material.uniforms.uTexture2.value = null;
+      screenQuad.material.uniforms.uDepth2.value = null;
     };
 
     window.addEventListener('resize', e => {
