@@ -719,7 +719,7 @@
       };
     });
 
-    const tabs = ['URL', 'Apps', 'Party', 'Config'];
+    const tabs = ['URL', 'Files', 'Apps', 'Party', 'Config'];
     const cursorWidth = 10;
     const _getTab = () => {
       if (currentTabIndex >= 0) {
@@ -732,6 +732,9 @@
     };
     let apps = [];
     let servers = [];
+    let files = [{
+      name: 'lol.png',
+    }];
     let user = null;
     let currentTabIndex = 0;
     const currentApps = [];
@@ -851,6 +854,15 @@
 
             ctx.fillStyle = '#03a9f4';
             ctx.fillRect(10 + urlState.measures[urlState.cursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
+          } else if (tab === 'Files') {
+            for (let i = 0; i < files.length; i++) {
+              const file = files[i];
+              const {name} = file;
+
+              ctx.fillStyle = '#333';
+              ctx.fillRect(0, urlBarOffset + i*fontSize, fontSize, fontSize);
+              ctx.fillText(name, fontSize * 1.2, urlBarOffset + (i+1)*fontSize);
+            }
           } else if (tab === 'Apps') {
             for (let i = 0; i < apps.length; i++) {
               const app = apps[i];
@@ -1326,6 +1338,7 @@
           let tabIndex = -1;
           let urlCoords = null;
           let appIndex = -1;
+          let fileIndex = -1;
           let serverIndex = -1;
           let loginHovered = false;
           let voicechatHovered = false;
@@ -1385,6 +1398,28 @@
                       controllerMesh.updateMatrixWorld();
                       controllerMesh.rayDot.visible = true;
                     } else {
+                      intersectionPoint = null;
+                    }
+                  } else if (tab === 'Files') {
+                    let j = 0;
+                    for (j = 0; j < files.length; j++) {
+                      const yTop = urlBarOffset + j*fontSize;
+                      const yBottom = urlBarOffset + (j+1)*fontSize;
+
+                      if (y >= yTop && y < yBottom) {
+                        fileIndex = j;
+
+                        controllerMesh.rayMesh.scale.z = distance;
+                        controllerMesh.updateMatrixWorld();
+
+                        controllerMesh.rayDot.position.z = -distance;
+                        controllerMesh.updateMatrixWorld();
+                        controllerMesh.rayDot.visible = true;
+
+                        break;
+                      }
+                    }
+                    if (j === files.length) {
                       intersectionPoint = null;
                     }
                   } else if (tab === 'Apps') {
@@ -1629,6 +1664,8 @@
               }
 
               menuMesh.urlMesh.updateText();
+            } else if (fileIndex !== -1) {
+              console.log('click file', fileIndex); // XXX
             } else if (serverIndex !== -1) {
               if (currentServerIndex !== serverIndex) {
                 currentServerIndex = serverIndex;
