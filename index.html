@@ -17,6 +17,7 @@
   <script src="js/three.js"></script>
   <script src="js/vr-display.js"></script>
   <script src="js/skin.js"></script>
+  <script src="js/sprite3d.js"></script>
   <script src="js/OBJLoader.js"></script>
   <script src="js/ScreenQuad.js"></script>
   <script src="js/keycode.js"></script>
@@ -40,7 +41,7 @@
       return null;
     };
 
-    const REGISTRY_QUERY_URL = 'http://127.0.0.1:9000/q';
+    const REGISTRY_QUERY_URL = 'https://registry.webmr.io/q';
     const SIDES = ['left', 'right'];
     const FLOOR_SIZE = 20;
     const RAY_COLOR = 0x44c2ff;
@@ -101,22 +102,27 @@
       cursor: -1,
       measures: [],
       submit() {
+        _closeUrl();
         _openUrl(urlState.text);
       },
     };
     urlState.cursor = urlState.text.length;
     const usernameState = {
-      text: 'username',
+      text: 'lol@zol.com',
       cursor: -1,
       measures: [],
-      submit() {},
+      submit() {
+        _openLogin();
+      },
     };
     usernameState.cursor = usernameState.text.length;
     const passwordState = {
-      text: '********',
+      text: 'zol',
       cursor: -1,
       measures: [],
-      submit() {},
+      submit() {
+        _openLogin();
+      },
     };
     passwordState.cursor = passwordState.text.length;
     let keyboardState = urlState;
@@ -249,13 +255,28 @@
       voicechatEnabled = false;
     };
 
+    let xrid = null;
     const _openLogin = () => { // XXX
+      xrid = new XRID('https://id.webmr.io', {
+        username: 'lol@lol.zol',
+        password: 'zol',
+      });
+      xrid.onauthenticate = e => {
+        user = e.user;
+
+        menuMesh.urlMesh.updateText();
+      };
+      xrid.onerror = err => {
+        console.warn(err.error);
+      };
       user = {
         name: usernameState.text,
       };
     };
     const _closeLogin = () => {
       user = null;
+
+      menuMesh.urlMesh.updateText();
     };
 
     canvas.width = window.innerWidth;
@@ -687,7 +708,19 @@
       };
     })();
 
-    const tabs = ['URL', 'Apps', 'Party', 'Config'];
+    const _requestSpriteMesh = itemType => new Promise((accept, reject) => {
+      const img = new Image();
+      img.src = `img/items/${itemType}.png`;
+      img.onload = () => {
+        const spriteMesh = sprite3d.makeSpriteMesh(img);
+        accept(spriteMesh);
+      };
+      img.onerror = err => {
+        reject(err);
+      };
+    });
+
+    const tabs = ['URL', 'Files', 'Apps', 'Party', 'Config'];
     const cursorWidth = 10;
     const _getTab = () => {
       if (currentTabIndex >= 0) {
@@ -700,6 +733,9 @@
     };
     let apps = [];
     let servers = [];
+    let files = [{
+      name: 'lol.png',
+    }];
     let user = null;
     let currentTabIndex = 0;
     const currentApps = [];
@@ -752,6 +788,43 @@
         .catch(err => {
           console.warn(err.stack);
         });
+    })();
+
+    const skinPreviewCanvas = (() => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 800;
+      const renderer = new THREE.WebGLRenderer({
+        canvas,
+        alpha: true,
+      });
+      const scene = new THREE.Scene();
+      // scene.background = new THREE.Color(0xFFFFFF);
+      const camera = new THREE.PerspectiveCamera(90, 1/2, 0.1, 1024);
+
+      const mesh = skin({
+        limbs: true,
+      });
+      mesh.position.set(0, -1.5/2, -1.2);
+      mesh.quaternion.setFromUnitVectors(
+        localVector.set(0, 0, -1),
+        localVector2.set(0, 0, 1)
+      );
+      scene.add(mesh);
+
+      const skinImg = new Image();
+      skinImg.crossOrigin = 'Anonymous';
+      skinImg.src = 'img/skins/male.png';
+      skinImg.onload = () => {
+        mesh.setImage(skinImg);
+
+        renderer.render(scene, camera);
+      };
+      skinImg.onerror = err => {
+        console.warn('skin image error', err.stack);
+      };
+
+      return canvas;
     })();
     const menuMesh = (() => {
       const object = new THREE.Object3D();
@@ -819,6 +892,15 @@
 
             ctx.fillStyle = '#03a9f4';
             ctx.fillRect(10 + urlState.measures[urlState.cursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
+          } else if (tab === 'Files') {
+            for (let i = 0; i < files.length; i++) {
+              const file = files[i];
+              const {name} = file;
+
+              ctx.fillStyle = '#333';
+              ctx.fillRect(0, urlBarOffset + i*fontSize, fontSize, fontSize);
+              ctx.fillText(name, fontSize * 1.2, urlBarOffset + (i+1)*fontSize);
+            }
           } else if (tab === 'Apps') {
             for (let i = 0; i < apps.length; i++) {
               const app = apps[i];
@@ -891,13 +973,14 @@
               ctx.fillRect(5, urlBarOffset*2 + 5, urlBarWidth - 10, urlBarHeight - 10);
               ctx.fillStyle = '#333';
               ctx.font = `${fontSize}px Arial`;
-              ctx.fillText(passwordState.text, 10, urlBarOffset*2 + urlBarHeight - 10*2 - 30);
+              const passwordText = '*'.repeat(passwordState.text.length);
+              ctx.fillText(passwordText, 10, urlBarOffset*2 + urlBarHeight - 10*2 - 30);
 
               passwordState.measures.length = 0;
               passwordState.measures.push(0);
               const {width: passwordWidth} = ctx.measureText('[');
-              for (let i = 1; i <= passwordState.text.length; i++) {
-                const {width} = ctx.measureText('[' + passwordState.text.slice(0, i) + ']');
+              for (let i = 1; i <= passwordText.length; i++) {
+                const {width} = ctx.measureText('[' + passwordText.slice(0, i) + ']');
                 passwordState.measures.push(width - passwordWidth*2);
               }
 
@@ -915,6 +998,9 @@
               ctx.fillStyle = '#FFF';
               ctx.font = `${fontSize*0.5}px Arial`;
               ctx.fillText('Logout', 50, urlBarOffset + 80);
+
+              ctx.drawImage(skinPreviewCanvas, 0, urlBarOffset*2);
+              ctx.fillStyle = '#333';
             }
           }
 
@@ -925,7 +1011,7 @@
           } else {
             ctx.fillStyle = '#333';
             ctx.fillRect(menuWidth - 550, urlBarOffset - 100, 100, 100);
-            ctx.fillText(user.name, menuWidth - 550 + 100 + 20, urlBarOffset);
+            ctx.fillText(user.username, menuWidth - 550 + 100 + 20, urlBarOffset);
           }
 
           texture.needsUpdate = true;
@@ -1293,6 +1379,7 @@
           let tabIndex = -1;
           let urlCoords = null;
           let appIndex = -1;
+          let fileIndex = -1;
           let serverIndex = -1;
           let loginHovered = false;
           let voicechatHovered = false;
@@ -1352,6 +1439,28 @@
                       controllerMesh.updateMatrixWorld();
                       controllerMesh.rayDot.visible = true;
                     } else {
+                      intersectionPoint = null;
+                    }
+                  } else if (tab === 'Files') {
+                    let j = 0;
+                    for (j = 0; j < files.length; j++) {
+                      const yTop = urlBarOffset + j*fontSize;
+                      const yBottom = urlBarOffset + (j+1)*fontSize;
+
+                      if (y >= yTop && y < yBottom) {
+                        fileIndex = j;
+
+                        controllerMesh.rayMesh.scale.z = distance;
+                        controllerMesh.updateMatrixWorld();
+
+                        controllerMesh.rayDot.position.z = -distance;
+                        controllerMesh.updateMatrixWorld();
+                        controllerMesh.rayDot.visible = true;
+
+                        break;
+                      }
+                    }
+                    if (j === files.length) {
                       intersectionPoint = null;
                     }
                   } else if (tab === 'Apps') {
@@ -1494,20 +1603,22 @@
               }
             }
 
-            localEuler.setFromQuaternion(
-              localQuaternion
-                .setFromUnitVectors(
-                  new THREE.Vector3(0, 0, -1),
-                  keyboardMesh.position.clone()
-                    .sub(camera.position)
-                    .normalize()
-                ),
-              localEuler.order
-            );
-            localEuler.x = 0;
-            localEuler.z = 0;
-            keyboardMesh.rotation.copy(localEuler);
-            menuMesh.rotation.copy(localEuler);
+            if (opening) {
+              localEuler.setFromQuaternion(
+                localQuaternion
+                  .setFromUnitVectors(
+                    new THREE.Vector3(0, 0, -1),
+                    keyboardMesh.position.clone()
+                      .sub(camera.position)
+                      .normalize()
+                  ),
+                localEuler.order
+              );
+              localEuler.x = 0;
+              localEuler.z = 0;
+              keyboardMesh.rotation.copy(localEuler);
+              menuMesh.rotation.copy(localEuler);
+            }
 
             const endValue = opening ? 1 : 0;
             const now = Date.now();
@@ -1587,8 +1698,13 @@
               const currentAppIndex = currentApps.indexOf(app);
               if (currentAppIndex === -1) {
                 currentApps.push(app);
+
+                _closeUrl();
+                _openUrl(app); // XXX
               } else {
                 currentApps.splice(currentAppIndex, 1);
+
+                _closeUrl(); // XXX
               }
 
               if (_isMpOpen()) {
@@ -1596,6 +1712,8 @@
               }
 
               menuMesh.urlMesh.updateText();
+            } else if (fileIndex !== -1) {
+              console.log('click file', fileIndex); // XXX
             } else if (serverIndex !== -1) {
               if (currentServerIndex !== serverIndex) {
                 currentServerIndex = serverIndex;
@@ -1664,16 +1782,10 @@
                   keyboardState = passwordState;
                 } else if (fieldIndex === 2) {
                   _openLogin();
-
-                  menuMesh.urlMesh.updateText();
                 }
               } else {
                 if (fieldIndex === 0) {
                   _closeLogin();
-
-                  console.log('close login');
-
-                  menuMesh.urlMesh.updateText();
                 }
               }
             }
@@ -1854,6 +1966,7 @@
         menuMesh.urlMesh.updateText();
       }
     };
+    const iframes = [];
     const _openUrl = (u, index = -1, cb = null) => {
       const iframe = document.createElement('iframe');
       iframe.src = u;
@@ -1864,13 +1977,17 @@
 
         const colorTexture = new THREE.Texture();
         const colorProperties = renderer.properties.get(colorTexture);
-        colorProperties.__webglTexture = framebuffer.colorTexture;
+        colorProperties.__webglTexture = {
+          id: framebuffer.colorTexture,
+        };
         colorProperties.__webglInit = true;
         screenQuad.material.uniforms.uTexture2.value = colorTexture;
 
         const depthTexture = new THREE.Texture();
         const depthProperties = renderer.properties.get(depthTexture);
-        depthProperties.__webglTexture = framebuffer.depthStencilTexture;
+        depthProperties.__webglTexture = {
+          id: framebuffer.depthStencilTexture,
+        };
         depthProperties.__webglInit = true;
         screenQuad.material.uniforms.uDepth2.value = depthTexture;
 
@@ -1882,6 +1999,21 @@
         screenQuad.material.uniforms.numTextures.value = 1;
       });
       container.appendChild(iframe);
+
+      iframes.push(iframe);
+    };
+    const _closeUrl = () => {
+      for (let i = 0; i < iframes.length; i++) {
+        const iframe = iframes[i];
+        iframe.destroy();
+
+        container.removeChild(iframe);
+      }
+      iframes.length = 0;
+
+      screenQuad.material.uniforms.numTextures.value = 1;
+      screenQuad.material.uniforms.uTexture2.value = null;
+      screenQuad.material.uniforms.uDepth2.value = null;
     };
 
     window.addEventListener('resize', e => {
@@ -1920,6 +2052,14 @@
     });
     THREE.AudioContext.setContext(audioCtx);
 
+    const _normalizeKeycode = keyCode => {
+      if (keyCode >= 97 && keyCode <= 122) {
+        return keyCode - 32;
+      } else {
+        return keyCode;
+      }
+    };
+
     const keys = {
       up: false,
       down: false,
@@ -1927,14 +2067,6 @@
       right: false,
     };
     window.addEventListener('keypress', e => {
-      const _normalizeKeycode = keyCode => {
-        if (keyCode >= 97 && keyCode <= 122) {
-          return keyCode - 32;
-        } else {
-          return keyCode;
-        }
-      };
-
       if (!window.document.pointerLockElement) {
         switch (e.keyCode) {
           case 99: { // C
@@ -2049,6 +2181,23 @@
             break;
           }
         }
+      } else {
+        const code = _normalizeKeycode(e.keyCode);
+
+        if (
+          code === 8 || // backspace
+          code === 46 || // delete
+          code === 9 || // tab
+          code === 16 || // shift
+          code === 17 || // ctrl
+          code === 18 || // alt
+          code === 20 || // capslock
+          code === 27 || // esc
+          code === 91 || // win
+          code >= 37 && code <= 40 // arrows
+        ) {
+          _handleKey(code, e.shiftKey);
+        }
       }
     });
     window.addEventListener('keyup', e => {
@@ -2123,7 +2272,19 @@
     window.addEventListener('drop', e => {
       e.preventDefault();
 
-      console.log('drop', e);
+      _requestSpriteMesh('file')
+        .then(spriteMesh => {
+          spriteMesh.position
+            .copy(camera.position)
+             .add(
+                localVector.set(0, 0, -0.4)
+                  .applyQuaternion(camera.quaternion)
+             );
+          scene.add(spriteMesh);
+        })
+        .catch(err => {
+          console.warn(err.stack);
+        });
     });
   </script>
 </body>
