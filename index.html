@@ -99,6 +99,12 @@
     let urlText = 'http://';
     let urlCursor = urlText.length;
     const urlMeasures = [];
+    let usernameText = 'username';
+    let usernameCursor = usernameText.length;
+    const usernameMeasures = [];
+    let passwordText = '********';
+    let passwordCursor = passwordText.length;
+    const passwordMeasures = [];
 
     const upVector = new THREE.Vector3(0, 1, 0);
     const armQuaternionOffset = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, -1));
@@ -226,6 +232,13 @@
       xrmp.localPlayerMesh.unsetMediaStream();
 
       voicechatEnabled = false;
+    };
+
+    const _openLogin = () => {
+      user = {}; // XXX
+    };
+    const _closeLogin = () => {
+      user = null;
     };
 
     canvas.width = window.innerWidth;
@@ -658,8 +671,19 @@
     })();
 
     const tabs = ['URL', 'Apps', 'Party', 'Config'];
+    const cursorWidth = 10;
+    const _getTab = () => {
+      if (currentTabIndex >= 0) {
+        return tabs[currentTabIndex];
+      } else if (currentTabIndex === -2) {
+        return 'Login';
+      } else {
+        return null;
+      }
+    };
     let apps = [];
     let servers = [];
+    let user = null;
     let currentTabIndex = 0;
     const currentApps = [];
     let currentServerIndex = -1;
@@ -749,7 +773,7 @@
 
           for (let i = 0; i < tabs.length; i++) {
             ctx.fillStyle = '#333';
-            ctx.font = `${fontSize*0.8}px Arial`;
+            ctx.font = `${fontSize*0.7}px Arial`;
             ctx.fillText(tabs[i], i * tabWidth, urlBarOffset);
 
             if (i === currentTabIndex) {
@@ -758,7 +782,7 @@
             }
           }
 
-          const tab = tabs[currentTabIndex];
+          const tab = _getTab();
           if (tab === 'URL') {
             ctx.fillStyle = '#333';
             ctx.fillRect(0, urlBarOffset, urlBarWidth, urlBarHeight);
@@ -777,7 +801,6 @@
             }
 
             ctx.fillStyle = '#03a9f4';
-            const cursorWidth = 10;
             ctx.fillRect(10 + urlMeasures[urlCursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
           } else if (tab === 'Apps') {
             for (let i = 0; i < apps.length; i++) {
@@ -821,6 +844,58 @@
               ctx.fillStyle = '#333';
             }
             ctx.fillText('Voice', 0, urlBarOffset + fontSize);
+          } else if (tab === 'Login') {
+            ctx.fillStyle = '#e53935';
+            ctx.fillRect(menuWidth - 500 - 20, urlBarOffset - 10, tabWidth, 10);
+
+            ctx.fillStyle = '#333';
+            ctx.fillRect(0, urlBarOffset, urlBarWidth, urlBarHeight);
+            ctx.fillStyle = '#FFF';
+            ctx.fillRect(5, urlBarOffset + 5, urlBarWidth - 10, urlBarHeight - 10);
+            ctx.fillStyle = '#333';
+            ctx.font = `${fontSize}px Arial`;
+            ctx.fillText(usernameText, 10, urlBarOffset + urlBarHeight - 10*2 - 30);
+
+            usernameMeasures.length = 0;
+            usernameMeasures.push(0);
+            const {width: usernameWidth} = ctx.measureText('[');
+            for (let i = 1; i <= usernameText.length; i++) {
+              const {width} = ctx.measureText('[' + usernameText.slice(0, i) + ']');
+              usernameMeasures.push(width - usernameWidth*2);
+            }
+
+            ctx.fillStyle = '#03a9f4';
+            ctx.fillRect(10 + usernameMeasures[usernameCursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
+
+            ctx.fillStyle = '#333';
+            ctx.fillRect(0, urlBarOffset*2, urlBarWidth, urlBarHeight);
+            ctx.fillStyle = '#FFF';
+            ctx.fillRect(5, urlBarOffset*2 + 5, urlBarWidth - 10, urlBarHeight - 10);
+            ctx.fillStyle = '#333';
+            ctx.font = `${fontSize}px Arial`;
+            ctx.fillText(passwordText, 10, urlBarOffset*2 + urlBarHeight - 10*2 - 30);
+
+            passwordMeasures.length = 0;
+            passwordMeasures.push(0);
+            const {width: passwordWidth} = ctx.measureText('[');
+            for (let i = 1; i <= passwordText.length; i++) {
+              const {width} = ctx.measureText('[' + passwordText.slice(0, i) + ']');
+              passwordMeasures.push(width - passwordWidth*2);
+            }
+
+            ctx.fillStyle = '#03a9f4';
+            ctx.fillRect(10 + passwordMeasures[passwordCursor] - cursorWidth/2, urlBarOffset*2 + 20, cursorWidth, urlBarHeight - 20*2);
+          }
+
+          ctx.font = `${fontSize*0.7}px Arial`;
+          if (!user) {
+            ctx.fillStyle = '#333';
+            const t = 'Not logged in';
+            ctx.fillText(t, menuWidth - 500 - 20, urlBarOffset);
+          } else {
+            ctx.fillStyle = '#333';
+            const t = 'Username';
+            ctx.fillText(t, menuWidth - 500 - 20, urlBarOffset);
           }
 
           texture.needsUpdate = true;
@@ -1190,7 +1265,9 @@
           let urlCoords = null;
           let appIndex = -1;
           let serverIndex = -1;
+          let loginHovered = false;
           let voicechatHovered = false;
+          let loginCoords = null;
           if (!intersectionPoint) {
             intersectionPoint = menuMesh.visible ? controllerMesh.ray.intersectPlane(menuMesh.urlMesh.plane, localVector) : null;
             if (intersectionPoint) {
@@ -1206,7 +1283,7 @@
                 const x = xFactor * menuWidth;
                 const y = yFactor * menuHeight;
 
-                const tab = tabs[currentTabIndex];
+                const tab = _getTab();
                 if (y < urlBarOffset) {
                   const newTabIndex = Math.floor(x / tabWidth);
                   if (newTabIndex < tabs.length) {
@@ -1219,7 +1296,20 @@
                     controllerMesh.updateMatrixWorld();
                     controllerMesh.rayDot.visible = true;
                   } else {
-                    intersectionPoint = null;
+                    const xLeft = menuWidth - 500 - 20;
+
+                    if (x > xLeft) {
+                      loginHovered = true;
+
+                      controllerMesh.rayMesh.scale.z = distance;
+                      controllerMesh.updateMatrixWorld();
+
+                      controllerMesh.rayDot.position.z = -distance;
+                      controllerMesh.updateMatrixWorld();
+                      controllerMesh.rayDot.visible = true;
+                    } else {
+                      intersectionPoint = null;
+                    }
                   }
                 } else {
                   if (tab === 'URL') {
@@ -1285,6 +1375,21 @@
 
                     if (y >= yTop && y < yBottom) {
                       voicechatHovered = true;
+
+                      controllerMesh.rayMesh.scale.z = distance;
+                      controllerMesh.updateMatrixWorld();
+
+                      controllerMesh.rayDot.position.z = -distance;
+                      controllerMesh.updateMatrixWorld();
+                      controllerMesh.rayDot.visible = true;
+                    } else {
+                      intersectionPoint = null;
+                    }
+                  } else if (tab === 'Login') {
+                    const fieldIndex = Math.floor((y - urlBarOffset) / urlBarOffset);
+
+                    if (fieldIndex <= 2) {
+                      loginCoords = [fieldIndex, x, y];
 
                       controllerMesh.rayMesh.scale.z = distance;
                       controllerMesh.updateMatrixWorld();
@@ -1400,6 +1505,10 @@
               currentTabIndex = tabIndex;
 
               menuMesh.urlMesh.updateText();
+            } else if (loginHovered) {
+              currentTabIndex = -2;
+
+              menuMesh.urlMesh.updateText();
             } else if (urlCoords) {
               const [x, y] = urlCoords;
               const textX = x - 10;
@@ -1453,6 +1562,44 @@
                 } else {
                   _closeMic();
 
+                  menuMesh.urlMesh.updateText();
+                }
+              }
+            } else if (loginCoords) {
+              const [fieldIndex, x, y] = loginCoords;
+
+              if (fieldIndex === 0) {
+                const textX = x - 10;
+
+                let closestIndex = -1;
+                let closestDistance = Infinity;
+                for (let i = 0; i < usernameMeasures.length; i++) {
+                  const usernameMeasure = usernameMeasures[i];
+                  const distance = Math.abs(usernameMeasure - textX);
+                  if (distance < closestDistance) {
+                    closestIndex = i;
+                    closestDistance = distance;
+                  }
+                }
+                if (closestIndex !== -1) {
+                  usernameCursor = closestIndex;
+                  menuMesh.urlMesh.updateText();
+                }
+              } else if (fieldIndex === 1) {
+                const textX = x - 10;
+
+                let closestIndex = -1;
+                let closestDistance = Infinity;
+                for (let i = 0; i < passwordMeasures.length; i++) {
+                  const passwordMeasure = passwordMeasures[i];
+                  const distance = Math.abs(passwordMeasure - textX);
+                  if (distance < closestDistance) {
+                    closestIndex = i;
+                    closestDistance = distance;
+                  }
+                }
+                if (closestIndex !== -1) {
+                  passwordCursor = closestIndex;
                   menuMesh.urlMesh.updateText();
                 }
               }
