@@ -1947,6 +1947,14 @@
     });
     THREE.AudioContext.setContext(audioCtx);
 
+    const _normalizeKeycode = keyCode => {
+      if (keyCode >= 97 && keyCode <= 122) {
+        return keyCode - 32;
+      } else {
+        return keyCode;
+      }
+    };
+
     const keys = {
       up: false,
       down: false,
@@ -1954,14 +1962,6 @@
       right: false,
     };
     window.addEventListener('keypress', e => {
-      const _normalizeKeycode = keyCode => {
-        if (keyCode >= 97 && keyCode <= 122) {
-          return keyCode - 32;
-        } else {
-          return keyCode;
-        }
-      };
-
       if (!window.document.pointerLockElement) {
         switch (e.keyCode) {
           case 99: { // C
@@ -2075,6 +2075,23 @@
             fakeDisplay.gamepads[1].buttons[3].pressed = true;
             break;
           }
+        }
+      } else {
+        const code = _normalizeKeycode(e.keyCode);
+
+        if (
+          code === 8 || // backspace
+          code === 46 || // delete
+          code === 9 || // tab
+          code === 16 || // shift
+          code === 17 || // ctrl
+          code === 18 || // alt
+          code === 20 || // capslock
+          code === 27 || // esc
+          code === 91 || // win
+          code >= 37 && code <= 40 // arrows
+        ) {
+          _handleKey(code, e.shiftKey);
         }
       }
     });
