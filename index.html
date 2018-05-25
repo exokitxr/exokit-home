@@ -1603,20 +1603,22 @@
               }
             }
 
-            localEuler.setFromQuaternion(
-              localQuaternion
-                .setFromUnitVectors(
-                  new THREE.Vector3(0, 0, -1),
-                  keyboardMesh.position.clone()
-                    .sub(camera.position)
-                    .normalize()
-                ),
-              localEuler.order
-            );
-            localEuler.x = 0;
-            localEuler.z = 0;
-            keyboardMesh.rotation.copy(localEuler);
-            menuMesh.rotation.copy(localEuler);
+            if (opening) {
+              localEuler.setFromQuaternion(
+                localQuaternion
+                  .setFromUnitVectors(
+                    new THREE.Vector3(0, 0, -1),
+                    keyboardMesh.position.clone()
+                      .sub(camera.position)
+                      .normalize()
+                  ),
+                localEuler.order
+              );
+              localEuler.x = 0;
+              localEuler.z = 0;
+              keyboardMesh.rotation.copy(localEuler);
+              menuMesh.rotation.copy(localEuler);
+            }
 
             const endValue = opening ? 1 : 0;
             const now = Date.now();
