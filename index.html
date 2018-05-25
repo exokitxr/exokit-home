@@ -96,15 +96,25 @@
       `,
     };
 
-    let urlText = 'http://';
-    let urlCursor = urlText.length;
-    const urlMeasures = [];
-    let usernameText = 'username';
-    let usernameCursor = usernameText.length;
-    const usernameMeasures = [];
-    let passwordText = '********';
-    let passwordCursor = passwordText.length;
-    const passwordMeasures = [];
+    const urlState = {
+      text: 'http://',
+      cursor: -1,
+      measures: [],
+    };
+    urlState.cursor = urlState.text.length;
+    const usernameState = {
+      text: 'username',
+      cursor: -1,
+      measures: [],
+    };
+    usernameState.cursor = usernameState.text.length;
+    const passwordState = {
+      text: '********',
+      cursor: -1,
+      measures: [],
+    };
+    passwordState.cursor = passwordState.text.length;
+    let keyboardState = urlState;
 
     const upVector = new THREE.Vector3(0, 1, 0);
     const armQuaternionOffset = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, -1));
@@ -236,7 +246,7 @@
 
     const _openLogin = () => { // XXX
       user = {
-        name: usernameText,
+        name: usernameState.text,
       };
     };
     const _closeLogin = () => {
@@ -792,18 +802,18 @@
             ctx.fillRect(5, urlBarOffset + 5, urlBarWidth - 10, urlBarHeight - 10);
             ctx.fillStyle = '#333';
             ctx.font = `${fontSize}px Arial`;
-            ctx.fillText(urlText, 10, urlBarOffset + urlBarHeight - 10*2 - 30);
+            ctx.fillText(urlState.text, 10, urlBarOffset + urlBarHeight - 10*2 - 30);
 
-            urlMeasures.length = 0;
-            urlMeasures.push(0);
+            urlState.measures.length = 0;
+            urlState.measures.push(0);
             const {width: barWidth} = ctx.measureText('[');
-            for (let i = 1; i <= urlText.length; i++) {
-              const {width} = ctx.measureText('[' + urlText.slice(0, i) + ']');
-              urlMeasures.push(width - barWidth*2);
+            for (let i = 1; i <= urlState.text.length; i++) {
+              const {width} = ctx.measureText('[' + urlState.text.slice(0, i) + ']');
+              urlState.measures.push(width - barWidth*2);
             }
 
             ctx.fillStyle = '#03a9f4';
-            ctx.fillRect(10 + urlMeasures[urlCursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
+            ctx.fillRect(10 + urlState.measures[urlState.cursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
           } else if (tab === 'Apps') {
             for (let i = 0; i < apps.length; i++) {
               const app = apps[i];
@@ -857,18 +867,18 @@
               ctx.fillRect(5, urlBarOffset + 5, urlBarWidth - 10, urlBarHeight - 10);
               ctx.fillStyle = '#333';
               ctx.font = `${fontSize}px Arial`;
-              ctx.fillText(usernameText, 10, urlBarOffset + urlBarHeight - 10*2 - 30);
+              ctx.fillText(usernameState.text, 10, urlBarOffset + urlBarHeight - 10*2 - 30);
 
-              usernameMeasures.length = 0;
-              usernameMeasures.push(0);
+              usernameState.measures.length = 0;
+              usernameState.measures.push(0);
               const {width: usernameWidth} = ctx.measureText('[');
-              for (let i = 1; i <= usernameText.length; i++) {
-                const {width} = ctx.measureText('[' + usernameText.slice(0, i) + ']');
-                usernameMeasures.push(width - usernameWidth*2);
+              for (let i = 1; i <= usernameState.text.length; i++) {
+                const {width} = ctx.measureText('[' + usernameState.text.slice(0, i) + ']');
+                usernameState.measures.push(width - usernameWidth*2);
               }
 
               ctx.fillStyle = '#03a9f4';
-              ctx.fillRect(10 + usernameMeasures[usernameCursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
+              ctx.fillRect(10 + usernameState.measures[usernameState.cursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
 
               ctx.fillStyle = '#333';
               ctx.fillRect(0, urlBarOffset*2, urlBarWidth, urlBarHeight);
@@ -876,18 +886,18 @@
               ctx.fillRect(5, urlBarOffset*2 + 5, urlBarWidth - 10, urlBarHeight - 10);
               ctx.fillStyle = '#333';
               ctx.font = `${fontSize}px Arial`;
-              ctx.fillText(passwordText, 10, urlBarOffset*2 + urlBarHeight - 10*2 - 30);
+              ctx.fillText(passwordState.text, 10, urlBarOffset*2 + urlBarHeight - 10*2 - 30);
 
-              passwordMeasures.length = 0;
-              passwordMeasures.push(0);
+              passwordState.measures.length = 0;
+              passwordState.measures.push(0);
               const {width: passwordWidth} = ctx.measureText('[');
-              for (let i = 1; i <= passwordText.length; i++) {
-                const {width} = ctx.measureText('[' + passwordText.slice(0, i) + ']');
-                passwordMeasures.push(width - passwordWidth*2);
+              for (let i = 1; i <= passwordState.text.length; i++) {
+                const {width} = ctx.measureText('[' + passwordState.text.slice(0, i) + ']');
+                passwordState.measures.push(width - passwordWidth*2);
               }
 
               ctx.fillStyle = '#03a9f4';
-              ctx.fillRect(10 + passwordMeasures[passwordCursor] - cursorWidth/2, urlBarOffset*2 + 20, cursorWidth, urlBarHeight - 20*2);
+              ctx.fillRect(10 + passwordState.measures[passwordState.cursor] - cursorWidth/2, urlBarOffset*2 + 20, cursorWidth, urlBarHeight - 20*2);
 
               ctx.fillStyle = '#333';
               ctx.fillRect(0, urlBarOffset*3, 300, fontSize);
@@ -973,7 +983,6 @@
           THREE.ClampToEdgeWrapping,
           THREE.NearestFilter,
           THREE.NearestFilter,
-          // THREE.LinearMipMapLinearFilter,
           THREE.RGBAFormat,
           THREE.UnsignedByteType,
           1
@@ -1547,8 +1556,8 @@
 
               let closestIndex = -1;
               let closestDistance = Infinity;
-              for (let i = 0; i < urlMeasures.length; i++) {
-                const urlMeasure = urlMeasures[i];
+              for (let i = 0; i < urlState.measures.length; i++) {
+                const urlMeasure = urlState.measures[i];
                 const distance = Math.abs(urlMeasure - textX);
                 if (distance < closestDistance) {
                   closestIndex = i;
@@ -1556,7 +1565,7 @@
                 }
               }
               if (closestIndex !== -1) {
-                urlCursor = closestIndex;
+                urlState.cursor = closestIndex;
                 menuMesh.urlMesh.updateText();
               }
             } else if (appIndex !== -1) {
@@ -1606,8 +1615,8 @@
 
                   let closestIndex = -1;
                   let closestDistance = Infinity;
-                  for (let i = 0; i < usernameMeasures.length; i++) {
-                    const usernameMeasure = usernameMeasures[i];
+                  for (let i = 0; i < usernameState.measures.length; i++) {
+                    const usernameMeasure = usernameState.measures[i];
                     const distance = Math.abs(usernameMeasure - textX);
                     if (distance < closestDistance) {
                       closestIndex = i;
@@ -1615,7 +1624,7 @@
                     }
                   }
                   if (closestIndex !== -1) {
-                    usernameCursor = closestIndex;
+                    usernameState.cursor = closestIndex;
                     menuMesh.urlMesh.updateText();
                   }
                 } else if (fieldIndex === 1) {
@@ -1623,8 +1632,8 @@
 
                   let closestIndex = -1;
                   let closestDistance = Infinity;
-                  for (let i = 0; i < passwordMeasures.length; i++) {
-                    const passwordMeasure = passwordMeasures[i];
+                  for (let i = 0; i < passwordState.measures.length; i++) {
+                    const passwordMeasure = passwordState.measures[i];
                     const distance = Math.abs(passwordMeasure - textX);
                     if (distance < closestDistance) {
                       closestIndex = i;
@@ -1632,7 +1641,7 @@
                     }
                   }
                   if (closestIndex !== -1) {
-                    passwordCursor = closestIndex;
+                    passwordState.cursor = closestIndex;
                     menuMesh.urlMesh.updateText();
                   }
                 } else if (fieldIndex === 2) {
@@ -1777,22 +1786,22 @@
 
     const _handleKey = (code, shiftKey) => {
       if (code === 8) { // backspace
-        if (urlCursor > 0) {
-          urlText = urlText.slice(0, urlCursor - 1) + urlText.slice(urlCursor);
-          urlCursor--;
+        if (urlState.cursor > 0) {
+          urlState.text = urlState.text.slice(0, urlState.cursor - 1) + urlState.text.slice(urlState.cursor);
+          urlState.cursor--;
           menuMesh.urlMesh.updateText();
         }
       } else if (code === 46) { // delete
-        if (urlCursor < urlText.length) {
-          urlText = urlText.slice(0, urlCursor) + urlText.slice(urlCursor + 1);
+        if (urlState.cursor < urlState.text.length) {
+          urlState.text = urlState.text.slice(0, urlState.cursor) + urlState.text.slice(urlState.cursor + 1);
           menuMesh.urlMesh.updateText();
         }
       } else if (code === 32) { // space
-        urlText = urlText.slice(0, urlCursor) + ' ' + urlText.slice(urlCursor);
-        urlCursor++;
+        urlState.text = urlState.text.slice(0, urlState.cursor) + ' ' + urlState.text.slice(urlState.cursor);
+        urlState.cursor++;
         menuMesh.urlMesh.updateText();
       } else if (code === 13) { // enter
-        _openUrl(urlText);
+        _openUrl(urlState.text);
       } else if (
         code === 9 || // tab
         code === 16 || // shift
@@ -1804,16 +1813,16 @@
       ) {
         // nothing
       } else if (code === 37) { // left
-        urlCursor = Math.max(urlCursor - 1, 0);
+        urlState.cursor = Math.max(urlState.cursor - 1, 0);
         menuMesh.urlMesh.updateText();
       } else if (code === 39) { // right
-        urlCursor = Math.min(urlCursor + 1, urlText.length);
+        urlState.cursor = Math.min(urlState.cursor + 1, urlState.text.length);
         menuMesh.urlMesh.updateText();
       } else if (code === 38) { // up
-        urlCursor = 0;
+        urlState.cursor = 0;
         menuMesh.urlMesh.updateText();
       } else if (code === 40) { // down
-        urlCursor = urlText.length;
+        urlState.cursor = urlState.text.length;
         menuMesh.urlMesh.updateText();
       } else if (code === -1) {
         // nothing
@@ -1822,8 +1831,8 @@
         if (shiftKey) {
           c = c.toUpperCase();
         }
-        urlText = urlText.slice(0, urlCursor) + c + urlText.slice(urlCursor);
-        urlCursor++;
+        urlState.text = urlState.text.slice(0, urlState.cursor) + c + urlState.text.slice(urlState.cursor);
+        urlState.cursor++;
         menuMesh.urlMesh.updateText();
       }
     };
@@ -2084,8 +2093,8 @@
       const item = items.find(item => item.kind === 'string');
       if (item) {
         item.getAsString(s => {
-          urlText = urlText.slice(0, urlCursor) + s + urlText.slice(urlCursor);
-          urlCursor += s.length;
+          urlState.text = urlState.text.slice(0, urlState.cursor) + s + urlState.text.slice(urlState.cursor);
+          urlState.cursor += s.length;
           menuMesh.urlMesh.updateText();
         });
       }
