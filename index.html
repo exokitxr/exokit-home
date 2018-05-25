@@ -2132,31 +2132,6 @@
 
       console.log('drop', e);
     });
-    function detectKeyboardUser(keyPress){
-          switch(keyPress) {
-            case 'W':
-              W++;
-              break;
-            case 'A':
-              A++;
-              break;
-            case 'S':
-              S++;
-              break;
-            case 'D':
-              D++;
-              break;
-        }
-        if(W > 3 || A > 3 || S > 3 || D > 3){
-            console.log('Keyboard Detected');
-          return true;
-        }
-        else{
-            console.log('W:' +  W, 'A:' + A, 'S:' + S, 'D:' + D);
-          return false;
-
-        }
-    }
   </script>
 </body>
 </html>
