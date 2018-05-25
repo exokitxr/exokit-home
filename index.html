@@ -102,6 +102,7 @@
       cursor: -1,
       measures: [],
       submit() {
+        _closeUrl();
         _openUrl(urlState.text);
       },
     };
@@ -1656,6 +1657,7 @@
               if (currentAppIndex === -1) {
                 currentApps.push(app);
 
+                _closeUrl();
                 _openUrl(app); // XXX
               } else {
                 currentApps.splice(currentAppIndex, 1);
@@ -1965,6 +1967,7 @@
 
         container.removeChild(iframe);
       }
+      iframes.length = 0;
 
       screenQuad.material.uniforms.numTextures.value = 1;
       screenQuad.material.uniforms.uTexture2.value = null;
