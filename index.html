@@ -100,18 +100,23 @@
       text: 'http://',
       cursor: -1,
       measures: [],
+      submit() {
+        _openUrl(urlState.text);
+      },
     };
     urlState.cursor = urlState.text.length;
     const usernameState = {
       text: 'username',
       cursor: -1,
       measures: [],
+      submit() {},
     };
     usernameState.cursor = usernameState.text.length;
     const passwordState = {
       text: '********',
       cursor: -1,
       measures: [],
+      submit() {},
     };
     passwordState.cursor = passwordState.text.length;
     let keyboardState = urlState;
@@ -1545,6 +1550,13 @@
             } else if (tabIndex !== -1) {
               currentTabIndex = tabIndex;
 
+              const tab = _getTab();
+              if (tab === 'URL') {
+                keyboardState = urlState;
+              } else if (tab === 'Login') {
+                keyboardState = useranmeState;
+              }
+
               menuMesh.urlMesh.updateText();
             } else if (loginHovered) {
               currentTabIndex = -2;
@@ -1568,6 +1580,8 @@
                 urlState.cursor = closestIndex;
                 menuMesh.urlMesh.updateText();
               }
+
+              keyboardState = urlState;
             } else if (appIndex !== -1) {
               const app = apps[appIndex];
               const currentAppIndex = currentApps.indexOf(app);
@@ -1627,6 +1641,8 @@
                     usernameState.cursor = closestIndex;
                     menuMesh.urlMesh.updateText();
                   }
+
+                  keyboardState = usernameState;
                 } else if (fieldIndex === 1) {
                   const textX = x - 10;
 
@@ -1644,6 +1660,8 @@
                     passwordState.cursor = closestIndex;
                     menuMesh.urlMesh.updateText();
                   }
+
+                  keyboardState = passwordState;
                 } else if (fieldIndex === 2) {
                   _openLogin();
 
@@ -1786,22 +1804,22 @@
 
     const _handleKey = (code, shiftKey) => {
       if (code === 8) { // backspace
-        if (urlState.cursor > 0) {
-          urlState.text = urlState.text.slice(0, urlState.cursor - 1) + urlState.text.slice(urlState.cursor);
-          urlState.cursor--;
+        if (keyboardState.cursor > 0) {
+          keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor - 1) + keyboardState.text.slice(keyboardState.cursor);
+          keyboardState.cursor--;
           menuMesh.urlMesh.updateText();
         }
       } else if (code === 46) { // delete
-        if (urlState.cursor < urlState.text.length) {
-          urlState.text = urlState.text.slice(0, urlState.cursor) + urlState.text.slice(urlState.cursor + 1);
+        if (keyboardState.cursor < keyboardState.text.length) {
+          keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor) + keyboardState.text.slice(keyboardState.cursor + 1);
           menuMesh.urlMesh.updateText();
         }
       } else if (code === 32) { // space
-        urlState.text = urlState.text.slice(0, urlState.cursor) + ' ' + urlState.text.slice(urlState.cursor);
-        urlState.cursor++;
+        keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor) + ' ' + keyboardState.text.slice(keyboardState.cursor);
+        keyboardState.cursor++;
         menuMesh.urlMesh.updateText();
       } else if (code === 13) { // enter
-        _openUrl(urlState.text);
+        keyboardState.submit();
       } else if (
         code === 9 || // tab
         code === 16 || // shift
@@ -1813,16 +1831,16 @@
       ) {
         // nothing
       } else if (code === 37) { // left
-        urlState.cursor = Math.max(urlState.cursor - 1, 0);
+        keyboardState.cursor = Math.max(keyboardState.cursor - 1, 0);
         menuMesh.urlMesh.updateText();
       } else if (code === 39) { // right
-        urlState.cursor = Math.min(urlState.cursor + 1, urlState.text.length);
+        keyboardState.cursor = Math.min(keyboardState.cursor + 1, keyboardState.text.length);
         menuMesh.urlMesh.updateText();
       } else if (code === 38) { // up
-        urlState.cursor = 0;
+        keyboardState.cursor = 0;
         menuMesh.urlMesh.updateText();
       } else if (code === 40) { // down
-        urlState.cursor = urlState.text.length;
+        keyboardState.cursor = keyboardState.text.length;
         menuMesh.urlMesh.updateText();
       } else if (code === -1) {
         // nothing
@@ -1831,8 +1849,8 @@
         if (shiftKey) {
           c = c.toUpperCase();
         }
-        urlState.text = urlState.text.slice(0, urlState.cursor) + c + urlState.text.slice(urlState.cursor);
-        urlState.cursor++;
+        keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor) + c + keyboardState.text.slice(keyboardState.cursor);
+        keyboardState.cursor++;
         menuMesh.urlMesh.updateText();
       }
     };
@@ -2093,8 +2111,8 @@
       const item = items.find(item => item.kind === 'string');
       if (item) {
         item.getAsString(s => {
-          urlState.text = urlState.text.slice(0, urlState.cursor) + s + urlState.text.slice(urlState.cursor);
-          urlState.cursor += s.length;
+          keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor) + s + keyboardState.text.slice(keyboardState.cursor);
+          keyboardState.cursor += s.length;
           menuMesh.urlMesh.updateText();
         });
       }
