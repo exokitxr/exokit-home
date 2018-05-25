@@ -789,6 +789,43 @@
           console.warn(err.stack);
         });
     })();
+
+    const skinPreviewCanvas = (() => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 800;
+      const renderer = new THREE.WebGLRenderer({
+        canvas,
+        alpha: true,
+      });
+      const scene = new THREE.Scene();
+      // scene.background = new THREE.Color(0xFFFFFF);
+      const camera = new THREE.PerspectiveCamera(90, 1/2, 0.1, 1024);
+
+      const mesh = skin({
+        limbs: true,
+      });
+      mesh.position.set(0, -1.5/2, -1.2);
+      mesh.quaternion.setFromUnitVectors(
+        localVector.set(0, 0, -1),
+        localVector2.set(0, 0, 1)
+      );
+      scene.add(mesh);
+
+      const skinImg = new Image();
+      skinImg.crossOrigin = 'Anonymous';
+      skinImg.src = 'img/skins/male.png';
+      skinImg.onload = () => {
+        mesh.setImage(skinImg);
+
+        renderer.render(scene, camera);
+      };
+      skinImg.onerror = err => {
+        console.warn('skin image error', err.stack);
+      };
+
+      return canvas;
+    })();
     const menuMesh = (() => {
       const object = new THREE.Object3D();
       object.position.copy(camera.position).add(new THREE.Vector3(0, 0.5, -2));
@@ -961,6 +998,9 @@
               ctx.fillStyle = '#FFF';
               ctx.font = `${fontSize*0.5}px Arial`;
               ctx.fillText('Logout', 50, urlBarOffset + 80);
+
+              ctx.drawImage(skinPreviewCanvas, 0, urlBarOffset*2);
+              ctx.fillStyle = '#333';
             }
           }
 
