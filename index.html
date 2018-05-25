@@ -234,8 +234,10 @@
       voicechatEnabled = false;
     };
 
-    const _openLogin = () => {
-      user = {}; // XXX
+    const _openLogin = () => { // XXX
+      user = {
+        name: usernameText,
+      };
     };
     const _closeLogin = () => {
       user = null;
@@ -846,56 +848,69 @@
             ctx.fillText('Voice', 0, urlBarOffset + fontSize);
           } else if (tab === 'Login') {
             ctx.fillStyle = '#e53935';
-            ctx.fillRect(menuWidth - 500 - 20, urlBarOffset - 10, tabWidth, 10);
+            ctx.fillRect(menuWidth - 550, urlBarOffset - 10, tabWidth, 10);
 
-            ctx.fillStyle = '#333';
-            ctx.fillRect(0, urlBarOffset, urlBarWidth, urlBarHeight);
-            ctx.fillStyle = '#FFF';
-            ctx.fillRect(5, urlBarOffset + 5, urlBarWidth - 10, urlBarHeight - 10);
-            ctx.fillStyle = '#333';
-            ctx.font = `${fontSize}px Arial`;
-            ctx.fillText(usernameText, 10, urlBarOffset + urlBarHeight - 10*2 - 30);
+            if (!user) {
+              ctx.fillStyle = '#333';
+              ctx.fillRect(0, urlBarOffset, urlBarWidth, urlBarHeight);
+              ctx.fillStyle = '#FFF';
+              ctx.fillRect(5, urlBarOffset + 5, urlBarWidth - 10, urlBarHeight - 10);
+              ctx.fillStyle = '#333';
+              ctx.font = `${fontSize}px Arial`;
+              ctx.fillText(usernameText, 10, urlBarOffset + urlBarHeight - 10*2 - 30);
 
-            usernameMeasures.length = 0;
-            usernameMeasures.push(0);
-            const {width: usernameWidth} = ctx.measureText('[');
-            for (let i = 1; i <= usernameText.length; i++) {
-              const {width} = ctx.measureText('[' + usernameText.slice(0, i) + ']');
-              usernameMeasures.push(width - usernameWidth*2);
+              usernameMeasures.length = 0;
+              usernameMeasures.push(0);
+              const {width: usernameWidth} = ctx.measureText('[');
+              for (let i = 1; i <= usernameText.length; i++) {
+                const {width} = ctx.measureText('[' + usernameText.slice(0, i) + ']');
+                usernameMeasures.push(width - usernameWidth*2);
+              }
+
+              ctx.fillStyle = '#03a9f4';
+              ctx.fillRect(10 + usernameMeasures[usernameCursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
+
+              ctx.fillStyle = '#333';
+              ctx.fillRect(0, urlBarOffset*2, urlBarWidth, urlBarHeight);
+              ctx.fillStyle = '#FFF';
+              ctx.fillRect(5, urlBarOffset*2 + 5, urlBarWidth - 10, urlBarHeight - 10);
+              ctx.fillStyle = '#333';
+              ctx.font = `${fontSize}px Arial`;
+              ctx.fillText(passwordText, 10, urlBarOffset*2 + urlBarHeight - 10*2 - 30);
+
+              passwordMeasures.length = 0;
+              passwordMeasures.push(0);
+              const {width: passwordWidth} = ctx.measureText('[');
+              for (let i = 1; i <= passwordText.length; i++) {
+                const {width} = ctx.measureText('[' + passwordText.slice(0, i) + ']');
+                passwordMeasures.push(width - passwordWidth*2);
+              }
+
+              ctx.fillStyle = '#03a9f4';
+              ctx.fillRect(10 + passwordMeasures[passwordCursor] - cursorWidth/2, urlBarOffset*2 + 20, cursorWidth, urlBarHeight - 20*2);
+
+              ctx.fillStyle = '#333';
+              ctx.fillRect(0, urlBarOffset*3, 300, fontSize);
+              ctx.fillStyle = '#FFF';
+              ctx.font = `${fontSize*0.5}px Arial`;
+              ctx.fillText('Login', 70, urlBarOffset*3 + 80);
+            } else {
+              ctx.fillStyle = '#333';
+              ctx.fillRect(0, urlBarOffset, 300, fontSize);
+              ctx.fillStyle = '#FFF';
+              ctx.font = `${fontSize*0.5}px Arial`;
+              ctx.fillText('Logout', 50, urlBarOffset + 80);
             }
-
-            ctx.fillStyle = '#03a9f4';
-            ctx.fillRect(10 + usernameMeasures[usernameCursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
-
-            ctx.fillStyle = '#333';
-            ctx.fillRect(0, urlBarOffset*2, urlBarWidth, urlBarHeight);
-            ctx.fillStyle = '#FFF';
-            ctx.fillRect(5, urlBarOffset*2 + 5, urlBarWidth - 10, urlBarHeight - 10);
-            ctx.fillStyle = '#333';
-            ctx.font = `${fontSize}px Arial`;
-            ctx.fillText(passwordText, 10, urlBarOffset*2 + urlBarHeight - 10*2 - 30);
-
-            passwordMeasures.length = 0;
-            passwordMeasures.push(0);
-            const {width: passwordWidth} = ctx.measureText('[');
-            for (let i = 1; i <= passwordText.length; i++) {
-              const {width} = ctx.measureText('[' + passwordText.slice(0, i) + ']');
-              passwordMeasures.push(width - passwordWidth*2);
-            }
-
-            ctx.fillStyle = '#03a9f4';
-            ctx.fillRect(10 + passwordMeasures[passwordCursor] - cursorWidth/2, urlBarOffset*2 + 20, cursorWidth, urlBarHeight - 20*2);
           }
 
           ctx.font = `${fontSize*0.7}px Arial`;
           if (!user) {
             ctx.fillStyle = '#333';
-            const t = 'Not logged in';
-            ctx.fillText(t, menuWidth - 500 - 20, urlBarOffset);
+            ctx.fillText('Not logged in', menuWidth - 550, urlBarOffset);
           } else {
             ctx.fillStyle = '#333';
-            const t = 'Username';
-            ctx.fillText(t, menuWidth - 500 - 20, urlBarOffset);
+            ctx.fillRect(menuWidth - 550, urlBarOffset - 100, 100, 100);
+            ctx.fillText(user.name, menuWidth - 550 + 100 + 20, urlBarOffset);
           }
 
           texture.needsUpdate = true;
@@ -1296,7 +1311,7 @@
                     controllerMesh.updateMatrixWorld();
                     controllerMesh.rayDot.visible = true;
                   } else {
-                    const xLeft = menuWidth - 500 - 20;
+                    const xLeft = menuWidth - 550;
 
                     if (x > xLeft) {
                       loginHovered = true;
@@ -1386,19 +1401,36 @@
                       intersectionPoint = null;
                     }
                   } else if (tab === 'Login') {
-                    const fieldIndex = Math.floor((y - urlBarOffset) / urlBarOffset);
+                    if (!user) {
+                      const fieldIndex = Math.floor((y - urlBarOffset) / urlBarOffset);
 
-                    if (fieldIndex <= 2) {
-                      loginCoords = [fieldIndex, x, y];
+                      if (fieldIndex < 3) {
+                        loginCoords = [fieldIndex, x, y];
 
-                      controllerMesh.rayMesh.scale.z = distance;
-                      controllerMesh.updateMatrixWorld();
+                        controllerMesh.rayMesh.scale.z = distance;
+                        controllerMesh.updateMatrixWorld();
 
-                      controllerMesh.rayDot.position.z = -distance;
-                      controllerMesh.updateMatrixWorld();
-                      controllerMesh.rayDot.visible = true;
+                        controllerMesh.rayDot.position.z = -distance;
+                        controllerMesh.updateMatrixWorld();
+                        controllerMesh.rayDot.visible = true;
+                      } else {
+                        intersectionPoint = null;
+                      }
                     } else {
-                      intersectionPoint = null;
+                      const fieldIndex = Math.floor((y - urlBarOffset) / urlBarOffset);
+
+                      if (fieldIndex < 1) {
+                        loginCoords = [fieldIndex, x, y];
+
+                        controllerMesh.rayMesh.scale.z = distance;
+                        controllerMesh.updateMatrixWorld();
+
+                        controllerMesh.rayDot.position.z = -distance;
+                        controllerMesh.updateMatrixWorld();
+                        controllerMesh.rayDot.visible = true;
+                      } else {
+                        intersectionPoint = null;
+                      }
                     }
                   } else {
                     intersectionPoint = null;
@@ -1568,38 +1600,52 @@
             } else if (loginCoords) {
               const [fieldIndex, x, y] = loginCoords;
 
-              if (fieldIndex === 0) {
-                const textX = x - 10;
+              if (!user) {
+                if (fieldIndex === 0) {
+                  const textX = x - 10;
 
-                let closestIndex = -1;
-                let closestDistance = Infinity;
-                for (let i = 0; i < usernameMeasures.length; i++) {
-                  const usernameMeasure = usernameMeasures[i];
-                  const distance = Math.abs(usernameMeasure - textX);
-                  if (distance < closestDistance) {
-                    closestIndex = i;
-                    closestDistance = distance;
+                  let closestIndex = -1;
+                  let closestDistance = Infinity;
+                  for (let i = 0; i < usernameMeasures.length; i++) {
+                    const usernameMeasure = usernameMeasures[i];
+                    const distance = Math.abs(usernameMeasure - textX);
+                    if (distance < closestDistance) {
+                      closestIndex = i;
+                      closestDistance = distance;
+                    }
                   }
-                }
-                if (closestIndex !== -1) {
-                  usernameCursor = closestIndex;
+                  if (closestIndex !== -1) {
+                    usernameCursor = closestIndex;
+                    menuMesh.urlMesh.updateText();
+                  }
+                } else if (fieldIndex === 1) {
+                  const textX = x - 10;
+
+                  let closestIndex = -1;
+                  let closestDistance = Infinity;
+                  for (let i = 0; i < passwordMeasures.length; i++) {
+                    const passwordMeasure = passwordMeasures[i];
+                    const distance = Math.abs(passwordMeasure - textX);
+                    if (distance < closestDistance) {
+                      closestIndex = i;
+                      closestDistance = distance;
+                    }
+                  }
+                  if (closestIndex !== -1) {
+                    passwordCursor = closestIndex;
+                    menuMesh.urlMesh.updateText();
+                  }
+                } else if (fieldIndex === 2) {
+                  _openLogin();
+
                   menuMesh.urlMesh.updateText();
                 }
-              } else if (fieldIndex === 1) {
-                const textX = x - 10;
+              } else {
+                if (fieldIndex === 0) {
+                  _closeLogin();
 
-                let closestIndex = -1;
-                let closestDistance = Infinity;
-                for (let i = 0; i < passwordMeasures.length; i++) {
-                  const passwordMeasure = passwordMeasures[i];
-                  const distance = Math.abs(passwordMeasure - textX);
-                  if (distance < closestDistance) {
-                    closestIndex = i;
-                    closestDistance = distance;
-                  }
-                }
-                if (closestIndex !== -1) {
-                  passwordCursor = closestIndex;
+                  console.log('close login');
+
                   menuMesh.urlMesh.updateText();
                 }
               }
