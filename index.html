@@ -1928,13 +1928,17 @@
 
         const colorTexture = new THREE.Texture();
         const colorProperties = renderer.properties.get(colorTexture);
-        colorProperties.__webglTexture = framebuffer.colorTexture;
+        colorProperties.__webglTexture = {
+          id: framebuffer.colorTexture,
+        };
         colorProperties.__webglInit = true;
         screenQuad.material.uniforms.uTexture2.value = colorTexture;
 
         const depthTexture = new THREE.Texture();
         const depthProperties = renderer.properties.get(depthTexture);
-        depthProperties.__webglTexture = framebuffer.depthStencilTexture;
+        depthProperties.__webglTexture = {
+          id: framebuffer.depthStencilTexture,
+        };
         depthProperties.__webglInit = true;
         screenQuad.material.uniforms.uDepth2.value = depthTexture;
 
