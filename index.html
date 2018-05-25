@@ -109,14 +109,22 @@
       text: 'username',
       cursor: -1,
       measures: [],
-      submit() {},
+      submit() {
+        _openLogin();
+
+        menuMesh.urlMesh.updateText();
+      },
     };
     usernameState.cursor = usernameState.text.length;
     const passwordState = {
       text: '********',
       cursor: -1,
       measures: [],
-      submit() {},
+      submit() {
+        _openLogin();
+
+        menuMesh.urlMesh.updateText();
+      },
     };
     passwordState.cursor = passwordState.text.length;
     let keyboardState = urlState;
