@@ -17,6 +17,7 @@
   <script src="js/three.js"></script>
   <script src="js/vr-display.js"></script>
   <script src="js/skin.js"></script>
+  <script src="js/sprite3d.js"></script>
   <script src="js/OBJLoader.js"></script>
   <script src="js/ScreenQuad.js"></script>
   <script src="js/keycode.js"></script>
@@ -106,24 +107,20 @@
     };
     urlState.cursor = urlState.text.length;
     const usernameState = {
-      text: 'username',
+      text: 'lol@zol.com',
       cursor: -1,
       measures: [],
       submit() {
         _openLogin();
-
-        menuMesh.urlMesh.updateText();
       },
     };
     usernameState.cursor = usernameState.text.length;
     const passwordState = {
-      text: '********',
+      text: 'zol',
       cursor: -1,
       measures: [],
       submit() {
         _openLogin();
-
-        menuMesh.urlMesh.updateText();
       },
     };
     passwordState.cursor = passwordState.text.length;
@@ -257,13 +254,28 @@
       voicechatEnabled = false;
     };
 
+    let xrid = null;
     const _openLogin = () => { // XXX
+      xrid = new XRID('https://id.webmr.io', {
+        username: 'lol@lol.zol',
+        password: 'zol',
+      });
+      xrid.onauthenticate = e => {
+        user = e.user;
+
+        menuMesh.urlMesh.updateText();
+      };
+      xrid.onerror = err => {
+        console.warn(err.stack);
+      };
       user = {
         name: usernameState.text,
       };
     };
     const _closeLogin = () => {
       user = null;
+
+      menuMesh.urlMesh.updateText();
     };
 
     canvas.width = window.innerWidth;
@@ -695,6 +707,18 @@
       };
     })();
 
+    const _requestSpriteMesh = itemType => new Promise((accept, reject) => {
+      const img = new Image();
+      img.src = `img/items/${itemType}.png`;
+      img.onload = () => {
+        const spriteMesh = sprite3d.makeSpriteMesh(img);
+        accept(spriteMesh);
+      };
+      img.onerror = err => {
+        reject(err);
+      };
+    });
+
     const tabs = ['URL', 'Apps', 'Party', 'Config'];
     const cursorWidth = 10;
     const _getTab = () => {
@@ -899,13 +923,14 @@
               ctx.fillRect(5, urlBarOffset*2 + 5, urlBarWidth - 10, urlBarHeight - 10);
               ctx.fillStyle = '#333';
               ctx.font = `${fontSize}px Arial`;
-              ctx.fillText(passwordState.text, 10, urlBarOffset*2 + urlBarHeight - 10*2 - 30);
+              const passwordText = '*'.repeat(passwordState.text.length);
+              ctx.fillText(passwordText, 10, urlBarOffset*2 + urlBarHeight - 10*2 - 30);
 
               passwordState.measures.length = 0;
               passwordState.measures.push(0);
               const {width: passwordWidth} = ctx.measureText('[');
-              for (let i = 1; i <= passwordState.text.length; i++) {
-                const {width} = ctx.measureText('[' + passwordState.text.slice(0, i) + ']');
+              for (let i = 1; i <= passwordText.length; i++) {
+                const {width} = ctx.measureText('[' + passwordText.slice(0, i) + ']');
                 passwordState.measures.push(width - passwordWidth*2);
               }
 
@@ -933,7 +958,7 @@
           } else {
             ctx.fillStyle = '#333';
             ctx.fillRect(menuWidth - 550, urlBarOffset - 100, 100, 100);
-            ctx.fillText(user.name, menuWidth - 550 + 100 + 20, urlBarOffset);
+            ctx.fillText(user.username, menuWidth - 550 + 100 + 20, urlBarOffset);
           }
 
           texture.needsUpdate = true;
@@ -1672,16 +1697,10 @@
                   keyboardState = passwordState;
                 } else if (fieldIndex === 2) {
                   _openLogin();
-
-                  menuMesh.urlMesh.updateText();
                 }
               } else {
                 if (fieldIndex === 0) {
                   _closeLogin();
-
-                  console.log('close login');
-
-                  menuMesh.urlMesh.updateText();
                 }
               }
             }
@@ -2131,7 +2150,19 @@
     window.addEventListener('drop', e => {
       e.preventDefault();
 
-      console.log('drop', e);
+      _requestSpriteMesh('file')
+        .then(spriteMesh => {
+          spriteMesh.position
+            .copy(camera.position)
+             .add(
+                localVector.set(0, 0, -0.4)
+                  .applyQuaternion(camera.quaternion)
+             );
+          scene.add(spriteMesh);
+        })
+        .catch(err => {
+          console.warn(err.stack);
+        });
     });
   </script>
 </body>
