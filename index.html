@@ -97,6 +97,7 @@
       `,
     };
     let menuOpen = true;
+    const fileMeshes = [];
 
     const urlState = {
       text: 'http://',
@@ -1639,19 +1640,19 @@
 
           const lastGrabbed = lastGrabbeds[controllerIndex];
           lastGrabbeds[controllerIndex] = grabbed;
-          /* if (grabbed && !lastGrabbed) {
-            const targetObject = objectMeshes.find(objectMesh =>
+          if (grabbed && !lastGrabbed) {
+            const targetObject = fileMeshes.find(objectMesh =>
               objectMesh.position.distanceTo(controllerMesh.position) < 0.1
             );
             if (targetObject) {
-              grabbedObjects[i] = targetObject;
+              grabbedObjects[controllerIndex] = targetObject;
             }
           } else if (!grabbed && lastGrabbed) {
-            const grabbedObject = grabbedObjects[i];
+            const grabbedObject = grabbedObjects[controllerIndex];
             if (grabbedObject) {
-              grabbedObjects[i] = null;
+              grabbedObjects[controllerIndex] = null;
             }
-          } */
+          }
 
           const lastPressed = lastPresseds[controllerIndex];
           lastPresseds[controllerIndex] = pressed;
@@ -2328,6 +2329,7 @@
                   .applyQuaternion(camera.quaternion)
              );
           scene.add(spriteMesh);
+          fileMeshes.push(spriteMesh);
         })
         .catch(err => {
           console.warn(err.stack);
