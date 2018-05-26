@@ -2180,6 +2180,10 @@
             fakeDisplay.gamepads[1].buttons[3].pressed = true;
             break;
           }
+          case 70: { // F
+            fakeDisplay.gamepads[1].buttons[2].pressed = true;
+            break;
+          }
         }
       } else {
         const code = _normalizeKeycode(e.keyCode);
@@ -2221,6 +2225,10 @@
           }
           case 69: { // E
             fakeDisplay.gamepads[1].buttons[3].pressed = false;
+            break;
+          }
+          case 70: { // F
+            fakeDisplay.gamepads[1].buttons[2].pressed = false;
             break;
           }
         }
