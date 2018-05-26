@@ -1641,7 +1641,7 @@
 
           const lastGrabbed = lastGrabbeds[controllerIndex];
           lastGrabbeds[controllerIndex] = grabbed;
-          if (grabbed && !lastGrabbed) {
+          /* if (grabbed && !lastGrabbed) {
             const targetObject = objectMeshes.find(objectMesh =>
               objectMesh.position.distanceTo(controllerMesh.position) < 0.1
             );
@@ -1653,7 +1653,7 @@
             if (grabbedObject) {
               grabbedObjects[i] = null;
             }
-          }
+          } */
 
           const lastPressed = lastPresseds[controllerIndex];
           lastPresseds[controllerIndex] = pressed;
