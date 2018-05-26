@@ -2081,7 +2081,7 @@
     window.addEventListener('keypress', e => {
       if (!window.document.pointerLockElement) {
         switch (e.which) {
-          case 67: { // C
+          case 99: { // C
             if (e.ctrlKey) {
               document.execCommand('copy');
             } else {
@@ -2089,7 +2089,7 @@
             }
             break;
           }
-          case 86: { // V
+          case 118: { // V
             if (e.ctrlKey) {
               document.execCommand('paste');
             } else {
@@ -2110,7 +2110,7 @@
         }
       } else {
         switch (e.which) {
-          case 73: { // I
+          case 105: { // I
             console.log('enable VR');
 
             const display = displays.find(display =>
@@ -2139,7 +2139,7 @@
             }
             break;
           }
-          case 79: { // O
+          case 111: { // O
             console.log('enable ML');
 
             const display = displays.find(display =>
