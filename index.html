@@ -96,6 +96,7 @@
         }
       `,
     };
+    let menuOpen = true;
 
     const urlState = {
       text: 'http://',
@@ -1581,7 +1582,7 @@
           const lastMenuPressed = lastMenuPresseds[controllerIndex];
           lastMenuPresseds[controllerIndex] = menuPressed;
           if (menuPressed && !lastMenuPressed) {
-            const opening = keyboardMesh.planeMesh.scale.y < 0.5;
+            const opening = !menuOpen;
             if (opening) {
               localEuler.setFromQuaternion(camera.quaternion, localEuler.order);
               localEuler.x = 0;
@@ -1603,14 +1604,11 @@
                     .applyEuler(localEuler)
                 );
 
-              for (let i = 0; i < controllerMeshes.length; i++) {
-                controllerMeshes[i].rayMesh.visible = true;
-              }
+              controllerMeshes[controllerIndex].rayMesh.visible = true;
             } else {
-              for (let i = 0; i < controllerMeshes.length; i++) {
-                controllerMeshes[i].rayMesh.visible = false;
-              }
+              controllerMeshes[controllerIndex].rayMesh.visible = false;
             }
+            menuOpen = opening;
 
             if (opening) {
               localEuler.setFromQuaternion(
@@ -2207,7 +2205,9 @@
               gamepad.buttons[i].pressed = false;
             }
             controllerIndex = 1;
-            controllerMeshes[controllerIndex].rayMesh.visible = true;
+            if (menuOpen) {
+              controllerMeshes[controllerIndex].rayMesh.visible = true;
+            }
             break;
           }
           case 90: { // Z
@@ -2223,7 +2223,9 @@
               gamepad.buttons[i].pressed = false;
             }
             controllerIndex = 0;
-            controllerMeshes[controllerIndex].rayMesh.visible = true;
+            if (menuOpen) {
+              controllerMeshes[controllerIndex].rayMesh.visible = true;
+            }
             break;
           }
           case 69: { // E
