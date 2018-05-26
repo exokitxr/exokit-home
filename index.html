@@ -1923,6 +1923,15 @@
     }
     window.requestAnimationFrame(animate);
 
+    const _handleDefaultKey = (code, shiftKey) => {
+      let c = String.fromCharCode(code);
+      if (shiftKey) {
+        c = c.toUpperCase();
+      }
+      keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor) + c + keyboardState.text.slice(keyboardState.cursor);
+      keyboardState.cursor++;
+      menuMesh.urlMesh.updateText();
+    };
     const _handleKey = (code, shiftKey) => {
       if (code === 8) { // backspace
         if (keyboardState.cursor > 0) {
@@ -1966,13 +1975,7 @@
       } else if (code === -1) {
         // nothing
       } else {
-        let c = keyCode(code);
-        if (shiftKey) {
-          c = c.toUpperCase();
-        }
-        keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor) + c + keyboardState.text.slice(keyboardState.cursor);
-        keyboardState.cursor++;
-        menuMesh.urlMesh.updateText();
+        _handleDefaultKey(code, shiftKey);
       }
     };
     const iframes = [];
@@ -2063,41 +2066,51 @@
     });
     THREE.AudioContext.setContext(audioCtx);
 
-    const _normalizeKeycode = keyCode => {
-      if (keyCode >= 97 && keyCode <= 122) {
-        return keyCode - 32;
-      } else {
-        return keyCode;
-      }
-    };
+    const _isPrintableKey = code =>
+      code !== 8 && // backspace
+      code !== 46 && // delete
+      code !== 9 && // tab
+      code !== 16 && // shift
+      code !== 17 && // ctrl
+      code !== 18 && // alt
+      code !== 20 && // capslock
+      code !== 27 && // esc
+      code !== 91 && // win
+      !(code >= 37 && code <= 40); // arrows
 
     window.addEventListener('keypress', e => {
       if (!window.document.pointerLockElement) {
-        switch (e.keyCode) {
-          case 99: { // C
+        switch (e.which) {
+          case 67: { // C
             if (e.ctrlKey) {
               document.execCommand('copy');
             } else {
-              _handleKey(_normalizeKeycode(e.keyCode), e.shiftKey);
+              _handleKey(e.which, e.shiftKey);
             }
             break;
           }
-          case 118: { // V
+          case 86: { // V
             if (e.ctrlKey) {
               document.execCommand('paste');
             } else {
-              _handleKey(_normalizeKeycode(e.keyCode), e.shiftKey);
+              _handleKey(e.which, e.shiftKey);
             }
             break;
           }
           default: {
-            _handleKey(_normalizeKeycode(e.keyCode), e.shiftKey);
+            let c = String.fromCharCode(e.which);
+            if (e.shiftKey) {
+              c = c.toUpperCase();
+            }
+            keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor) + c + keyboardState.text.slice(keyboardState.cursor);
+            keyboardState.cursor++;
+            menuMesh.urlMesh.updateText();
             break;
           }
         }
       } else {
-        switch (e.keyCode) {
-          case 105: { // I
+        switch (e.which) {
+          case 73: { // I
             console.log('enable VR');
 
             const display = displays.find(display =>
@@ -2126,7 +2139,7 @@
             }
             break;
           }
-          case 111: { // O
+          case 79: { // O
             console.log('enable ML');
 
             const display = displays.find(display =>
@@ -2152,7 +2165,7 @@
     });
     window.addEventListener('keydown', e => {
       if (window.document.pointerLockElement) {
-        switch (e.keyCode) {
+        switch (e.which) {
           case 87: { // W
             keys.up = true;
             if (!window.document.pointerLockElement) {
@@ -2223,27 +2236,14 @@
           }
         }
       } else {
-        const code = _normalizeKeycode(e.keyCode);
-
-        if (
-          code === 8 || // backspace
-          code === 46 || // delete
-          code === 9 || // tab
-          code === 16 || // shift
-          code === 17 || // ctrl
-          code === 18 || // alt
-          code === 20 || // capslock
-          code === 27 || // esc
-          code === 91 || // win
-          code >= 37 && code <= 40 // arrows
-        ) {
-          _handleKey(code, e.shiftKey);
+        if (!_isPrintableKey(e.which)) {
+          _handleKey(e.which, e.shiftKey);
         }
       }
     });
     window.addEventListener('keyup', e => {
       if (window.document.pointerLockElement) {
-        switch (e.keyCode) {
+        switch (e.which) {
           case 87: { // W
             keys.up = false;
             break;
