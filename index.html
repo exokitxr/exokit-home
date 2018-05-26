@@ -2014,7 +2014,9 @@
     const _closeUrl = () => {
       for (let i = 0; i < iframes.length; i++) {
         const iframe = iframes[i];
-        iframe.destroy();
+        if (iframe.destroy) {
+          iframe.destroy();
+        }
 
         container.removeChild(iframe);
       }
