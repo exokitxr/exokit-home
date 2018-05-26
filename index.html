@@ -126,6 +126,13 @@
     };
     passwordState.cursor = passwordState.text.length;
     let keyboardState = urlState;
+    let controllerIndex = 1;
+    const keys = {
+      up: false,
+      down: false,
+      left: false,
+      right: false,
+    };
 
     const upVector = new THREE.Vector3(0, 1, 0);
     const armQuaternionOffset = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, -1));
@@ -339,6 +346,7 @@
         });
 
         const mesh = new THREE.Mesh(geometry, material);
+        mesh.visible = i === 1;
         return mesh;
       })();
       controllerMesh.add(rayMesh);
@@ -352,6 +360,7 @@
 
         const mesh = new THREE.Mesh(geometry, material);
         mesh.position.z = -1;
+        mesh.visible = false;
         return mesh;
       })();
       controllerMesh.add(rayDot);
@@ -1282,11 +1291,11 @@
 
         const gamepads = _getGamepads();
 
-        for (let i = 0; i < controllerMeshes.length; i++) {
-          const controllerMesh = controllerMeshes[i];
+        (() => {
+          const controllerMesh = controllerMeshes[controllerIndex];
           controllerMesh.update();
 
-          const gamepad = gamepads[i];
+          const gamepad = gamepads[controllerIndex];
           let pressed = false;
           let grabbed = false;
           let menuPressed = false;
@@ -1569,8 +1578,8 @@
             _setIntersectionDefault();
           }
 
-          const lastMenuPressed = lastMenuPresseds[i];
-          lastMenuPresseds[i] = menuPressed;
+          const lastMenuPressed = lastMenuPresseds[controllerIndex];
+          lastMenuPresseds[controllerIndex] = menuPressed;
           if (menuPressed && !lastMenuPressed) {
             const opening = keyboardMesh.planeMesh.scale.y < 0.5;
             if (opening) {
@@ -1630,8 +1639,8 @@
             };
           }
 
-          const lastGrabbed = lastGrabbeds[i];
-          lastGrabbeds[i] = grabbed;
+          const lastGrabbed = lastGrabbeds[controllerIndex];
+          lastGrabbeds[controllerIndex] = grabbed;
           if (grabbed && !lastGrabbed) {
             const targetObject = objectMeshes.find(objectMesh =>
               objectMesh.position.distanceTo(controllerMesh.position) < 0.1
@@ -1646,8 +1655,8 @@
             }
           }
 
-          const lastPressed = lastPresseds[i];
-          lastPresseds[i] = pressed;
+          const lastPressed = lastPresseds[controllerIndex];
+          lastPresseds[controllerIndex] = pressed;
           if (pressed && !lastPressed) {
             if (gamepad.hapticActuators) {
               for (let j = 0; j < gamepad.hapticActuators.length; j++) {
@@ -1790,7 +1799,7 @@
               }
             }
           }
-        }
+        })();
       };
       const _animateKeyboard = () => {
         if (keyboardMeshAnimation) {
@@ -2060,12 +2069,6 @@
       }
     };
 
-    const keys = {
-      up: false,
-      down: false,
-      left: false,
-      right: false,
-    };
     window.addEventListener('keypress', e => {
       if (!window.document.pointerLockElement) {
         switch (e.keyCode) {
@@ -2176,12 +2179,44 @@
             }
             break;
           }
+          case 67: { // C
+            lastPresseds[controllerIndex] = false;
+            lastMenuPresseds[controllerIndex] = false;
+            lastGrabbeds[controllerIndex] = false;
+
+            controllerMeshes[controllerIndex].rayMesh.visible = false;
+            controllerMeshes[controllerIndex].rayDot.visible = false;
+            controllerMeshes[controllerIndex].keyMesh.visible = false;
+            const gamepad = fakeDisplay.gamepads[controllerIndex];
+            for (let i = 0; i < 4; i++) {
+              gamepad.buttons[i].pressed = false;
+            }
+            controllerIndex = 1;
+            controllerMeshes[controllerIndex].rayMesh.visible = true;
+            break;
+          }
+          case 90: { // Z
+            lastPresseds[controllerIndex] = false;
+            lastMenuPresseds[controllerIndex] = false;
+            lastGrabbeds[controllerIndex] = false;
+
+            controllerMeshes[controllerIndex].rayMesh.visible = false;
+            controllerMeshes[controllerIndex].rayDot.visible = false;
+            controllerMeshes[controllerIndex].keyMesh.visible = false;
+            const gamepad = fakeDisplay.gamepads[controllerIndex];
+            for (let i = 0; i < 4; i++) {
+              gamepad.buttons[i].pressed = false;
+            }
+            controllerIndex = 0;
+            controllerMeshes[controllerIndex].rayMesh.visible = true;
+            break;
+          }
           case 69: { // E
-            fakeDisplay.gamepads[1].buttons[3].pressed = true;
+            fakeDisplay.gamepads[controllerIndex].buttons[3].pressed = true;
             break;
           }
           case 70: { // F
-            fakeDisplay.gamepads[1].buttons[2].pressed = true;
+            fakeDisplay.gamepads[controllerIndex].buttons[2].pressed = true;
             break;
           }
         }
@@ -2224,11 +2259,11 @@
             break;
           }
           case 69: { // E
-            fakeDisplay.gamepads[1].buttons[3].pressed = false;
+            fakeDisplay.gamepads[controllerIndex].buttons[3].pressed = false;
             break;
           }
           case 70: { // F
-            fakeDisplay.gamepads[1].buttons[2].pressed = false;
+            fakeDisplay.gamepads[controllerIndex].buttons[2].pressed = false;
             break;
           }
         }
@@ -2240,12 +2275,12 @@
       } else {
         const gamepad = fakeDisplay.gamepads[1];
         if (gamepad) {
-          fakeDisplay.gamepads[1].buttons[1].pressed = true;
+          fakeDisplay.gamepads[controllerIndex].buttons[1].pressed = true;
         }
       }
     });
     window.addEventListener('mouseup', () => {
-      const gamepad = fakeDisplay.gamepads[1];
+      const gamepad = fakeDisplay.gamepads[controllerIndex];
       if (gamepad) {
         gamepad.buttons[1].pressed = false;
       }
