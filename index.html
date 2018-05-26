@@ -1221,6 +1221,7 @@
 
     const position = new THREE.Vector3();
     const velocity = new THREE.Vector3();
+    const speed = 0.001;
     let lastTime = Date.now();
     function animate() {
       const currentTime = Date.now();
@@ -1229,26 +1230,28 @@
 
       const _updateControls = () => {
         if (window.document.pointerLockElement) {
-          localVector.set(0, 0, 0);
+          let moving = false;
           if (keys.up) {
-            localVector.z--;
+            velocity.z -= speed;
+            moving = true;
           }
           if (keys.down) {
-            localVector.z++;
+            velocity.z += speed;
+            moving = true;
           }
           if (keys.left) {
-            localVector.x--;
+            velocity.x -= speed;
+            moving = true;
           }
           if (keys.right) {
-            localVector.x++;
+            velocity.x += speed;
+            moving = true;
           }
-          localVector
-            .normalize()
-            .multiplyScalar(0.1);
+          velocity.multiplyScalar(moving ? 0.98 : 0.9);
           localEuler.setFromQuaternion(fakeDisplay.quaternion, localEuler.order);
           localEuler.x = 0;
           fakeDisplay.position.add(
-            localVector
+            localVector.copy(velocity)
               .applyEuler(localEuler)
           );
 
