@@ -419,8 +419,8 @@
         if (palmNormal.x !== 0 || palmNormal.y !== 0 || palmNormal.z !== 0) {
           // const palmPosition = localVector.set(frameHandData[0], frameHandData[1], frameHandData[2]);
 
-          const fingerBaseIndex = (1 + (1 * 5)) * (3 + 3);
-          const fingerTipPosition = localVector2.set(frameHandData[fingerBaseIndex + 0], frameHandData[fingerBaseIndex + 1], frameHandData[fingerBaseIndex + 2]);
+          const fingerBaseIndex = (1 + 5) * (3 + 3);
+          const fingerTipPosition = localVector2.set(frameHandData[fingerBaseIndex], frameHandData[fingerBaseIndex + 1], frameHandData[fingerBaseIndex + 2]);
           const fingerTipDirection = localVector3.set(frameHandData[fingerBaseIndex + 3], frameHandData[fingerBaseIndex + 4], frameHandData[fingerBaseIndex + 5]);
 
           handMesh.position
@@ -446,7 +446,7 @@
                 .copy(camera.position)
                 .add(
                   localVector3
-                    .set(frameHandData[boneBaseIndex + 0], frameHandData[boneBaseIndex + 1], frameHandData[boneBaseIndex + 2])
+                    .set(frameHandData[boneBaseIndex], frameHandData[boneBaseIndex + 1], frameHandData[boneBaseIndex + 2])
                     .applyQuaternion(camera.quaternion)
                 );
               const boneEndPosition = localVector3
@@ -476,7 +476,7 @@
               boneMesh.updateMatrixWorld();
               boneMesh.visible = true;
 
-              boneStartPosition.toArray(handFrameData, j*4*(3+3) + k*(3+3) + 0);
+              boneStartPosition.toArray(handFrameData, j*4*(3+3) + k*(3+3));
               boneEndPosition.toArray(handFrameData, j*4*(3+3) + k*(3+3) + 3);
             }
           }
@@ -502,7 +502,7 @@
               const boneMesh = boneMeshes[k];
 
               const boneBaseIndex = ((j*4) + k) * (3+3);
-              const boneStartPosition = localVector2.set(playerMatrixHandData.data[boneBaseIndex + 0], playerMatrixHandData.data[boneBaseIndex + 1], playerMatrixHandData.data[boneBaseIndex + 2]);
+              const boneStartPosition = localVector2.set(playerMatrixHandData.data[boneBaseIndex], playerMatrixHandData.data[boneBaseIndex + 1], playerMatrixHandData.data[boneBaseIndex + 2]);
               const boneEndPosition = localVector3.set(playerMatrixHandData.data[boneBaseIndex + 3], playerMatrixHandData.data[boneBaseIndex + 4], playerMatrixHandData.data[boneBaseIndex + 5]);
 
               const boneCenter = localVector4
@@ -560,7 +560,7 @@
           const uvs = geometry.attributes.uv.array;
           const numUvs = uvs.length / 2;
           for (let i = 0; i < numUvs; i++) {
-            uvs[i * 2 + 0] *= FLOOR_SIZE / 10 * 2;
+            uvs[i * 2] *= FLOOR_SIZE / 10 * 2;
             uvs[i * 2 + 1] *= FLOOR_SIZE / 10;
           }
 
@@ -1066,7 +1066,7 @@
           console.warn(err.stack);
         };
 
-        const geometry = new THREE.PlaneBufferGeometry(1, 1 * keyboardHeight / keyboardWidth);
+        const geometry = new THREE.PlaneBufferGeometry(1, keyboardHeight / keyboardWidth);
         const texture = new THREE.Texture(
           img,
           THREE.UVMapping,
@@ -1665,7 +1665,7 @@
               if (tab === 'URL') {
                 keyboardState = urlState;
               } else if (tab === 'Login') {
-                keyboardState = useranmeState;
+                keyboardState = usernameState;
               }
 
               menuMesh.urlMesh.updateText();
