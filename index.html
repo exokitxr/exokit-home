@@ -2069,6 +2069,7 @@
     THREE.AudioContext.setContext(audioCtx);
 
     const _isPrintableKey = code =>
+      code !== 13 && // enter
       code !== 8 && // backspace
       code !== 46 && // delete
       code !== 9 && // tab
