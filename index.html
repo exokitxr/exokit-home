@@ -253,6 +253,7 @@
       xrmp = null;
     };
     const _isMpOpen = () => Boolean(xrmp && xrmp.localPlayerMesh);
+    const _isIdOpen = () => Boolean(xrid);
 
     const _openMic = () => {
       navigator.mediaDevices.getUserMedia({
@@ -2365,6 +2366,21 @@
     });
     window.addEventListener('drop', e => {
       e.preventDefault();
+
+      if (_isIdOpen()) {
+        const {files} = e.dataTransfer;
+
+        if (files.length > 0) {
+          const file = files[0];
+          xrid.upload(file)
+            .then(() => {
+              console.log('uploaded', file.name);
+            })
+            .catch(err => {
+              console.warn(err);
+            });
+        }
+      }
 
       _requestSpriteMesh('file')
         .then(spriteMesh => {
