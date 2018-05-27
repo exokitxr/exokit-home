@@ -129,11 +129,17 @@
     passwordState.cursor = passwordState.text.length;
     let keyboardState = urlState;
     let controllerIndex = 1;
+    const controllerOffsets = [
+      new THREE.Vector3(),
+      new THREE.Vector3(),
+    ];
     const keys = {
       up: false,
       down: false,
       left: false,
       right: false,
+      ctrl: false,
+      alt: false,
     };
 
     const upVector = new THREE.Vector3(0, 1, 0);
@@ -1258,9 +1264,12 @@
           for (let i = 0; i < 2; i++) {
             const gamepad = fakeDisplay.gamepads[i];
             if (gamepad) {
+              const controllerOffset = controllerOffsets[i];
+
               localVector.copy(fakeDisplay.position)
                 .add(
                   localVector2.set(-0.1 + (i*0.1*2), -0.1, -0.2)
+                    .add(controllerOffset)
                     .applyQuaternion(fakeDisplay.quaternion)
                 ).toArray(gamepad.pose.position);
               fakeDisplay.quaternion.toArray(fakeDisplay.gamepads[i].pose.orientation);
@@ -2241,6 +2250,14 @@
             fakeDisplay.gamepads[controllerIndex].buttons[2].pressed = true;
             break;
           }
+          case 17: { // Ctrl
+            keys.ctrl = true;
+            break;
+          }
+          case 18: { // Alt
+            keys.alt = true;
+            break;
+          }
         }
       } else {
         if (!_isPrintableKey(e.which)) {
@@ -2275,6 +2292,14 @@
             fakeDisplay.gamepads[controllerIndex].buttons[2].pressed = false;
             break;
           }
+          case 17: { // Ctrl
+            keys.ctrl = false;
+            break;
+          }
+          case 18: { // Alt
+            keys.alt = false;
+            break;
+          }
         }
       }
     });
@@ -2297,13 +2322,24 @@
     window.addEventListener('mousemove', e => {
       if (window.document.pointerLockElement) {
         const {movementX, movementY} = e;
-        localEuler.setFromQuaternion(fakeDisplay.quaternion, localEuler.order);
-        localEuler.y -= movementX * 0.01;
-        localEuler.x -= movementY * 0.01;
-        localEuler.x = Math.min(Math.max(localEuler.x, -Math.PI/2), Math.PI/2);
-        fakeDisplay.quaternion.setFromEuler(localEuler);
 
-        fakeDisplay.update();
+        if (keys.ctrl) {
+          const controllerOffset = controllerOffsets[controllerIndex];
+          controllerOffset.x += movementX * 0.002;
+          controllerOffset.y -= movementY * 0.002;
+        } else if (keys.alt) {
+          const controllerOffset = controllerOffsets[controllerIndex];
+          controllerOffset.x += movementX * 0.002;
+          controllerOffset.z += movementY * 0.002;
+        } else {
+          localEuler.setFromQuaternion(fakeDisplay.quaternion, localEuler.order);
+          localEuler.y -= movementX * 0.01;
+          localEuler.x -= movementY * 0.01;
+          localEuler.x = Math.min(Math.max(localEuler.x, -Math.PI/2), Math.PI/2);
+          fakeDisplay.quaternion.setFromEuler(localEuler);
+
+          fakeDisplay.update();
+        }
       }
     });
     window.document.addEventListener('paste', e => {
