@@ -1934,12 +1934,12 @@
             grabbedObject.quaternion.fromArray(gamepad.pose.orientation);
             grabbedObject.updateMatrixWorld();
 
-            if (_isMpOpen()) {
+            /* if (_isMpOpen()) {
               objectMesh.position.toArray(objectMesh.object.objectMatrix.position);
               objectMesh.quaternion.toArray(objectMesh.object.objectMatrix.quaternion);
 
               objectMesh.object.pushUpdate();
-            }
+            } */
           }
         }
       };
