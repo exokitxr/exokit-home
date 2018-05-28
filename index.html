@@ -262,13 +262,9 @@
         .then(mediaStream => {
           xrmp.localPlayerMesh.setMediaStream(mediaStream);
         });
-
-      voicechatEnabled = true;
     };
     const _closeMic = () => {
       xrmp.localPlayerMesh.unsetMediaStream();
-
-      voicechatEnabled = false;
     };
 
     let xrid = null;
@@ -1744,6 +1740,7 @@
                 currentServerIndex = -1;
 
                 _closeMp();
+                voicechatEnabled = false;
               }
 
               menuMesh.urlMesh.updateText();
@@ -1751,10 +1748,12 @@
               if (_isMpOpen()) {
                 if (!voicechatEnabled) {
                   _openMic();
+                  voicechatEnabled = true;
 
                   menuMesh.urlMesh.updateText();
                 } else {
                   _closeMic();
+                  voicechatEnabled = false;
 
                   menuMesh.urlMesh.updateText();
                 }
