@@ -350,6 +350,20 @@
         );
       return p.distanceTo(bodyPosition) < 0.35;
     };
+    const _makeFileObject = file => {
+      const object = new THREE.Object3D();
+      object.file = file;
+
+      _requestSpriteMesh('file')
+        .then(spriteMesh => {
+          object.add(spriteMesh);
+        })
+        .catch(err => {
+          console.warn(err.stack);
+        });
+
+      return object;
+    };
 
     const controllerMeshes = [null, null];
     const lastPresseds = [false, false];
@@ -1685,20 +1699,9 @@
             );
             if (targetObject) {
               grabbedObjects[controllerIndex] = targetObject;
-            } else if (_isInBody(controllerMesh.position)) {
-              const fileObject = (() => {
-                const object = new THREE.Object3D();
-
-                _requestSpriteMesh('file')
-                  .then(spriteMesh => {
-                    object.add(spriteMesh);
-                  })
-                  .catch(err => {
-                    console.warn(err.stack);
-                  });
-
-                return object;
-              })();
+            } else if (_isInBody(controllerMesh.position) && currentFileIndex !== -1) {
+              const currentFile = files[currentFileIndex];
+              const fileObject = _makeFileObject(currentFile);
               scene.add(fileObject);
               fileMeshes.push(fileObject);
 
@@ -2456,20 +2459,15 @@
         }
       }
 
-      _requestSpriteMesh('file')
-        .then(spriteMesh => {
-          spriteMesh.position
-            .copy(camera.position)
-             .add(
-                localVector.set(0, 0, -0.4)
-                  .applyQuaternion(camera.quaternion)
-             );
-          scene.add(spriteMesh);
-          fileMeshes.push(spriteMesh);
-        })
-        .catch(err => {
-          console.warn(err.stack);
-        });
+      const fileObject = _makeFileObject(null);
+      fileObject.position
+        .copy(camera.position)
+        .add(
+          localVector.set(0, 0, -0.4)
+            .applyQuaternion(camera.quaternion)
+        );
+      scene.add(fileObject);
+      fileMeshes.push(fileObject);
     });
   </script>
 </body>
