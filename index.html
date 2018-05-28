@@ -760,6 +760,7 @@
     let user = null;
     let currentTabIndex = 0;
     const currentApps = [];
+    let currentFileIndex = -1;
     let currentServerIndex = -1;
     const _resJson = res => {
       if (res.status >= 200 && res.status < 300) {
@@ -919,8 +920,16 @@
               const {name} = file;
               const match = name.match(/([^\/]+)$/);
 
+              const selected = i === currentFileIndex;
+              if (selected) {
+                ctx.fillStyle = '#03a9f4';
+                ctx.fillRect(0, urlBarOffset + i*fontSize, urlBarWidth, fontSize);
+              }
               ctx.fillStyle = '#333';
               ctx.fillRect(0, urlBarOffset + i*fontSize, fontSize, fontSize);
+              if (selected) {
+                ctx.fillStyle = '#FFF';
+              }
               ctx.fillText(match[1], fontSize * 1.2, urlBarOffset + (i+1)*fontSize);
             }
           } else if (tab === 'Apps') {
@@ -1738,7 +1747,9 @@
 
               menuMesh.urlMesh.updateText();
             } else if (fileIndex !== -1) {
-              console.log('click file', fileIndex); // XXX
+              currentFileIndex = fileIndex;
+
+              menuMesh.urlMesh.updateText();
             } else if (serverIndex !== -1) {
               if (currentServerIndex !== serverIndex) {
                 currentServerIndex = serverIndex;
