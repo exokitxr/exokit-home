@@ -164,12 +164,14 @@ class XRMultiplayerTHREE {
     const localPlayer = this.xrmp.addPlayer(id);
     localPlayerMesh.player = localPlayer;
 
+    let mediaStream = null;
     let unsetMediaStream = null;
-    localPlayerMesh.setMediaStream = mediaStream => {
+    localPlayerMesh.getMediaStream = () => mediaStream;
+    localPlayerMesh.setMediaStream = newMediaStream => {
       localPlayerMesh.unsetMediaStream();
 
       const audioCtx = this.getAudioContext();
-      const microphoneSourceNode = audioCtx.createMediaStreamSource(mediaStream);
+      const microphoneSourceNode = audioCtx.createMediaStreamSource(newMediaStream);
       const scriptProcessorNode = audioCtx.createScriptProcessor(AUDIO_BUFFER_SIZE, 1, 1);
       scriptProcessorNode.onaudioprocess = e => {
         localPlayer.pushAudio(e.inputBuffer.getChannelData(0));
@@ -179,13 +181,16 @@ class XRMultiplayerTHREE {
       microphoneSourceNode.connect(scriptProcessorNode);
       scriptProcessorNode.connect(audioCtx.destination);
 
+      mediaStream = newMediaStream;
       unsetMediaStream = () => {
         scriptProcessorNode.disconnect();
 
-        const tracks = mediaStream.getTracks();
+        const tracks = newMediaStream.getTracks();
         for (let i = 0; i < tracks.length; i++) {
           tracks[i].stop();
         }
+
+        mediaStream = null;
       };
     };
     localPlayerMesh.unsetMediaStream = () => {
@@ -266,6 +271,10 @@ class XRMultiplayerTHREE {
   }
   close() {
     this.xrmp.close();
+
+    for (let i = 0; i < this.localPlayerMeshes.length; i++) {
+      this.localPlayerMeshes[i].unsetMediaStream();
+    }
   }
   _bindPlayerMeshAudio(playerMesh) {
     const audioCtx = this.getAudioContext();
