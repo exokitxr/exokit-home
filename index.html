@@ -2348,6 +2348,13 @@
         }
       }
     });
+    window.document.addEventListener('pointerlockchange', e => {
+      if (!window.document.pointerLockElement) {
+        for (const k in keys) {
+          keys[k] = false;
+        }
+      }
+    });
     window.document.addEventListener('paste', e => {
       const {clipboardData} = e;
       const items = Array.from(clipboardData.items);
