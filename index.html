@@ -839,7 +839,7 @@
         });
     })();
 
-    const skinPreviewCanvas = (() => {
+    const _requestSkinPreviewCanvas = src => new Promise((accept, reject) => {
       const canvas = document.createElement('canvas');
       canvas.width = 400;
       canvas.height = 800;
@@ -863,18 +863,25 @@
 
       const skinImg = new Image();
       skinImg.crossOrigin = 'Anonymous';
-      skinImg.src = 'img/skins/male.png';
+      skinImg.src = src;
       skinImg.onload = () => {
         mesh.setImage(skinImg);
 
         renderer.render(scene, camera);
+
+        accept(canvas);
       };
       skinImg.onerror = err => {
-        console.warn('skin image error', err.stack);
+        reject(err);
       };
+    });
+    let skinPreviewCanvas = null;
+    _requestSkinPreviewCanvas('img/skins/male.png')
+      .then(canvas => {
+        skinPreviewCanvas = canvas;
 
-      return canvas;
-    })();
+        menuMesh.urlMesh.updateText();
+      });
     const menuMesh = (() => {
       const object = new THREE.Object3D();
       object.position.copy(camera.position).add(new THREE.Vector3(0, 0.5, -2));
@@ -1057,7 +1064,9 @@
               ctx.font = `${fontSize*0.5}px Arial`;
               ctx.fillText('Logout', 50, urlBarOffset + 80);
 
-              ctx.drawImage(skinPreviewCanvas, 0, urlBarOffset*2);
+              if (skinPreviewCanvas) {
+                ctx.drawImage(skinPreviewCanvas, 0, urlBarOffset*2);
+              }
               ctx.fillStyle = '#333';
             }
           }
@@ -1729,7 +1738,20 @@
               }
             }
 
-            if (intersectionKey) {
+            const grabbedObject = grabbedObjects[controllerIndex];
+            if (grabbedObject) {
+              const {file} = grabbedObject;
+
+              _requestSkinPreviewCanvas(file.name)
+                .then(canvas => {
+                  skinPreviewCanvas = canvas;
+
+                  menuMesh.urlMesh.updateText();
+                })
+                .catch(err => {
+                  console.warn(err.stack);
+                });
+            } else if (intersectionKey) {
               const code = keyCode(intersectionKey);
               _handleKey(code, false);
             } else if (tabIndex !== -1) {
