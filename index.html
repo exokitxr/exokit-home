@@ -916,7 +916,8 @@
           } else if (tab === 'Files') {
             for (let i = 0; i < files.length; i++) {
               const file = files[i];
-              const match = file.match(/([^\/]+)$/);
+              const {name} = file;
+              const match = name.match(/([^\/]+)$/);
 
               ctx.fillStyle = '#333';
               ctx.fillRect(0, urlBarOffset + i*fontSize, fontSize, fontSize);
