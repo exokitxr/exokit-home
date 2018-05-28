@@ -2256,6 +2256,12 @@
             fakeDisplay.gamepads[controllerIndex].buttons[2].pressed = true;
             break;
           }
+          case 84: { // T
+            if (_isMpOpen() && !voicechatEnabled && !xrmp.localPlayerMesh.getMediaStream()) {
+              _openMic();
+            }
+            break;
+          }
           case 17: { // Ctrl
             keys.ctrl = true;
             break;
@@ -2296,6 +2302,12 @@
           }
           case 70: { // F
             fakeDisplay.gamepads[controllerIndex].buttons[2].pressed = false;
+            break;
+          }
+          case 84: { // T
+            if (_isMpOpen() && !voicechatEnabled && xrmp.localPlayerMesh.getMediaStream()) {
+              _closeMic();
+            }
             break;
           }
           case 17: { // Ctrl
