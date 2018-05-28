@@ -275,8 +275,17 @@
       });
       xrid.onauthenticate = e => {
         user = e.user;
-
         menuMesh.urlMesh.updateText();
+
+        xrid.getFiles()
+          .then(newFiles => {
+            files = newFiles;
+
+            menuMesh.urlMesh.updateText();
+          })
+          .catch(err => {
+            console.warn(err.stack);
+          });
       };
       xrid.onerror = err => {
         console.warn(err.error);
@@ -747,9 +756,7 @@
     };
     let apps = [];
     let servers = [];
-    let files = [{
-      name: 'lol.png',
-    }];
+    let files = [];
     let user = null;
     let currentTabIndex = 0;
     const currentApps = [];
@@ -909,11 +916,11 @@
           } else if (tab === 'Files') {
             for (let i = 0; i < files.length; i++) {
               const file = files[i];
-              const {name} = file;
+              const match = file.match(/([^\/]+)$/);
 
               ctx.fillStyle = '#333';
               ctx.fillRect(0, urlBarOffset + i*fontSize, fontSize, fontSize);
-              ctx.fillText(name, fontSize * 1.2, urlBarOffset + (i+1)*fontSize);
+              ctx.fillText(match[1], fontSize * 1.2, urlBarOffset + (i+1)*fontSize);
             }
           } else if (tab === 'Apps') {
             for (let i = 0; i < apps.length; i++) {
