@@ -2480,33 +2480,37 @@
     window.addEventListener('drop', e => {
       e.preventDefault();
 
-      if (_isIdOpen()) {
-        const {files} = e.dataTransfer;
+      const {dataTransfer} = e;
+      if (dataTransfer.files.length > 0) {
+        if (_isIdOpen()) {
+          const file = dataTransfer.files[0];
 
-        if (files.length > 0) {
-          const file = files[0];
           xrid.upload(file)
-            .then(() => xrid.getFiles())
-            .then(newFiles => {
-              files = newFiles;
+            .then(result => {
+              const fileObject = _makeFileObject({
+                name: result.url,
+              });
+              fileObject.position
+                .copy(camera.position)
+                .add(
+                  localVector.set(0, 0, -0.4)
+                    .applyQuaternion(camera.quaternion)
+                );
+              scene.add(fileObject);
+              fileMeshes.push(fileObject);
 
-              menuMesh.urlMesh.updateText();
+              return xrid.getFiles()
+                .then(newFiles => {
+                  files = newFiles;
+
+                  menuMesh.urlMesh.updateText();
+                });
             })
             .catch(err => {
               console.warn(err);
             });
         }
       }
-
-      const fileObject = _makeFileObject(null);
-      fileObject.position
-        .copy(camera.position)
-        .add(
-          localVector.set(0, 0, -0.4)
-            .applyQuaternion(camera.quaternion)
-        );
-      scene.add(fileObject);
-      fileMeshes.push(fileObject);
     });
   </script>
 </body>
