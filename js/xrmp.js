@@ -881,105 +881,133 @@ class XRMultiplayer extends EventEmitter {
           case 'playerEnter': {
             const {id, state} = j;
 
-            const remotePlayer = new XRRemotePlayer(id, state, this);
-            this.remotePlayers.push(remotePlayer);
+            if (id !== undefined && state !== undefined) {
+              const remotePlayer = new XRRemotePlayer(id, state, this);
+              this.remotePlayers.push(remotePlayer);
 
-            const e = new XRMultiplayerEvent('playerenter');
-            e.player = remotePlayer;
-            this.emit(e.type, e);
+              const e = new XRMultiplayerEvent('playerenter');
+              e.player = remotePlayer;
+              this.emit(e.type, e);
+            } else {
+              console.warn('got invalid playerEnter message', j);
+            }
             break;
           }
           case 'playerLeave': {
             const {id} = j;
 
-            const remotePlayerIndex = this.remotePlayers.findIndex(remotePlayer => remotePlayer.id === id);
-            if (remotePlayerIndex !== -1) {
-              const remotePlayer = this.remotePlayers[remotePlayerIndex];
-              this.remotePlayers.splice(remotePlayerIndex, 1);
+            if (id !== undefined) {
+              const remotePlayerIndex = this.remotePlayers.findIndex(remotePlayer => remotePlayer.id === id);
+              if (remotePlayerIndex !== -1) {
+                const remotePlayer = this.remotePlayers[remotePlayerIndex];
+                this.remotePlayers.splice(remotePlayerIndex, 1);
 
-              const e = new XRMultiplayerEvent('playerleave');
-              e.player = remotePlayer;
-              this.emit(e.type, e);
+                const e = new XRMultiplayerEvent('playerleave');
+                e.player = remotePlayer;
+                this.emit(e.type, e);
+              } else {
+                console.warn('got event for unknown remote player', {id});
+              }
             } else {
-              console.warn('got event for unknown remote player', {id});
+              console.warn('got invalid playerLeave message', j);
             }
             break;
           }
           case 'playerSetState': {
             const {id, state: update} = j;
 
-            const remotePlayer = this.remotePlayers.find(player => player.id === id);
-            this.remotePlayers.push(remotePlayer);
-            if (remotePlayer) {
-              for (const k in update) {
-                remotePlayer.state[k] = update[k];
-              }
+            if (id !== undefined && update !== undefined) {
+              const remotePlayer = this.remotePlayers.find(player => player.id === id);
+              this.remotePlayers.push(remotePlayer);
+              if (remotePlayer) {
+                for (const k in update) {
+                  remotePlayer.state[k] = update[k];
+                }
 
-              const e = new XRMultiplayerEvent('stateupdate');
-              e.state = object.state;
-              e.update = update;
-              remotePlayer.emit(e.type, e);
+                const e = new XRMultiplayerEvent('stateupdate');
+                e.state = remotePlayer.state;
+                e.update = update;
+                remotePlayer.emit(e.type, e);
+              } else {
+                console.warn('got event for unknown remote player', {id});
+              }
             } else {
-              console.warn('got event for unknown remote player', {id});
+              console.warn('got invalid playerSetState message', j);
             }
             break;
           }
           case 'objectAdd': {
             const {id, state} = j;
 
-            const object = new XRObject(id, state, this);
-            this.objects.push(object);
+            if (id !== undefined && state !== undefined) {
+              const object = new XRObject(id, state, this);
+              this.objects.push(object);
 
-            const e = new XRMultiplayerEvent('objectadd');
-            e.object = object;
-            this.emit(e.type, e);
+              const e = new XRMultiplayerEvent('objectadd');
+              e.object = object;
+              this.emit(e.type, e);
+            } else {
+              console.warn('got invalid objectAdd message', j);
+            }
             break;
           }
           case 'objectRemove': {
             const {id} = j;
 
-            const index = this.objects.findIndex(object => object.id === id);
-            if (index !== -1) {
-              const object = this.objects[index];
-              this.objects.splice(index, 1);
+            if (id !== undefined) {
+              const index = this.objects.findIndex(object => object.id === id);
+              if (index !== -1) {
+                const object = this.objects[index];
+                this.objects.splice(index, 1);
 
-              const e = new XRMultiplayerEvent('objectremove');
-              e.object = object;
-              this.emit(e.type, e);
+                const e = new XRMultiplayerEvent('objectremove');
+                e.object = object;
+                this.emit(e.type, e);
+              } else {
+                console.warn('got event for unknown object', {id});
+              }
             } else {
-              console.warn('got event for unknown object', {id});
+              console.warn('got invalid objectRemove message', j);
             }
             break;
           }
           case 'objectSetState': {
             const {id, state: update} = j;
 
-            const object = this.objects.find(object => object.id === id);
-            if (object) {
-              for (const k in update) {
-                object.state[k] = update[k];
-              }
+            if (id !== undefined && update !== undefined) {
+              const object = this.objects.find(object => object.id === id);
+              if (object) {
+                for (const k in update) {
+                  object.state[k] = update[k];
+                }
 
-              const e = new XRMultiplayerEvent('stateupdate');
-              e.state = object.state;
-              e.update = update;
-              object.emit(e.type, e);
+                const e = new XRMultiplayerEvent('stateupdate');
+                e.state = object.state;
+                e.update = update;
+                object.emit(e.type, e);
+              } else {
+                console.warn('got event for unknown object', {id});
+              }
             } else {
-              console.warn('got event for unknown object', {id});
+              console.warn('got invalid objectSetState message', j);
             }
             break;
           }
           case 'setState': {
             const {state: update} = j;
 
-            for (const k in update) {
-              this.state[k] = update[k];
-            }
+            if (update !== undefined) {
+              for (const k in update) {
+                this.state[k] = update[k];
+              }
 
-            const e = new XRMultiplayerEvent('stateupdate');
-            e.state = this.state;
-            e.update = update;
-            this.emit(e.type, e);
+              const e = new XRMultiplayerEvent('stateupdate');
+              e.state = this.state;
+              e.update = update;
+              this.emit(e.type, e);
+            } else {
+              console.warn('got invalid setState message', j);
+            }
             break;
           }
           case 'sync': {
