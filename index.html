@@ -42,6 +42,7 @@
     };
 
     const REGISTRY_QUERY_URL = 'https://registry.webmr.io/q';
+    const DEFAULT_SKIN_URL = 'img/skins/male.png';
     const SIDES = ['left', 'right'];
     const FLOOR_SIZE = 20;
     const RAY_COLOR = 0x44c2ff;
@@ -277,12 +278,21 @@
         user = e.user;
         menuMesh.urlMesh.updateText();
 
-        xrid.getFiles()
-          .then(newFiles => {
-            files = newFiles;
+        Promise.all([
+          xrid.get('_exokit.skin', 'text')
+            .then((skinUrl = DEFAULT_SKIN_URL) => _requestSkinPreviewCanvas(skinUrl))
+            .then(canvas => {
+              skinPreviewCanvas = canvas;
 
-            menuMesh.urlMesh.updateText();
-          })
+              menuMesh.urlMesh.updateText();
+            }),
+          xrid.getFiles()
+            .then(newFiles => {
+              files = newFiles;
+
+              menuMesh.urlMesh.updateText();
+            }),
+        ])
           .catch(err => {
             console.warn(err.stack);
           });
@@ -746,7 +756,7 @@
 
         const skinImg = new Image();
         skinImg.crossOrigin = 'Anonymous';
-        skinImg.src = 'img/skins/male.png';
+        skinImg.src = DEFAULT_SKIN_URL;
         skinImg.onload = () => {
           mesh.setImage(skinImg);
         };
@@ -876,7 +886,7 @@
       };
     });
     let skinPreviewCanvas = null;
-    _requestSkinPreviewCanvas('img/skins/male.png')
+    _requestSkinPreviewCanvas(DEFAULT_SKIN_URL)
       .then(canvas => {
         skinPreviewCanvas = canvas;
 
@@ -1742,6 +1752,10 @@
             if (grabbedObject) {
               const {file} = grabbedObject;
 
+              if (_isIdOpen()) {
+                xrid.set('_exokit.skin', file.name);
+              }
+
               _requestSkinPreviewCanvas(file.name)
                 .then(canvas => {
                   skinPreviewCanvas = canvas;
@@ -2472,8 +2486,11 @@
         if (files.length > 0) {
           const file = files[0];
           xrid.upload(file)
-            .then(() => {
-              console.log('uploaded', file.name);
+            .then(() => xrid.getFiles())
+            .then(newFiles => {
+              files = newFiles;
+
+              menuMesh.urlMesh.updateText();
             })
             .catch(err => {
               console.warn(err);
