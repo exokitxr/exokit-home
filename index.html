@@ -188,7 +188,11 @@
 
         camera.add(xrmp.getAudioListener());
 
-        xrmp.localPlayerMesh = xrmp.createLocalPlayerMesh();
+        xrmp.localPlayerMesh = xrmp.createLocalPlayerMesh(undefined, {
+          _exokit: {
+            username: _isIdOpen() ? xrid.user.username : null,
+          },
+        });
       };
       xrmp.onclose = () => {
         // console.log('mp close');
@@ -254,7 +258,7 @@
       xrmp = null;
     };
     const _isMpOpen = () => Boolean(xrmp && xrmp.localPlayerMesh);
-    const _isIdOpen = () => Boolean(xrid);
+    const _isIdOpen = () => Boolean(xrid && xrid.user);
 
     const _openMic = () => {
       navigator.mediaDevices.getUserMedia({
@@ -268,41 +272,35 @@
       xrmp.localPlayerMesh.unsetMediaStream();
     };
 
-    let xrid = null;
+    const xrid = new XRID('https://id.webmr.io');
     const _openLogin = () => { // XXX
-      xrid = new XRID('https://id.webmr.io', {
+      xrid.login({
         username: 'lol@lol.zol',
         password: 'zol',
-      });
-      xrid.onauthenticate = e => {
-        user = e.user;
-        menuMesh.urlMesh.updateText();
+      })
+        .then(newUser => {
+          user = newUser;
+          menuMesh.urlMesh.updateText();
 
-        Promise.all([
-          xrid.get('_exokit.skin', 'text')
-            .then((skinUrl = DEFAULT_SKIN_URL) => _requestSkinPreviewCanvas(skinUrl))
-            .then(canvas => {
-              skinPreviewCanvas = canvas;
+          return Promise.all([
+            xrid.get('_exokit.skin', 'text')
+              .then((skinUrl = DEFAULT_SKIN_URL) => _requestSkinPreviewCanvas(skinUrl))
+              .then(canvas => {
+                skinPreviewCanvas = canvas;
 
-              menuMesh.urlMesh.updateText();
-            }),
-          xrid.getFiles()
-            .then(newFiles => {
-              files = newFiles;
+                menuMesh.urlMesh.updateText();
+              }),
+            xrid.getFiles()
+              .then(newFiles => {
+                files = newFiles;
 
-              menuMesh.urlMesh.updateText();
-            }),
-        ])
-          .catch(err => {
-            console.warn(err.stack);
-          });
-      };
-      xrid.onerror = err => {
-        console.warn(err.error);
-      };
-      user = {
-        name: usernameState.text,
-      };
+                menuMesh.urlMesh.updateText();
+              }),
+          ]);
+        })
+        .catch(err => {
+          console.warn(err.stack);
+        });
     };
     const _closeLogin = () => {
       user = null;
@@ -606,8 +604,8 @@
 
     (() => {
       const graphImg = new Image();
-      graphImg.src = 'img/graphy.png';
       graphImg.crossOrigin = 'Anonymous';
+      graphImg.src = 'img/graphy.png';
       graphImg.onload = () => {
         const floorMesh = (() => {
           const geometry = new THREE.PlaneBufferGeometry(FLOOR_SIZE, FLOOR_SIZE)
@@ -754,15 +752,35 @@
           } */
         };
 
-        const skinImg = new Image();
-        skinImg.crossOrigin = 'Anonymous';
-        skinImg.src = DEFAULT_SKIN_URL;
-        skinImg.onload = () => {
-          mesh.setImage(skinImg);
-        };
-        skinImg.onerror = err => {
-          console.warn('skin image error', err.stack);
-        };
+        (() => {
+          const {username} = (playerMesh.player.state._exokit || {});
+          if (username) {
+            return xrid.get('_exokit.skin', {
+              user: username,
+              format: 'text',
+            });
+          } else {
+            return Promise.resolve(null);
+          }
+        })()
+          .then(skinUrl => new Promise((accept, reject) => {
+            skinUrl = skinUrl || DEFAULT_SKIN_URL;
+
+            const skinImg = new Image();
+            skinImg.crossOrigin = 'Anonymous';
+            skinImg.src = skinUrl;
+            skinImg.onload = () => {
+              mesh.setImage(skinImg);
+
+              accept();
+            };
+            skinImg.onerror = err => {
+              reject(err);
+            };
+          }))
+          .catch(err => {
+            console.warn(err.stack);
+          })
 
         return mesh;
       };
@@ -770,6 +788,7 @@
 
     const _requestSpriteMesh = itemType => new Promise((accept, reject) => {
       const img = new Image();
+      img.crossOrigin = 'Anonymous';
       img.src = `img/items/${itemType}.png`;
       img.onload = () => {
         const spriteMesh = sprite3d.makeSpriteMesh(img);
@@ -1135,6 +1154,7 @@
 
       const planeMesh = (() => {
         const img = new Image();
+        img.crossOrigin = 'Anonymous';
         img.src = 'img/keyboard.png';
         img.onload = () => {
           texture.needsUpdate = true;
@@ -1235,6 +1255,7 @@
 
     let keyboardHighlightCanvasCtx = null;
     const img = new Image();
+    img.crossOrigin = 'Anonymous';
     img.src = 'img/keyboard-hightlight.svg';
     img.onload = () => {
       const canvas = document.createElement('canvas');
