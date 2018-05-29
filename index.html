@@ -204,6 +204,11 @@
         const skinMesh = _makeSkinMesh(playerMesh);
         playerMesh.add(skinMesh);
 
+        playerMesh.player.onstateupdate = e => {
+          const {state} = e;
+          console.log('player state update', {state}); // XXX set the skin here
+        };
+
         scene.add(playerMesh);
       };
       xrmp.onplayerleave = playerMesh => {
@@ -752,6 +757,23 @@
           } */
         };
 
+        const _setSkin = skinUrl => new Promise((accept, reject) => {
+          skinUrl = skinUrl || DEFAULT_SKIN_URL;
+
+          const skinImg = new Image();
+          skinImg.crossOrigin = 'Anonymous';
+          skinImg.src = skinUrl;
+          skinImg.onload = () => {
+            mesh.setImage(skinImg);
+
+            accept();
+          };
+          skinImg.onerror = err => {
+            reject(err);
+          };
+        });
+        mesh.setSkin = _setSkin;
+
         (() => {
           const {username} = (playerMesh.player.state._exokit || {});
           if (username) {
@@ -763,24 +785,10 @@
             return Promise.resolve(null);
           }
         })()
-          .then(skinUrl => new Promise((accept, reject) => {
-            skinUrl = skinUrl || DEFAULT_SKIN_URL;
-
-            const skinImg = new Image();
-            skinImg.crossOrigin = 'Anonymous';
-            skinImg.src = skinUrl;
-            skinImg.onload = () => {
-              mesh.setImage(skinImg);
-
-              accept();
-            };
-            skinImg.onerror = err => {
-              reject(err);
-            };
-          }))
+          .then(_setSkin)
           .catch(err => {
             console.warn(err.stack);
-          })
+          });
 
         return mesh;
       };
@@ -1774,7 +1782,17 @@
               const {file} = grabbedObject;
 
               if (_isIdOpen()) {
-                xrid.set('_exokit.skin', file.name);
+                xrid.set('_exokit.skin', file.name)
+                  .then(() => {
+                    if (_isMpOpen()) {
+                      return xrmp.localPlayerMesh.player.setState({
+                        username: xrid.user.username,
+                      });
+                    }
+                  })
+                  .catch(err => {
+                    console.warn(err.stack);
+                  });
               }
 
               _requestSkinPreviewCanvas(file.name)
