@@ -158,10 +158,10 @@ class XRMultiplayerTHREE {
       }
     };
   }
-  createLocalPlayerMesh(id) {
+  createLocalPlayerMesh(id, state) {
     const localPlayerMesh = _makePlayerMesh();
 
-    const localPlayer = this.xrmp.addPlayer(id);
+    const localPlayer = this.xrmp.addPlayer(id, state);
     localPlayerMesh.player = localPlayer;
 
     let mediaStream = null;

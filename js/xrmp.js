@@ -648,11 +648,11 @@ const _makeObjectMatrix = () => {
 const objectMatrix = _makeObjectMatrix();
 
 class XRLocalPlayer extends EventEmitter {
-  constructor(xrmp) {
+  constructor(id = _makeId(), state = {}, xrmp) {
     super();
 
-    const id = _makeId();
     this.id = id;
+    this.state = state;
     this.xrmp = xrmp;
 
     this.position = playerMatrix.position;
@@ -665,11 +665,23 @@ class XRLocalPlayer extends EventEmitter {
 
     xrmp.ws.send(JSON.stringify({
       type: 'playerEnter',
-      id: this.id,
+      id,
+      state,
     }));
   }
   pushUpdate() {
     this.xrmp.ws.send(this.playerMatrix);
+  }
+  setState(update) {
+    for (const k in update) {
+      this.state[k] = update[k];
+    }
+
+    this.xrmp.ws.send(JSON.stringify({
+      type: 'playerSetState',
+      id: this.id,
+      state: update,
+    }));
   }
   pushAudio(float32Array) {
     const audioMessage = new ArrayBuffer(Uint32Array.BYTES_PER_ELEMENT*2 + float32Array.byteLength);
@@ -682,10 +694,11 @@ class XRLocalPlayer extends EventEmitter {
 module.exports.XRLocalPlayer = XRLocalPlayer;
 
 class XRRemotePlayer extends EventEmitter {
-  constructor(id, xrmp) {
+  constructor(id, state, xrmp) {
     super();
 
     this.id = id;
+    this.state = state;
     this.xrmp = xrmp;
   }
   pullUpdate(playerMatrix) {
@@ -714,6 +727,12 @@ class XRRemotePlayer extends EventEmitter {
   }
   set onupdate(onupdate) {
     _elementSetter(this, 'update', onupdate);
+  }
+  get onstateupdate() {
+    return _elementGetter(this, 'stateupdate');
+  }
+  set onstateupdate(onstateupdate) {
+    _elementSetter(this, 'stateupdate', onstateupdate);
   }
   get onaudio() {
     return _elementGetter(this, 'audio');
@@ -790,7 +809,7 @@ class XRObject extends EventEmitter {
     _elementSetter(this, 'update', onupdate);
   }
 }
-module.exports.XRRemotePlayer = XRRemotePlayer;
+module.exports.XRObject = XRObject;
 
 class XRMultiplayerEvent {
   constructor(type) {
@@ -860,9 +879,9 @@ class XRMultiplayer extends EventEmitter {
 
         switch (type) {
           case 'playerEnter': {
-            const {id} = j;
+            const {id, state} = j;
 
-            const remotePlayer = new XRRemotePlayer(id, this);
+            const remotePlayer = new XRRemotePlayer(id, state, this);
             this.remotePlayers.push(remotePlayer);
 
             const e = new XRMultiplayerEvent('playerenter');
@@ -881,6 +900,25 @@ class XRMultiplayer extends EventEmitter {
               const e = new XRMultiplayerEvent('playerleave');
               e.player = remotePlayer;
               this.emit(e.type, e);
+            } else {
+              console.warn('got event for unknown remote player', {id});
+            }
+            break;
+          }
+          case 'playerSetState': {
+            const {id, state: update} = j;
+
+            const remotePlayer = this.remotePlayers.find(player => player.id === id);
+            this.remotePlayers.push(remotePlayer);
+            if (remotePlayer) {
+              for (const k in update) {
+                remotePlayer.state[k] = update[k];
+              }
+
+              const e = new XRMultiplayerEvent('stateupdate');
+              e.state = object.state;
+              e.update = update;
+              remotePlayer.emit(e.type, e);
             } else {
               console.warn('got event for unknown remote player', {id});
             }
@@ -1018,8 +1056,8 @@ class XRMultiplayer extends EventEmitter {
     // return this.ws.readyState === WebSocket.OPEN
     return this.open;
   }
-  addPlayer() {
-    const localPlayer = new XRLocalPlayer(this);
+  addPlayer(id, state) {
+    const localPlayer = new XRLocalPlayer(id, state, this);
     this.localPlayers.push(localPlayer);
     return localPlayer;
   }
