@@ -90,14 +90,12 @@ class Gamepad {
     this.index = index;
 
     this.connected = true;
-    this.buttons = [
-      new GamepadButton(),
-      new GamepadButton(),
-      new GamepadButton(),
-      new GamepadButton(),
-    ];
+    this.buttons = Array(16);
+    for (let i = 0; i < this.buttons.length; i++) {
+      this.buttons[i] = new GamepadButton();
+    }
     this.pose = new GamepadPose();
-    this.axes = new Float32Array(2);
+    this.axes = new Float32Array(10);
 
     Gamepad.nonstandard.init.call(this);
   }
