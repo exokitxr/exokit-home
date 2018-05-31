@@ -854,8 +854,8 @@ var BoneHelper = function (_Object3D) {
     var _this = possibleConstructorReturn(this, (BoneHelper.__proto__ || Object.getPrototypeOf(BoneHelper)).call(this));
     if (height !== 0) {
       var geo = new three.ConeBufferGeometry(boneSize, height, 4);
-      geo.applyMatrix(new three.Matrix4().makeRotationAxis(new three.Vector3(1, 0, 0), Math.PI / 2));
-      _this.boneMesh = new three.Mesh(geo, new three.MeshBasicMaterial({
+      // geo.applyMatrix(new three.Matrix4().makeRotationAxis(new three.Vector3(1, 0, 0), Math.PI / 2));
+      _this.boneMesh = new three.Mesh(geo, new three.MeshPhongMaterial({
         color: 0xff0000,
         wireframe: true,
         depthTest: false,
@@ -864,7 +864,7 @@ var BoneHelper = function (_Object3D) {
     } else {
       _this.boneMesh = new three.Object3D();
     }
-    _this.boneMesh.position.z = height / 2;
+    _this.boneMesh.position.y = height / 2;
     _this.add(_this.boneMesh);
     _this.axesHelper = new three.AxesHelper(axesSize);
     _this.add(_this.axesHelper);
