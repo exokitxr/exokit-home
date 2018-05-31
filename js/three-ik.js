@@ -859,7 +859,8 @@ var BoneHelper = function (_Object3D) {
         color: 0xff0000,
         wireframe: true,
         depthTest: false,
-        depthWrite: false
+        flatShading: true,
+        // depthWrite: false
       }));
     } else {
       _this.boneMesh = new three.Object3D();
@@ -867,6 +868,8 @@ var BoneHelper = function (_Object3D) {
     _this.boneMesh.position.y = height / 2;
     _this.add(_this.boneMesh);
     _this.axesHelper = new three.AxesHelper(axesSize);
+    _this.axesHelper.material.depthTest = false;
+    // _this.axesHelper.depthWrite = true;
     _this.add(_this.axesHelper);
     return _this;
   }
@@ -973,7 +976,7 @@ var IKHelper = function (_Object3D2) {
     }
     _this2.showBones = showBones !== undefined ? showBones : true;
     _this2.showAxes = showAxes !== undefined ? showAxes : true;
-    _this2.wireframe = wireframe !== undefined ? wireframe : true;
+    _this2.wireframe = wireframe !== undefined ? wireframe : false;
     _this2.color = color || new three.Color(0xff0077);
     return _this2;
   }
