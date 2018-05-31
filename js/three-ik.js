@@ -342,7 +342,7 @@ var IKBallConstraint = function () {
     key: '_apply',
     value: function _apply(joint) {
       var direction = new three.Vector3().copy(joint._getDirection());
-      var parentDirection = joint._localToWorldDirection(new three.Vector3().copy(Z_AXIS)).normalize();
+      var parentDirection = joint._localToWorldDirection(new three.Vector3().copy(joint.limb ? Y_AXIS : Z_AXIS)).normalize();
       var currentAngle = direction.angleTo(parentDirection) * RAD2DEG;
       if (this.angle / 2 < currentAngle) {
         direction.normalize();
