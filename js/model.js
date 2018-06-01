@@ -62,14 +62,8 @@ THREE.Model = (() => {
     };
     const _addBone = (startBone, endBone, angle, limb, end) => {
       const chain = new THREE.IKChain();
-      let endJoint = null;
-      if (startBone.isIKJoint) {
-        endJoint = startBone;
-        startBone = startBone.bone.parent;
-      }
       const list = _getBoneList(startBone, endBone);
 
-      // console.log('bone list', startBone.name, endBone.name, list.map(bone => bone.name));
       for (let i = 0; i < list.length; i++) {
         const bone = list[i];
 
@@ -81,10 +75,6 @@ THREE.Model = (() => {
         joint.limb = i === 0 && limb;
         const target = (end && i === (list.length - 1)) ? camera : null;
         chain.add(joint, {target});
-      }
-
-      if (endJoint) {
-        chain.add(endJoint);
       }
 
       return chain;
@@ -149,6 +139,8 @@ THREE.Model = (() => {
 
     ik.add(_addBone(handL, shoulderL, 120, true, true));
     ik.add(_addBone(handR, shoulderR, 120, true, true));
+
+    // console.log('add bone', {handL, shoulderL}); // XXX
 
     // const helper = new THREE.IKHelper(ik);
     // scene.add(helper);
