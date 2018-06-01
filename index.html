@@ -2523,38 +2523,112 @@
     window.addEventListener('dragover', e => {
       e.preventDefault();
     });
+    const _getFiles = items => {
+      const entries = Array.from(items)
+        .map(item => item.webkitGetAsEntry())
+        .filter(entry => entry !== null);
+
+      const files = [];
+      const _recurseEntries = entries => Promise.all(entries.map(_recurseEntry));
+      const _recurseEntry = entry => new Promise((accept, reject) => {
+        if (entry.isFile) {
+          entry.file(file => {
+            file.path = entry.fullPath.slice(1);
+
+            files.push(file);
+
+            accept();
+          });
+        } else if (entry.isDirectory) {
+          const directoryReader = entry.createReader();
+          directoryReader.readEntries(entries => {
+            _recurseEntries(Array.from(entries))
+              .then(() => {
+                accept();
+              });
+          });
+        } else {
+          accept();
+        }
+      });
+      return _recurseEntries(entries)
+        .then(() => files);
+    };
+    const _uploadFile = file => {
+      const dropPositon = camera.position.clone()
+        .add(
+          localVector.set(0, 0, -0.4)
+            .applyQuaternion(camera.quaternion)
+        );
+
+      return xrid.upload(file)
+        .then(result => {
+          const fileObject = _makeFileObject({
+            name: result.url,
+          });
+          fileObject.position.copy(dropPositon);
+          scene.add(fileObject);
+          fileMeshes.push(fileObject);
+
+          return xrid.getFiles()
+            .then(newFiles => {
+              files = newFiles;
+
+              menuMesh.urlMesh.updateText();
+            });
+        });
+    };
     window.addEventListener('drop', e => {
       e.preventDefault();
 
-      const {dataTransfer} = e;
-      if (dataTransfer.files.length > 0) {
-        if (_isIdOpen()) {
-          const file = dataTransfer.files[0];
+      if (_isIdOpen()) {
+        const {dataTransfer} = e;
+        if (dataTransfer.files.length > 0) {
+          if (dataTransfer.files.length > 1) {
+            _getFiles(dataTransfer.items)
+              .then(files => {
+                const tar = new Tar();
+                const _recurse = i => {
+                  if (i < files.length) {
+                    const file = files[i];
 
-          xrid.upload(file)
-            .then(result => {
-              const fileObject = _makeFileObject({
-                name: result.url,
+                    const fr = new FileReader();
+                    fr.onload = () => {
+                      tar.append(file.path, new Uint8Array(fr.result), () => {
+                        _recurse(i + 1);
+                      });
+                    };
+                    fr.onerror = err => {
+                      console.warn(err.stack);
+                    };
+                    fr.readAsArrayBuffer(file);
+                  } else {
+                    const blob = new Blob([tar.out], {
+                      type: 'application/x-tar; type=fbx',
+                    });
+                    const fbxFile = files.find(file => /\.fbx/.test(file.name));
+                    blob.name = fbxFile ? 'model.fbx.tar' : 'bundle.tar';
+
+                    _uploadFile(blob)
+                      .then(() => {
+                        console.log('done upload');
+                      })
+                      .catch(err => {
+                        console.warn(err);
+                      });
+                  }
+                };
+                _recurse(0);
+              })
+              .catch(err => {
+                console.warn(err.stack);
               });
-              fileObject.position
-                .copy(camera.position)
-                .add(
-                  localVector.set(0, 0, -0.4)
-                    .applyQuaternion(camera.quaternion)
-                );
-              scene.add(fileObject);
-              fileMeshes.push(fileObject);
-
-              return xrid.getFiles()
-                .then(newFiles => {
-                  files = newFiles;
-
-                  menuMesh.urlMesh.updateText();
-                });
-            })
-            .catch(err => {
-              console.warn(err);
-            });
+          } else {
+            _uploadFile(dataTransfer.files[0])
+              .catch(err => {
+                console.warn(err);
+              });
+          }
         }
       }
     });
