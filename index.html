@@ -106,6 +106,7 @@
     };
     let menuOpen = true;
     const fileMeshes = [];
+    const fetchManager = new FetchManager();
 
     const urlState = {
       text: 'http://',
@@ -1789,28 +1790,68 @@
               const {file} = grabbedObject;
 
               if (_isIdOpen()) {
-                xrid.set('_exokit.skin', file.name)
-                  .then(() => {
-                    if (_isMpOpen()) {
-                      return xrmp.localPlayerMesh.player.setState({
-                        username: xrid.user.username,
-                      });
+                const placementPosition = controllerMesh.position.clone();
+
+                xrid.requestFile(file.name)
+                  .then(res => {
+                    const {headers} = res;
+                    const type = headers.get('content-type');
+
+                    if (/^application\/x-tar;?/.test(type)) {
+                      return res.arrayBuffer()
+                        .then(arrayBuffer => untar(arrayBuffer))
+                        .then(files => {
+                          const fbxFile = files.find(file => /\.fbx/.test(file.name));
+
+                          if (fbxFile) {
+                            const directoryUrl = fetchManager.addDirectory(files);
+                            const fbxFileUrl = directoryUrl + '/' + fbxFile.name;
+
+                            THREE.Model.FBX(fbxFileUrl)
+                              .then(object => {
+                                object.position.copy(placementPosition);
+                                scene.add(object);
+                              })
+                              .catch(err => {
+                                console.warn(err.stack);
+                              });
+
+                            // console.log('get fbx file', directoryUrl + '/' + fbxFiled.name);
+
+                            /* return fetch()
+                              .then(fbxFile => {
+                                console.log('got fbx file', fbxFile); // XXX
+                              }); */
+                            return Promise.resolve(fbxFile);
+                          } else {
+                            return Promise.reject(new Error('could not find model file in bundle'));
+                          }
+                        });
+                    } else if (/^image\/png;?/.test(type)) {
+                      return Promise.all([
+                        _requestSkinPreviewCanvas(file.name)
+                          .then(canvas => {
+                            skinPreviewCanvas = canvas;
+
+                            menuMesh.urlMesh.updateText();
+                          }),
+                        xrid.set('_exokit.skin', file.name)
+                          .then(() => {
+                            if (_isMpOpen()) {
+                              return xrmp.localPlayerMesh.player.setState({
+                                username: xrid.user.username,
+                              });
+                            }
+                          }),
+                      ]);
+                    } else {
+                      console.warn('cannot open unknown file type', {type});
                     }
                   })
                   .catch(err => {
-                    console.warn(err.stack);
+                    console.warn(err);
                   });
               }
-
-              _requestSkinPreviewCanvas(file.name)
-                .then(canvas => {
-                  skinPreviewCanvas = canvas;
-
-                  menuMesh.urlMesh.updateText();
-                })
-                .catch(err => {
-                  console.warn(err.stack);
-                });
             } else if (intersectionKey) {
               const code = keyCode(intersectionKey);
               _handleKey(code, false);
