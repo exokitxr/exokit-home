@@ -3,6 +3,7 @@ THREE.Model = (() => {
   const localVector2 = new THREE.Vector3();
   const localQuaternion = new THREE.Quaternion();
   const localQuaternion2 = new THREE.Quaternion();
+  const localEuler = new THREE.Euler(0, 0, 0, 'YXZ');
   const localBox = new THREE.Box3();
 
   const _bindModel = (object, skinnedMesh, head, leftHand, rightHand, height) => {
@@ -134,7 +135,10 @@ THREE.Model = (() => {
       }
     };
 
-    ik.add(_addBone(headM, chest, 160, false, head));
+    const headTarget = new THREE.Object3D();
+    headTarget.position.z = -10;
+    head.add(headTarget);
+    ik.add(_addBone(headM, chest, 160, false, headTarget));
     ik.add(_addBone(handL, shoulderL, 120, true, leftHand));
     ik.add(_addBone(handR, shoulderR, 120, true, rightHand));
 
@@ -156,7 +160,21 @@ THREE.Model = (() => {
         reverts.length = 0;
       }
 
+      object.quaternion.setFromEuler(
+        localEuler.setFromQuaternion(head.quaternion, localEuler.order)
+          .set(0, localEuler.y + Math.PI, 0, localEuler.order)
+      );
+      object.updateMatrixWorld();
+
+      const positionDiff = head.getWorldPosition(localVector)
+        .sub(headM.getWorldPosition(localVector2));
+      object.position.add(positionDiff);
+      object.updateMatrixWorld();
+
       ik.solve();
+
+      headM.quaternion.multiply(localQuaternion.setFromEuler(localEuler.setFromQuaternion(head.quaternion, localEuler.order)
+        .set(0, 0, -localEuler.z, localEuler.order)));
 
       _fixBones(handL, shoulderL, -1);
       _fixBones(handR, shoulderR, 1);
@@ -266,6 +284,9 @@ THREE.Model = (() => {
       rightHand,
       height,
     ) => {
+      object.scale.multiplyScalar(height);
+      object.updateMatrixWorld();
+
       const ticks = skinnedMeshes.map(skinnedMesh => _bindModel(object, skinnedMesh, head, leftHand, rightHand, height));
       return () => {
         for (let i = 0; i < ticks.length; i++) {
