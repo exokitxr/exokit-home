@@ -58,7 +58,15 @@ window.XMLHttpRequest.prototype.open = (open => function(method, url, opts) {
 })(window.XMLHttpRequest.prototype.open);
 
 (() => {
-  const imgSrcDescriptor = Object.getOwnPropertyDescriptor(Image.prototype, 'src');
+  const imgSrcDescriptor = (() => {
+    for (let prototype = Image.prototype; prototype; prototype = Object.getPrototypeOf(prototype)) {
+      const descriptor = Object.getOwnPropertyDescriptor(prototype, 'src');
+      if (descriptor) {
+        return descriptor;
+      }
+    }
+    return null;
+  })();
   Object.defineProperty(Image.prototype, 'src', {
     get: imgSrcDescriptor.get,
     set(u) {
