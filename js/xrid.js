@@ -601,7 +601,7 @@ class XRID extends EventEmitter {
         mode: 'cors',
       })
         .then(res => {
-          if (res.status >= 200 && res.status < 300) {
+          if (res.ok) {
             return res.json();
           } else {
             return Promise.reject(new Error(`got invalid status code ${res.status}`));
@@ -641,7 +641,7 @@ class XRID extends EventEmitter {
       }
       return fetch(this.url + '/u/' + opts.user + '/' + k, o)
         .then(res => {
-          if (res.status >= 200 && res.status < 300) {
+          if (res.ok) {
             if (opts.format === 'json') {
               return res.json();
             } else if (opts.format === 'text') {
@@ -675,7 +675,7 @@ class XRID extends EventEmitter {
         mode: 'cors',
       })
         .then(res => {
-          if (res.status >= 200 && res.status < 300) {
+          if (res.ok) {
             return res.json();
           } else {
             return res.text()
@@ -695,12 +695,15 @@ class XRID extends EventEmitter {
       headers: (() => {
         const headers = new Headers();
         headers.append('Authorization', `Token ${this.user.username} ${this.user.token}`);
+        if (file.type) {
+          headers.append('Content-Type', file.type);
+        }
         return headers;
       })(),
       mode: 'cors',
     })
       .then(res => {
-        if (res.status >= 200 && res.status < 300) {
+        if (res.ok) {
           return res.json();
         } else {
           return Promise.reject(new Error(`got invalid status code ${res.status}`));
@@ -718,7 +721,7 @@ class XRID extends EventEmitter {
       mode: 'cors',
     })
       .then(res => {
-        if (res.status >= 200 && res.status < 300) {
+        if (res.ok) {
           return res.json();
         } else {
           return Promise.reject(new Error(`got invalid status code ${res.status}`));
