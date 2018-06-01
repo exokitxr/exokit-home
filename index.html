@@ -835,7 +835,7 @@
     let currentFileIndex = -1;
     let currentServerIndex = -1;
     const _resJson = res => {
-      if (res.status >= 200 && res.status < 300) {
+      if (res.ok) {
         return res.json();
       } else {
         return Promise.reject(new Error('invalid status code: ' + res.status));
