@@ -440,6 +440,91 @@
       controllerMeshes[i] = controllerMesh;
     }
 
+    const _animate = fn => {
+      requestAnimationFrame(() => {
+        fn();
+        _animate(fn);
+      });
+    };
+    /* THREE.Model.FBX('models/fbx/knuckles/Knuckles.fbx')
+      .then(object => {
+        object.position.set(-1, 0, 0);
+        scene.add(object);
+
+        const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1]);
+        _animate(animate);
+      })
+      .catch(err => {
+        console.warn(err.stack);
+      });
+    THREE.Model.FBX('models/fbx/redcall/PC Computer - Red Ash Prototype - Call C Bones.fbx')
+      .then(object => {
+        object.position.set(1, 0, 0);
+        scene.add(object);
+
+        const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1]);
+        _animate(animate);
+      })
+      .catch(err => {
+        console.warn(err.stack);
+      });
+    THREE.Model.FBX('models/fbx/yuno/untitled.fbx')
+      .then(object => {
+        object.position.set(2, 0, 0);
+        scene.add(object);
+
+        const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1]);
+        _animate(animate);
+      })
+      .catch(err => {
+        console.warn(err.stack);
+      });
+    THREE.Model.FBX('models/fbx/luka/Textures/Luka Nyan.fbx')
+      .then(object => {
+        object.position.set(-2, 0, 0);
+        scene.add(object);
+
+        const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1]);
+        _animate(animate);
+      })
+      .catch(err => {
+        console.warn(err.stack);
+      });
+
+    (() => {
+      const loader = new THREE.FBXLoader();
+      loader.parse = (parse => function() {
+        arguments[1] = arguments[1] + 'tex/';
+        return parse.apply(this, arguments);
+      })(loader.parse);
+      loader.load('models/fbx/dawn/Dawn.fbx', object => {
+        const scale = 0.008;
+        object.position.set(2, 0, 0);
+        // object.rotation.order = 'YXZ';
+        // object.rotation.y = Math.PI/2;
+        object.scale.set(scale, scale, scale);
+        object.updateMatrixWorld();
+
+        scene.add(object);
+
+        window.dawn = object.children[0];
+
+        _bindModel(object.children[0]);
+      });
+    })();
+    new THREE.FBXLoader().load('models/fbx/checkmate/tex/untitled.fbx', _handleModelLoad({
+      name: 'checkmate',
+      position: new THREE.Vector3(3, 0, 0),
+    }));
+    new THREE.FBXLoader().load('models/fbx/doggirl/yraitm002.fbx', _handleModelLoad({
+      name: 'doggirl',
+      position: new THREE.Vector3(3, 0, 0),
+    }));
+    new THREE.GLTFLoader().load('models/gltf/starbutterfly/scene.gltf', _handleModelLoad({
+      name: 'starbutterfly',
+      position: new THREE.Vector3(4, 0, 0),
+    })); */
+
     const controllerMeshLoader = new THREE.OBJLoader();
     controllerMeshLoader.setPath('models/obj/vive-controller/');
     controllerMeshLoader.load('vr_controller_vive_1_5.obj', object => {
@@ -1819,7 +1904,8 @@
                                 object.position.copy(placementPosition);
                                 scene.add(object);
 
-                                _animate(object.animate);
+                                const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1]);
+                                _animate(animate);
                               })
                               .catch(err => {
                                 console.warn(err.stack);

@@ -7,7 +7,7 @@ THREE.Model = (() => {
   const localQuaternion2 = new THREE.Quaternion();
   const localBox = new THREE.Box3();
 
-  const _bindModel = skinnedMesh => {
+  const _bindModel = (skinnedMesh, head, leftHand, rightHand) => {
     const {skeleton} = skinnedMesh;
     const {bones} = skeleton;
     for (let i = 0; i < bones.length; i++) {
@@ -24,7 +24,7 @@ THREE.Model = (() => {
 
     const ik = new THREE.IK();
 
-    const head = bones.find(bone => /^(?:head)|(?:Head)$/.test(bone.name));
+    const headM = bones.find(bone => /^(?:head)|(?:Head)$/.test(bone.name));
     const chest = bones.find(bone => /^(?:chest)|(?:Chest|Spine2)$/.test(bone.name));
     const handL = bones.find(bone => /^(?:handL)|(?:HandL|LeftHand|Left_wrist)$/.test(bone.name));
     const shoulderL = bones.find(bone => /^(?:clavicleL)|(?:ShoulderL|LeftShoulder|Left_shoulder)$/.test(bone.name));
@@ -35,9 +35,9 @@ THREE.Model = (() => {
     const kneeR = bones.find(bone => /^(?:shinR)|(?:Lower_legR|RightLeg|Right_knee)$/.test(bone.name));
     const thighR = bones.find(bone => /^(?:thighR)|(?:Upper_legR|RightUpLeg|Right_leg)$/.test(bone.name));
 
-    if (!(head && chest && shoulderL && handR && shoulderR && kneeL && thighL && kneeR && thighR)) {
+    if (!(headM && chest && shoulderL && handR && shoulderR && kneeL && thighL && kneeR && thighR)) {
       console.warn('did not load', {
-        head,
+        headM,
         chest,
         shoulderL,
         handR,
@@ -60,7 +60,7 @@ THREE.Model = (() => {
       list.reverse();
       return list;
     };
-    const _addBone = (startBone, endBone, angle, limb, end) => {
+    const _addBone = (startBone, endBone, angle, limb, target) => {
       const chain = new THREE.IKChain();
       const list = _getBoneList(startBone, endBone);
 
@@ -73,8 +73,9 @@ THREE.Model = (() => {
           ],
         });
         joint.limb = i === 0 && limb;
-        const target = (end && i === (list.length - 1)) ? camera : null;
-        chain.add(joint, {target});
+        chain.add(joint, {
+          target: i === (list.length - 1) ? target : null,
+        });
       }
 
       return chain;
@@ -135,10 +136,9 @@ THREE.Model = (() => {
       }
     };
 
-    ik.add(_addBone(head, chest, 160, false, true));
-
-    ik.add(_addBone(handL, shoulderL, 120, true, true));
-    ik.add(_addBone(handR, shoulderR, 120, true, true));
+    ik.add(_addBone(headM, chest, 160, false, head));
+    ik.add(_addBone(handL, shoulderL, 120, true, leftHand));
+    ik.add(_addBone(handR, shoulderR, 120, true, rightHand));
 
     // console.log('add bone', {handL, shoulderL}); // XXX
 
@@ -263,21 +263,24 @@ THREE.Model = (() => {
     object.scale.multiplyScalar(MODEL_SCALE / scale);
     object.updateMatrixWorld();
 
-    const ticks = skinnedMeshes.map(skinnedMesh => _bindModel(skinnedMesh));
-    return {
-      animate() {
+    object.bindAvatar = (
+      head,
+      leftHand,
+      rightHand,
+    ) => {
+      const ticks = skinnedMeshes.map(skinnedMesh => _bindModel(skinnedMesh, head, leftHand, rightHand));
+      return () => {
         for (let i = 0; i < ticks.length; i++) {
           ticks[i]();
         }
-      },
+      };
     };
   };
   return {
     FBX(u) {
       return new Promise((accept, reject) => {
         new THREE.FBXLoader().load(u, object => { // load
-          const {animate} = _handleModelLoad(object);
-          object.animate = animate;
+          _handleModelLoad(object);
 
           accept(object);
         }, () => { // progress
