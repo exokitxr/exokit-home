@@ -918,7 +918,6 @@ class XRMultiplayer extends EventEmitter {
 
             if (id !== undefined && update !== undefined) {
               const remotePlayer = this.remotePlayers.find(player => player.id === id);
-              this.remotePlayers.push(remotePlayer);
               if (remotePlayer) {
                 for (const k in update) {
                   remotePlayer.state[k] = update[k];
