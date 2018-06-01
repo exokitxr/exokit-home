@@ -452,7 +452,7 @@
         object.position.set(-1, 0, 0);
         scene.add(object);
 
-        const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1]);
+        const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
         _animate(animate);
       })
       .catch(err => {
@@ -463,7 +463,7 @@
         object.position.set(1, 0, 0);
         scene.add(object);
 
-        const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1]);
+        const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
         _animate(animate);
       })
       .catch(err => {
@@ -474,7 +474,7 @@
         object.position.set(2, 0, 0);
         scene.add(object);
 
-        const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1]);
+        const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
         _animate(animate);
       })
       .catch(err => {
@@ -485,7 +485,7 @@
         object.position.set(-2, 0, 0);
         scene.add(object);
 
-        const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1]);
+        const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
         _animate(animate);
       })
       .catch(err => {
@@ -1905,7 +1905,7 @@
                                 object.position.copy(placementPosition);
                                 scene.add(object);
 
-                                const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1]);
+                                const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
                                 _animate(animate);
                               })
                               .catch(err => {

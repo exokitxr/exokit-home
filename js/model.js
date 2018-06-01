@@ -1,13 +1,11 @@
 THREE.Model = (() => {
-  const MODEL_SCALE = 1.6;
-
   const localVector = new THREE.Vector3();
   const localVector2 = new THREE.Vector3();
   const localQuaternion = new THREE.Quaternion();
   const localQuaternion2 = new THREE.Quaternion();
   const localBox = new THREE.Box3();
 
-  const _bindModel = (skinnedMesh, head, leftHand, rightHand) => {
+  const _bindModel = (object, skinnedMesh, head, leftHand, rightHand, height) => {
     const {skeleton} = skinnedMesh;
     const {bones} = skeleton;
     for (let i = 0; i < bones.length; i++) {
@@ -260,15 +258,15 @@ THREE.Model = (() => {
     localBox.setFromObject(object).getSize(localVector);
     const scale = Math.max(localVector.x, localVector.y, localVector.z);
 
-    object.scale.multiplyScalar(MODEL_SCALE / scale);
-    object.updateMatrixWorld();
+    object.scale.divideScalar(scale);
 
     object.bindAvatar = (
       head,
       leftHand,
       rightHand,
+      height,
     ) => {
-      const ticks = skinnedMeshes.map(skinnedMesh => _bindModel(skinnedMesh, head, leftHand, rightHand));
+      const ticks = skinnedMeshes.map(skinnedMesh => _bindModel(object, skinnedMesh, head, leftHand, rightHand, height));
       return () => {
         for (let i = 0; i < ticks.length; i++) {
           ticks[i]();
