@@ -158,11 +158,7 @@ THREE.Model = (() => {
     const initialThighLQuaternion = thighL.quaternion.clone();
     const initialKneeRQuaternion = kneeR.quaternion.clone();
     const initialThighRQuaternion = thighR.quaternion.clone();
-    const _animate = () => {
-      if (window.lol) {
-        return;
-      }
-
+    return () => {
       if (reverts.length > 0) {
         for (let i = 0; i < reverts.length; i++) {
           reverts[i]();
@@ -225,10 +221,7 @@ THREE.Model = (() => {
             ),
           0.5 + ((Math.sin((f + 0.5) * Math.PI * 2) - 1) / 2) * 0.6
         );
-
-      requestAnimationFrame(_animate);
     };
-    requestAnimationFrame(_animate);
   };
 
   const _handleModelLoad = object => {
@@ -278,15 +271,21 @@ THREE.Model = (() => {
     object.scale.multiplyScalar(MODEL_SCALE / scale);
     object.updateMatrixWorld();
 
-    for (let i = 0; i < skinnedMeshes.length; i++) {
-      _bindModel(skinnedMeshes[i]);
-    }
+    const ticks = skinnedMeshes.map(skinnedMesh => _bindModel(skinnedMesh));
+    return {
+      animate() {
+        for (let i = 0; i < ticks.length; i++) {
+          ticks[i]();
+        }
+      },
+    };
   };
   return {
     FBX(u) {
       return new Promise((accept, reject) => {
         new THREE.FBXLoader().load(u, object => { // load
-          _handleModelLoad(object);
+          const {animate} = _handleModelLoad(object);
+          object.animate = animate;
 
           accept(object);
         }, () => { // progress
