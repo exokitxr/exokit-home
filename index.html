@@ -441,11 +441,9 @@
       controllerMeshes[i] = controllerMesh;
     }
 
+    const animations = [];
     const _animate = fn => {
-      requestAnimationFrame(() => {
-        fn();
-        _animate(fn);
-      });
+      animations.push(fn);
     };
     /* THREE.Model.FBX('models/fbx/knuckles/Knuckles.fbx')
       .then(object => {
@@ -1462,6 +1460,9 @@
           fakeDisplay.update();
         }
       };
+      const _updateCamera = () => {
+        renderer.vr.getCamera(camera);
+      };
       const _updateControllers = () => {
         const gamepads = _getGamepads();
 
@@ -2162,6 +2163,13 @@
           }
         }
       };
+      const _animateAnimations = () => {
+        renderer.vr.getCamera(camera);
+
+        for (let i = 0; i < animations.length; i++) {
+          animations[i]();
+        }
+      };
       const _updateMp = () => {
         if (_isMpOpen()) {
           xrmp.localPlayerMesh.hmd.position.copy(camera.position);
@@ -2183,11 +2191,13 @@
         }
       };
       _updateControls();
+      _updateCamera();
       _updateControllers();
       _updateHands();
       _updateIntersections();
       _animateKeyboard();
       _animateControllers();
+      _animateAnimations();
       _updateObjects();
       _updateMp();
 
