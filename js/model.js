@@ -142,7 +142,32 @@ THREE.Model = (() => {
     ik.add(_addBone(handL, shoulderL, 120, true, leftHand));
     ik.add(_addBone(handR, shoulderR, 120, true, rightHand));
 
-    // console.log('add bone', {handL, shoulderL}); // XXX
+    const positionShapshots = (() => {
+      const result = Array(8);
+      for (let i = 0; i < result.length; i++) {
+        result[i] = {
+          position: head.position.clone(),
+          timestamp: Date.now(),
+        };
+      }
+      return result;
+    })();
+    let positionShapshotIndex = 0;
+    const _capturePositionSnapshot = (position, timestamp) => {
+      const snapshot = positionShapshots[positionShapshotIndex];
+      snapshot.position.copy(position);
+      snapshot.timestamp = timestamp;
+
+      positionShapshotIndex = (positionShapshotIndex + 1) % positionShapshots.length;
+    };
+    const _getLastPosition = () => {
+      let index = positionShapshotIndex - 1;
+      if (index < 0) {
+        index += positionShapshots.length;
+      }
+      return positionShapshots[index];
+    };
+    const _getFirstPosition = () => positionShapshots[positionShapshotIndex];
 
     // const helper = new THREE.IKHelper(ik);
     // scene.add(helper);
@@ -159,6 +184,8 @@ THREE.Model = (() => {
         }
         reverts.length = 0;
       }
+
+      _capturePositionSnapshot(head.position, Date.now());
 
       object.quaternion.setFromEuler(
         localEuler.setFromQuaternion(head.quaternion, localEuler.order)
@@ -181,6 +208,11 @@ THREE.Model = (() => {
 
       const rate = 1200;
       const f = (Date.now() % rate) / rate;
+      const firstPosition = _getFirstPosition();
+      const lastPosition = _getLastPosition();
+      const walkSpeed = localVector.copy(firstPosition.position)
+        .distanceTo(lastPosition.position) / (lastPosition.timestamp - firstPosition.timestamp);
+      const intensity = Math.min(walkSpeed * 1000, 1);
       kneeL.quaternion.copy(initialKneeLQuaternion)
         .slerp(
           localQuaternion.copy(initialKneeLQuaternion)
@@ -191,7 +223,7 @@ THREE.Model = (() => {
                   localVector2.set(0, invertedKnee ? -1 : 1, 0)
                 )
             ),
-          ((Math.sin((f + 0.1) * Math.PI * 2) + 1) / 2) * 0.6
+          (((Math.sin((f + 0.1) * Math.PI * 2) + 1) / 2) * 0.6) * intensity
         );
       thighL.quaternion.copy(initialThighLQuaternion)
         .slerp(
@@ -203,7 +235,7 @@ THREE.Model = (() => {
                   localVector2.set(0, invertedKnee ? 1 : -1, 0)
                 )
             ),
-          0.5 + ((Math.sin(f * Math.PI * 2) - 1) / 2) * 0.6
+          (0.5 + ((Math.sin(f * Math.PI * 2) - 1) / 2) * 0.6) * intensity
         );
       kneeR.quaternion.copy(initialKneeRQuaternion)
         .slerp(
@@ -215,7 +247,7 @@ THREE.Model = (() => {
                   localVector2.set(0, invertedKnee ? -1 : 1, 0)
                 )
             ),
-          ((Math.sin((f + 0.1 + 0.5) * Math.PI * 2) + 1) / 2) * 0.6
+          (((Math.sin((f + 0.1 + 0.5) * Math.PI * 2) + 1) / 2) * 0.6) * intensity
         );
       thighR.quaternion.copy(initialThighRQuaternion)
         .slerp(
@@ -227,7 +259,7 @@ THREE.Model = (() => {
                   localVector2.set(0, invertedKnee ? 1 : -1, 0)
                 )
             ),
-          0.5 + ((Math.sin((f + 0.5) * Math.PI * 2) - 1) / 2) * 0.6
+          (0.5 + ((Math.sin((f + 0.5) * Math.PI * 2) - 1) / 2) * 0.6) * intensity
         );
     };
   };
