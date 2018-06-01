@@ -1799,7 +1799,7 @@
                     } else {
                       return Promise.reject(new Error('invalid status code: ' + res.status));
                     }
-                  });
+                  })
                   .then(res => {
                     const {headers} = res;
                     const type = headers.get('content-type');
