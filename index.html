@@ -1792,7 +1792,14 @@
               if (_isIdOpen()) {
                 const placementPosition = controllerMesh.position.clone();
 
-                xrid.requestFile(file.name)
+                fetch(file.name)
+                  .then(res => {
+                    if (res.ok) {
+                      return Promise.resolve(res);
+                    } else {
+                      return Promise.reject(new Error('invalid status code: ' + res.status));
+                    }
+                  });
                   .then(res => {
                     const {headers} = res;
                     const type = headers.get('content-type');
