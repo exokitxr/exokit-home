@@ -2400,13 +2400,15 @@
             break;
           }
           default: {
-            let c = String.fromCharCode(e.which);
-            if (e.shiftKey) {
-              c = c.toUpperCase();
+            if (!e.ctrlKey) {
+              let c = String.fromCharCode(e.which);
+              if (e.shiftKey) {
+                c = c.toUpperCase();
+              }
+              keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor) + c + keyboardState.text.slice(keyboardState.cursor);
+              keyboardState.cursor++;
+              menuMesh.urlMesh.updateText();
             }
-            keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor) + c + keyboardState.text.slice(keyboardState.cursor);
-            keyboardState.cursor++;
-            menuMesh.urlMesh.updateText();
             break;
           }
         }
@@ -2418,7 +2420,110 @@
             }
             break;
           }
-          case 105: { // I
+        }
+      }
+    });
+    window.addEventListener('keydown', e => {
+      const _handleDefaultKey = () => {
+        if (window.document.pointerLockElement) {
+          switch (e.which) {
+            case 87: { // W
+              keys.up = true;
+              if (!window.document.pointerLockElement) {
+                renderer.domElement.requestPointerLock();
+              }
+              break;
+            }
+            case 83: { // S
+              keys.down = true;
+              if (!window.document.pointerLockElement) {
+                renderer.domElement.requestPointerLock();
+              }
+              break;
+            }
+            case 65: { // A
+              keys.left = true;
+              if (!window.document.pointerLockElement) {
+                renderer.domElement.requestPointerLock();
+              }
+              break;
+            }
+            case 68: { // D
+              keys.right = true;
+              if (!window.document.pointerLockElement) {
+                renderer.domElement.requestPointerLock();
+              }
+              break;
+            }
+            case 67: { // C
+              lastPresseds[controllerIndex] = false;
+              lastMenuPresseds[controllerIndex] = false;
+              lastGrabbeds[controllerIndex] = false;
+
+              controllerMeshes[controllerIndex].rayMesh.visible = false;
+              controllerMeshes[controllerIndex].rayDot.visible = false;
+              controllerMeshes[controllerIndex].keyMesh.visible = false;
+              const gamepad = fakeDisplay.gamepads[controllerIndex];
+              for (let i = 0; i < 4; i++) {
+                gamepad.buttons[i].pressed = false;
+              }
+              controllerIndex = 1;
+              if (menuOpen) {
+                controllerMeshes[controllerIndex].rayMesh.visible = true;
+              }
+              break;
+            }
+            case 90: { // Z
+              lastPresseds[controllerIndex] = false;
+              lastMenuPresseds[controllerIndex] = false;
+              lastGrabbeds[controllerIndex] = false;
+
+              controllerMeshes[controllerIndex].rayMesh.visible = false;
+              controllerMeshes[controllerIndex].rayDot.visible = false;
+              controllerMeshes[controllerIndex].keyMesh.visible = false;
+              const gamepad = fakeDisplay.gamepads[controllerIndex];
+              for (let i = 0; i < 4; i++) {
+                gamepad.buttons[i].pressed = false;
+              }
+              controllerIndex = 0;
+              if (menuOpen) {
+                controllerMeshes[controllerIndex].rayMesh.visible = true;
+              }
+              break;
+            }
+            case 69: { // E
+              fakeDisplay.gamepads[controllerIndex].buttons[3].pressed = true;
+              break;
+            }
+            case 70: { // F
+              fakeDisplay.gamepads[controllerIndex].buttons[2].pressed = true;
+              break;
+            }
+            case 84: { // T
+              if (_isMpOpen() && !voicechatEnabled && !xrmp.localPlayerMesh.getMediaStream()) {
+                _openMic();
+              }
+              break;
+            }
+            case 17: { // Ctrl
+              keys.ctrl = true;
+              break;
+            }
+            case 18: { // Alt
+              keys.alt = true;
+              break;
+            }
+          }
+        } else {
+          if (!_isPrintableKey(e.which)) {
+            _handleKey(e.which, e.shiftKey);
+          }
+        }
+      };
+
+      if (e.ctrlKey) {
+        switch (e.which) {
+          case 49: { // 1
             console.log('enable VR');
 
             const display = displays.find(display =>
@@ -2447,7 +2552,7 @@
             }
             break;
           }
-          case 111: { // O
+          case 50: { // 2
             console.log('enable ML');
 
             const display = displays.find(display =>
@@ -2468,103 +2573,13 @@
             }
             break;
           }
-        }
-      }
-    });
-    window.addEventListener('keydown', e => {
-      if (window.document.pointerLockElement) {
-        switch (e.which) {
-          case 87: { // W
-            keys.up = true;
-            if (!window.document.pointerLockElement) {
-              renderer.domElement.requestPointerLock();
-            }
-            break;
-          }
-          case 83: { // S
-            keys.down = true;
-            if (!window.document.pointerLockElement) {
-              renderer.domElement.requestPointerLock();
-            }
-            break;
-          }
-          case 65: { // A
-            keys.left = true;
-            if (!window.document.pointerLockElement) {
-              renderer.domElement.requestPointerLock();
-            }
-            break;
-          }
-          case 68: { // D
-            keys.right = true;
-            if (!window.document.pointerLockElement) {
-              renderer.domElement.requestPointerLock();
-            }
-            break;
-          }
-          case 67: { // C
-            lastPresseds[controllerIndex] = false;
-            lastMenuPresseds[controllerIndex] = false;
-            lastGrabbeds[controllerIndex] = false;
-
-            controllerMeshes[controllerIndex].rayMesh.visible = false;
-            controllerMeshes[controllerIndex].rayDot.visible = false;
-            controllerMeshes[controllerIndex].keyMesh.visible = false;
-            const gamepad = fakeDisplay.gamepads[controllerIndex];
-            for (let i = 0; i < 4; i++) {
-              gamepad.buttons[i].pressed = false;
-            }
-            controllerIndex = 1;
-            if (menuOpen) {
-              controllerMeshes[controllerIndex].rayMesh.visible = true;
-            }
-            break;
-          }
-          case 90: { // Z
-            lastPresseds[controllerIndex] = false;
-            lastMenuPresseds[controllerIndex] = false;
-            lastGrabbeds[controllerIndex] = false;
-
-            controllerMeshes[controllerIndex].rayMesh.visible = false;
-            controllerMeshes[controllerIndex].rayDot.visible = false;
-            controllerMeshes[controllerIndex].keyMesh.visible = false;
-            const gamepad = fakeDisplay.gamepads[controllerIndex];
-            for (let i = 0; i < 4; i++) {
-              gamepad.buttons[i].pressed = false;
-            }
-            controllerIndex = 0;
-            if (menuOpen) {
-              controllerMeshes[controllerIndex].rayMesh.visible = true;
-            }
-            break;
-          }
-          case 69: { // E
-            fakeDisplay.gamepads[controllerIndex].buttons[3].pressed = true;
-            break;
-          }
-          case 70: { // F
-            fakeDisplay.gamepads[controllerIndex].buttons[2].pressed = true;
-            break;
-          }
-          case 84: { // T
-            if (_isMpOpen() && !voicechatEnabled && !xrmp.localPlayerMesh.getMediaStream()) {
-              _openMic();
-            }
-            break;
-          }
-          case 17: { // Ctrl
-            keys.ctrl = true;
-            break;
-          }
-          case 18: { // Alt
-            keys.alt = true;
+          default: {
+            _handleDefaultKey();
             break;
           }
         }
       } else {
-        if (!_isPrintableKey(e.which)) {
-          _handleKey(e.which, e.shiftKey);
-        }
+        _handleDefaultKey();
       }
     });
     window.addEventListener('keyup', e => {
