@@ -425,9 +425,13 @@ if (typeof window !== 'undefined') {
   }
   if (window.VRFrameData === undefined) {
     window.VRFrameData = VRFrameData;
+  } else {
+    window.VRFrameData.prototype.copy = VRFrameData.prototype.copy;
   }
   if (window.VRPose === undefined) {
     window.VRPose = VRPose;
+  } else {
+    window.VRPose.prototype.copy = VRPose.prototype.copy;
   }
   if (window.VRStageParameters === undefined) {
     window.VRStageParameters = VRStageParameters;
