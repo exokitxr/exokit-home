@@ -33,6 +33,7 @@
   <script src="js/xrmp.js"></script>
   <script src="js/xrmp-three.js"></script>
   <script>
+(() => {
     const container = document.getElementById('container');
     const canvas = document.getElementById('canvas');
 
@@ -2362,9 +2363,7 @@
     window.addEventListener('vrdisplayconnect', _updateDisplays);
     window.addEventListener('vrdisplaydisconnect', _updateDisplays);
 
-    const audioCtx = new AudioContext({
-      sampleRate: 48000,
-    });
+    const audioCtx = new AudioContext();
     THREE.AudioContext.setContext(audioCtx);
 
     const _isPrintableKey = code =>
@@ -2781,6 +2780,7 @@
         }
       }
     });
+})();
   </script>
 </body>
 </html>
