@@ -17,10 +17,12 @@ class VRPose {
   }
 
   copy(vrPose) {
-    if (this.position)
+    if (this.position) {
       this.position.set(vrPose.position);
-    if (this.orientation)
+    }
+    if (this.orientation) {
       this.orientation.set(vrPose.orientation);
+    }
   }
 }
 class VRFrameData {
@@ -37,14 +39,18 @@ class VRFrameData {
   }
 
   copy(frameData) {
-    if (this.leftProjectionMatrix)
+    if (this.leftProjectionMatrix) {
       this.leftProjectionMatrix.set(frameData.leftProjectionMatrix);
-    if (this.leftViewMatrix)
+    }
+    if (this.leftViewMatrix) {
       this.leftViewMatrix.set(frameData.leftViewMatrix);
-    if (this.rightProjectionMatrix)
+    }
+    if (this.rightProjectionMatrix) {
       this.rightProjectionMatrix.set(frameData.rightProjectionMatrix);
-    if (this.rightViewMatrix)
+    }
+    if (this.rightViewMatrix) {
       this.rightViewMatrix.set(frameData.rightViewMatrix);
+    }
     this.pose.copy(frameData.pose);
 
     VRFrameData.nonstandard.copy.call(this, frameData);
