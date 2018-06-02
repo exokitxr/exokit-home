@@ -172,6 +172,7 @@
     fakeDisplay.setSize(window.innerWidth * window.devicePixelRatio, window.innerHeight * window.devicePixelRatio);
     fakeDisplay.position.copy(camera.position);
     fakeDisplay.quaternion.copy(camera.quaternion);
+    camera.projectionMatrix.toArray(fakeDisplay._frameData.leftProjectionMatrix);
     fakeDisplay.update();
     fakeDisplay.requestPresent([{source: canvas}])
       .then(() => {
@@ -2332,6 +2333,7 @@
     window.addEventListener('resize', e => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
+      camera.projectionMatrix.toArray(fakeDisplay._frameData.leftProjectionMatrix);
 
       const device = renderer.vr.getDevice();
       if (device === fakeDisplay) {
