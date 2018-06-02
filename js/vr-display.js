@@ -17,8 +17,12 @@ class VRPose {
   }
 
   copy(vrPose) {
-    this.position.set(vrPose.position);
-    this.orientation.set(vrPose.orientation);
+    if (this.position) {
+      this.position.set(vrPose.position);
+    }
+    if (this.orientation) {
+      this.orientation.set(vrPose.orientation);
+    }
   }
 }
 class VRFrameData {
