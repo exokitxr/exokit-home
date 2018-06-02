@@ -2209,17 +2209,29 @@
 
         renderer.vr.enabled = false;
         renderer.render(scene, camera, renderTarget);
+        renderer.render(compositeScene, camera);
         renderer.vr.enabled = true;
-      } else {
+        window.requestAnimationFrame(animate);
+      } else if (device) {
+        renderer.vr.enabled = false;
+        renderer.render(compositeScene, camera);
         renderer.render(scene, camera, renderTarget);
+        renderer.vr.enabled = true;
+        renderer.render(scene, camera, renderTarget);
+        device.requestAnimationFrame(animate);
+      } else {
+        renderer.vr.enabled = false;
+        renderer.render(compositeScene, camera);
+        renderer.vr.enabled = true;
+        window.requestAnimationFrame(animate);
       }
-      renderer.vr.enabled = false;
-      renderer.render(compositeScene, camera);
-      renderer.vr.enabled = true;
-
+    }
+    const device = renderer.vr.getDevice();
+    if (device) {
+      device.requestAnimationFrame(animate);
+    } else {
       window.requestAnimationFrame(animate);
     }
-    window.requestAnimationFrame(animate);
 
     const _handleDefaultKey = (code, shiftKey) => {
       let c = String.fromCharCode(code);
