@@ -444,16 +444,13 @@
     }
 
     const animations = [];
-    const _animate = fn => {
-      animations.push(fn);
-    };
     /* THREE.Model.FBX('models/fbx/knuckles/Knuckles.fbx')
       .then(object => {
         object.position.set(-1, 0, 0);
         scene.add(object);
 
-        const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
-        _animate(animate);
+        const fn = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
+        animations.push(fn);
       })
       .catch(err => {
         console.warn(err.stack);
@@ -463,8 +460,8 @@
         object.position.set(1, 0, 0);
         scene.add(object);
 
-        const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
-        _animate(animate);
+        const fn = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
+        animations.push(fn);
       })
       .catch(err => {
         console.warn(err.stack);
@@ -474,8 +471,8 @@
         object.position.set(2, 0, 0);
         scene.add(object);
 
-        const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
-        _animate(animate);
+        const fn = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
+        animations.push(fn);
       })
       .catch(err => {
         console.warn(err.stack);
@@ -485,8 +482,8 @@
         object.position.set(-2, 0, 0);
         scene.add(object);
 
-        const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
-        _animate(animate);
+        const fn = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
+        animations.push(fn);
       })
       .catch(err => {
         console.warn(err.stack);
@@ -1908,8 +1905,8 @@
                                 object.position.copy(placementPosition);
                                 scene.add(object);
 
-                                const animate = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
-                                _animate(animate);
+                                const fn = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
+                                animations.push(fn);
                               })
                               .catch(err => {
                                 console.warn(err.stack);
