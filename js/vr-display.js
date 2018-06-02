@@ -241,7 +241,12 @@ class VRDisplay extends MRDisplay {
   }
 
   getFrameData(frameData) {
-    frameData.copy(this._frameData);
+    frameData.set(this._frameData.leftProjectionMatrix);
+    frameData.set(this._frameData.leftViewMatrix);
+    frameData.set(this._frameData.rightViewMatrix);
+    frameData.set(this._frameData.rightProjectionMatrix);
+    frameData.pose.position.set(this._frameData.pose.position);
+    frameData.pose.orientation.set(this._frameData.pose.orientation);
   }
 
   update(update) {
@@ -420,9 +425,13 @@ if (typeof window !== 'undefined') {
   }
   if (window.VRFrameData === undefined) {
     window.VRFrameData = VRFrameData;
+  } else {
+    window.VRFrameData.prototype.copy = VRFrameData.prototype.copy;
   }
   if (window.VRPose === undefined) {
     window.VRPose = VRPose;
+  } else {
+    window.VRPose.prototype.copy = VRPose.prototype.copy;
   }
   if (window.VRStageParameters === undefined) {
     window.VRStageParameters = VRStageParameters;
