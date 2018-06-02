@@ -4,7 +4,7 @@ const xrmpThree = ((
   })
 ) => {
 
-const AUDIO_BUFFER_SIZE = 512;
+const AUDIO_BUFFER_SIZE = 2048;
 
 const _makePlayerMesh = () => {
   const result = new THREE.Object3D();
