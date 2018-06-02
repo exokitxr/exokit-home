@@ -34,7 +34,7 @@ class VRFrameData {
     VRFrameData.nonstandard.init.call(this);
   }
 
-  copy(frameData) {
+  /* copy(frameData) {
     this.leftProjectionMatrix.set(frameData.leftProjectionMatrix);
     this.leftViewMatrix.set(frameData.leftViewMatrix);
     this.rightProjectionMatrix.set(frameData.rightProjectionMatrix);
@@ -42,7 +42,7 @@ class VRFrameData {
     this.pose.copy(frameData.pose);
 
     VRFrameData.nonstandard.copy.call(this, frameData);
-  }
+  } */
 }
 VRFrameData.nonstandard = {
   init() {},
@@ -241,7 +241,12 @@ class VRDisplay extends MRDisplay {
   }
 
   getFrameData(frameData) {
-    frameData.copy(this._frameData);
+    frameData.set(this._frameData.leftProjectionMatrix);
+    frameData.set(this._frameData.leftViewMatrix);
+    frameData.set(this._frameData.rightViewMatrix);
+    frameData.set(this._frameData.rightProjectionMatrix);
+    frameData.pose.position.set(this._frameData.pose.position);
+    frameData.pose.orientation.set(this._frameData.pose.orientation);
   }
 
   update(update) {
