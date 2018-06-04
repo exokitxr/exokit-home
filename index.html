@@ -181,7 +181,56 @@
         renderer.vr.setDevice(fakeDisplay);
         renderer.vr.setAnimationLoop(animate);
 
-        window.dispatchEvent(new Event('vrdisplaypresentchange'));
+        if (navigator.xr) {
+          const views = [{
+            projectionMatrix: fakeDisplay._frameData.leftProjectionMatrix,
+            _viewport: {
+              x: 0,
+              y: 0,
+              width: fakeDisplay._width,
+              height: fakeDisplay._height,
+            },
+          }];
+          const devicePose = {
+            getViewMatrix() {
+              return fakeDisplay._frameData.leftViewMatrix;
+            },
+          };
+          const frame = {
+            views,
+            getDevicePose() {
+              return devicePose;
+            },
+          };
+          const onends = [];
+          const session = {
+            addEventListener(e, fn) {
+              if (e === 'end') {
+                onends.push(fn);
+              }
+            },
+            baseLayer: null,
+            requestFrameOfReference() {
+              return Promise.resolve(null);
+            },
+            device: fakeDisplay,
+            requestAnimationFrame: fn => window.requestAnimationFrame(timestamp => {
+              fn(timestamp, frame);
+            }),
+            end() {
+              for (let i = 0; i < onends.length; i++) {
+                onends[i]();
+              }
+              return Promise.resolve();
+            }
+          };
+          fakeDisplay.session = session;
+          renderer.vr.setSession(session, {
+            frameOfReferenceType: 'stage',
+          });
+        } else {
+          window.dispatchEvent(new Event('vrdisplaypresentchange'));
+        }
       });
 
     const _getGamepads = () => {
@@ -2347,9 +2396,15 @@
 
     let displays = [];
     const _updateDisplays = () => {
-      window.navigator.getVRDisplays ? window.navigator.getVRDisplays() : Promise.resolve([])
+      Promise.all([
+        window.navigator.getVRDisplays ? window.navigator.getVRDisplays() : Promise.resolve([]),
+        window.navigator.xr ? window.navigator.xr.requestDevice().then(device => [device]) : Promise.resolve([]),
+      ])
         .then(ds => {
-          displays = ds;
+          displays.length = 0;
+          for (let i = 0; i < ds.length; i++) {
+            displays.push.apply(displays, ds[i]);
+          }
         })
         .catch(err => {
           console.warn(err);
