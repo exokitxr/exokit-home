@@ -198,14 +198,15 @@ class MRDisplay {
   }
 
   requestPresent(layers) {
-    return (this.onrequestpresent ? this.onrequestpresent(layers) : Promise.resolve())
-      .then(() => {
-        this.isPresenting = true;
+    if (this.onrequestpresent) {
+      this.onrequestpresent(layers);
+    }
 
-        if (this.onvrdisplaypresentchange) {
-          this.onvrdisplaypresentchange();
-        }
-      });
+    this.isPresenting = true;
+
+    if (this.onvrdisplaypresentchange) {
+      this.onvrdisplaypresentchange();
+    }
   }
 
   exitPresent() {
