@@ -179,6 +179,9 @@
     fakeDisplay.requestPresent([{source: canvas}])
       .then(() => {
         renderer.vr.setDevice(fakeDisplay);
+        renderer.vr.setAnimationLoop(animate);
+
+        window.dispatchEvent(new Event('vrdisplaypresentchange'));
       });
 
     const _getGamepads = () => {
@@ -1460,9 +1463,6 @@
           fakeDisplay.update();
         }
       };
-      const _updateCamera = () => {
-        renderer.vr.getCamera(camera);
-      };
       const _updateControllers = () => {
         const gamepads = _getGamepads();
 
@@ -2189,7 +2189,6 @@
         }
       };
       _updateControls();
-      _updateCamera();
       _updateControllers();
       _updateHands();
       _updateIntersections();
@@ -2216,9 +2215,10 @@
       renderer.render(compositeScene, camera);
       renderer.vr.enabled = true;
 
-      window.requestAnimationFrame(animate);
+      if (!device) {
+        window.requestAnimationFrame(animate);
+      }
     }
-    window.requestAnimationFrame(animate);
 
     const _handleDefaultKey = (code, shiftKey) => {
       let c = String.fromCharCode(code);
@@ -2335,25 +2335,25 @@
       const device = renderer.vr.getDevice();
       if (device === fakeDisplay) {
         renderer.vr.setDevice(null);
+        renderer.vr.setAnimationLoop(null);
       }
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
       if (device === fakeDisplay) {
         renderer.vr.setDevice(fakeDisplay);
+        renderer.vr.setAnimationLoop(animate);
       }
     });
 
     let displays = [];
     const _updateDisplays = () => {
-      if (window.navigator.getVRDisplays) {
-        window.navigator.getVRDisplays()
-          .then(ds => {
-            displays = ds;
-          })
-          .catch(err => {
-            console.warn(err);
-          });
-      }
+      window.navigator.getVRDisplays ? window.navigator.getVRDisplays() : Promise.resolve([])
+        .then(ds => {
+          displays = ds;
+        })
+        .catch(err => {
+          console.warn(err);
+        });
     };
     _updateDisplays();
     window.addEventListener('vrdisplayconnect', _updateDisplays);
@@ -2522,27 +2522,47 @@
             console.log('enable VR');
 
             const display = displays.find(display =>
-              display.constructor.name === 'VRDisplay'
+              display.constructor.name === 'XRDevice'
             );
+
             if (display) {
               if (window.document.pointerLockElement) {
                 window.document.exitPointerLock();
               }
               renderer.vr.setDevice(null);
+              renderer.vr.setAnimationLoop(null);
 
-              display.requestPresent([{source: canvas}])
-                .then(() => {
-                  renderer.vr.setDevice(display);
+              fakeDisplay.session.end();
 
-                  const eyeParameters = display.getEyeParameters('left');
-                  const width = eyeParameters.renderWidth * 2;
-                  const height = eyeParameters.renderHeight;
+              display.requestSession({
+                exclusive: true,
+                outputContext: renderer.getContext(),
+              })
+                .then(session => {
+                  display.session = session;
 
-                  // renderTarget.dispose(); // XXX
-                  renderTarget = _makeRenderTarget(width, height);
+                  session.requestAnimationFrame((timestamp, frame) => {
+                    renderer.vr.setSession(session, {
+                      frameOfReferenceType: 'stage',
+                    });
 
-                  screenQuad.material.uniforms.uTexture1.value = renderTarget.texture;
-                  screenQuad.material.uniforms.uDepth1.value = renderTarget.depthTexture;
+                    const viewport = session.baseLayer.getViewport(frame.views[0]);
+                    const width = viewport.width * 2;
+                    const height = viewport.height;
+
+                    renderer.setSize(width, height);
+
+                    renderer.vr.setDevice(display);
+                    renderer.vr.setAnimationLoop(animate);
+
+                    renderTarget = _makeRenderTarget(width, height);
+
+                    screenQuad.material.uniforms.uTexture1.value = renderTarget.texture;
+                    screenQuad.material.uniforms.uDepth1.value = renderTarget.depthTexture;
+                  });
+                })
+                .catch(err => {
+                  console.warn(err.stack);
                 });
             }
             break;
@@ -2558,10 +2578,14 @@
                 window.document.exitPointerLock();
               }
               renderer.vr.setDevice(null);
+              renderer.vr.setAnimationLoop(null);
+
+              fakeDisplay.session.end();
 
               display.requestPresent([{source: canvas}])
                 .then(() => {
                   renderer.vr.setDevice(display);
+                  renderer.vr.setAnimationLoop(animate);
 
                   scene.background = null;
                 });
