@@ -207,6 +207,7 @@ class MRDisplay {
     if (this.onvrdisplaypresentchange) {
       this.onvrdisplaypresentchange();
     }
+    return Promise.resolve();
   }
 
   exitPresent() {
@@ -263,10 +264,10 @@ class VRDisplay extends MRDisplay {
   }
 
   getFrameData(frameData) {
-    frameData.set(this._frameData.leftProjectionMatrix);
-    frameData.set(this._frameData.leftViewMatrix);
-    frameData.set(this._frameData.rightViewMatrix);
-    frameData.set(this._frameData.rightProjectionMatrix);
+    frameData.leftProjectionMatrix.set(this._frameData.leftProjectionMatrix);
+    frameData.leftViewMatrix.set(this._frameData.leftViewMatrix);
+    frameData.rightViewMatrix.set(this._frameData.rightViewMatrix);
+    frameData.rightProjectionMatrix.set(this._frameData.rightProjectionMatrix);
     frameData.pose.position.set(this._frameData.pose.position);
     frameData.pose.orientation.set(this._frameData.pose.orientation);
   }
