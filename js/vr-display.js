@@ -104,6 +104,7 @@ class GamepadHapticActuator {
 }
 class Gamepad {
   constructor(hand, index) {
+    this.id = 'OpenVR Gamepad';
     this.hand = hand;
     this.index = index;
 
