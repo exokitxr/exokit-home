@@ -121,6 +121,7 @@
         _closeUrl();
           loadingBarState.ifLoaded = false;
           loadingBarState.ifLoading = true;
+          loadingBarState.ifError = false;
           loadingBarState.text = "Loading...";
           menuMesh.urlMesh.updateText();
           _openUrl(urlState.text);
