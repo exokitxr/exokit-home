@@ -69,6 +69,11 @@
     const keyboardWidth = 2048;
     const keyboardHeight = 716;
     const keyboardMatrix = [keyboardWidth / 963.266, keyboardHeight / 337.215];
+
+    const loadingBarWidth = menuWidth;
+    const loadingBarHeight = 200;
+    const loadingBarOffset = loadingBarHeight*1.4 + 300;
+
     const SKYBOX_SHADER = {
       uniforms: {
         map: {
@@ -116,10 +121,19 @@
       measures: [],
       submit() {
         _closeUrl();
-        _openUrl(urlState.text);
+          loadingBarState.ifLoading = true;
+          menuMesh.urlMesh.updateText();
+          _openUrl(urlState.text);
       },
     };
     urlState.cursor = urlState.text.length;
+
+    const loadingBarState = {
+        ifLoading: false,
+        ifError: false,
+        ifLoaded: false
+    };
+
     const usernameState = {
       text: 'lol@zol.com',
       cursor: -1,
@@ -1115,6 +1129,36 @@
             ctx.fillRect(0, urlBarOffset, urlBarWidth, urlBarHeight);
             ctx.fillStyle = '#FFF';
             ctx.fillRect(5, urlBarOffset + 5, urlBarWidth - 10, urlBarHeight - 10);
+
+            // Chris`s Loading Bar
+              if(loadingBarState.ifLoading === true && loadingBarState.ifError === false){
+                  ctx.fillStyle = '#333';
+                  ctx.fillRect(0, loadingBarOffset, loadingBarWidth, loadingBarHeight);
+                  ctx.fillStyle = '#FFF';
+                  ctx.fillRect(10, loadingBarOffset, loadingBarWidth -20, loadingBarHeight- 10);
+                  ctx.fillStyle = '#333';
+                  ctx.font = `${fontSize}px Arial`;
+                  ctx.fillText("                Loading...", 10, loadingBarOffset + loadingBarHeight - 10*2 - 30);
+                  if(loadingBarState.ifLoaded === true){
+                      ctx.fillStyle = '#333';
+                      ctx.fillRect(0, loadingBarOffset, loadingBarWidth, loadingBarHeight);
+                      ctx.fillStyle = '#FFF';
+                      ctx.fillRect(10, loadingBarOffset, loadingBarWidth -20, loadingBarHeight- 10);
+                      ctx.fillStyle = '#333';
+                      ctx.font = `${fontSize}px Arial`;
+                      ctx.fillText("                Mesh is loaded!", 10, loadingBarOffset + loadingBarHeight - 10*2 - 30);
+                  }
+              }
+              else if(loadingBarState.ifLoading === true && loadingBarState.ifError === true){
+                  ctx.fillStyle = '#ff1818';
+                  ctx.fillRect(0, loadingBarOffset, loadingBarWidth, loadingBarHeight);
+                  ctx.fillStyle = '#FFF';
+                  ctx.fillRect(10, loadingBarOffset, loadingBarWidth -20, loadingBarHeight- 10);
+                  ctx.fillStyle = '#333';
+                  ctx.font = `${fontSize}px Arial`;
+                  ctx.fillText('          Error mesh could not load!', 10, loadingBarOffset + loadingBarHeight - 10*2 - 30);
+              }
+
             ctx.fillStyle = '#333';
             ctx.font = `${fontSize}px Arial`;
             ctx.fillText(urlState.text, 10, urlBarOffset + urlBarHeight - 10*2 - 30);
@@ -2324,6 +2368,7 @@
         _handleDefaultKey(code, shiftKey);
       }
     };
+
     const iframes = [];
     const _openUrl = (u, index = -1, cb = null) => {
       const iframe = document.createElement('iframe');
@@ -2356,9 +2401,39 @@
       iframe.addEventListener('destroy', () => {
         screenQuad.material.uniforms.numTextures.value = 1;
       });
-      container.appendChild(iframe);
-
-      iframes.push(iframe);
+        // function to test the URL on submit for a 404
+        function checkURL() {
+            let request;
+            if(window.XMLHttpRequest)
+                request = new XMLHttpRequest();
+            else
+                request = new ActiveXObject("Microsoft.XMLHTTP");
+                try{
+                    console.log("Loading");
+                    request.open('GET', u, false);
+                    request.send(); // there will be a 'pause' here until the response to come.
+                }
+                catch{
+                    console.log("URL failed to load");
+                    return false;
+                }
+            return true;
+        }
+        // if URL 404, throw error message
+        if(checkURL(u) === false){
+            loadingBarState.ifLoading = true;
+            loadingBarState.ifError = true;
+            menuMesh.urlMesh.updateText();
+        }
+        // if URL is correct and responds, show "loaded mesh" to user
+        else if(checkURL(u) === true){
+            container.appendChild(iframe);
+            iframes.push(iframe);
+            loadingBarState.ifLoading = true;
+            loadingBarState.ifLoaded = true;
+            loadingBarState.ifError = false;
+            menuMesh.urlMesh.updateText();
+        }
     };
     const _closeUrl = () => {
       for (let i = 0; i < iframes.length; i++) {
