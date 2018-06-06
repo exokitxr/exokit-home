@@ -69,11 +69,9 @@
     const keyboardWidth = 2048;
     const keyboardHeight = 716;
     const keyboardMatrix = [keyboardWidth / 963.266, keyboardHeight / 337.215];
-
     const loadingBarWidth = menuWidth;
     const loadingBarHeight = 200;
-    const loadingBarOffset = loadingBarHeight*1.4 + 300;
-
+    const loadingBarOffset = loadingBarHeight*1.4 + 202;
     const SKYBOX_SHADER = {
       uniforms: {
         map: {
@@ -121,7 +119,9 @@
       measures: [],
       submit() {
         _closeUrl();
+          loadingBarState.ifLoaded = false;
           loadingBarState.ifLoading = true;
+          loadingBarState.text = "Loading...";
           menuMesh.urlMesh.updateText();
           _openUrl(urlState.text);
       },
@@ -129,6 +129,7 @@
     urlState.cursor = urlState.text.length;
 
     const loadingBarState = {
+        text: '',
         ifLoading: false,
         ifError: false,
         ifLoaded: false
@@ -1131,32 +1132,32 @@
             ctx.fillRect(5, urlBarOffset + 5, urlBarWidth - 10, urlBarHeight - 10);
 
             // Chris`s Loading Bar
-              if(loadingBarState.ifLoading === true && loadingBarState.ifError === false){
-                  ctx.fillStyle = '#333';
+              if(loadingBarState.ifLoading === true && loadingBarState.ifError === false && loadingBarState.ifLoaded === false){
+                  ctx.fillStyle = '#e68e04';
                   ctx.fillRect(0, loadingBarOffset, loadingBarWidth, loadingBarHeight);
                   ctx.fillStyle = '#FFF';
                   ctx.fillRect(10, loadingBarOffset, loadingBarWidth -20, loadingBarHeight- 10);
                   ctx.fillStyle = '#333';
                   ctx.font = `${fontSize}px Arial`;
-                  ctx.fillText("                Loading...", 10, loadingBarOffset + loadingBarHeight - 10*2 - 30);
-                  if(loadingBarState.ifLoaded === true){
-                      ctx.fillStyle = '#333';
-                      ctx.fillRect(0, loadingBarOffset, loadingBarWidth, loadingBarHeight);
-                      ctx.fillStyle = '#FFF';
-                      ctx.fillRect(10, loadingBarOffset, loadingBarWidth -20, loadingBarHeight- 10);
-                      ctx.fillStyle = '#333';
-                      ctx.font = `${fontSize}px Arial`;
-                      ctx.fillText("                Mesh is loaded!", 10, loadingBarOffset + loadingBarHeight - 10*2 - 30);
-                  }
+                  ctx.fillText(loadingBarState.text, 10, loadingBarOffset + loadingBarHeight - 10*2 - 30);
               }
-              else if(loadingBarState.ifLoading === true && loadingBarState.ifError === true){
+              if(loadingBarState.ifLoaded === true && loadingBarState.ifError === false){
+                  ctx.fillStyle = '#1dc008';
+                  ctx.fillRect(0, loadingBarOffset, loadingBarWidth, loadingBarHeight);
+                  ctx.fillStyle = '#FFF';
+                  ctx.fillRect(10, loadingBarOffset, loadingBarWidth -20, loadingBarHeight- 10);
+                  ctx.fillStyle = '#333';
+                  ctx.font = `${fontSize}px Arial`;
+                  ctx.fillText(loadingBarState.text, 10, loadingBarOffset + loadingBarHeight - 10*2 - 30);
+              }
+              if(loadingBarState.ifLoading === false && loadingBarState.ifLoaded === true && loadingBarState.ifError === true){
                   ctx.fillStyle = '#ff1818';
                   ctx.fillRect(0, loadingBarOffset, loadingBarWidth, loadingBarHeight);
                   ctx.fillStyle = '#FFF';
                   ctx.fillRect(10, loadingBarOffset, loadingBarWidth -20, loadingBarHeight- 10);
                   ctx.fillStyle = '#333';
                   ctx.font = `${fontSize}px Arial`;
-                  ctx.fillText('          Error mesh could not load!', 10, loadingBarOffset + loadingBarHeight - 10*2 - 30);
+                  ctx.fillText(loadingBarState.text, 10, loadingBarOffset + loadingBarHeight - 10*2 - 30);
               }
 
             ctx.fillStyle = '#333';
@@ -2372,6 +2373,25 @@
     const iframes = [];
     const _openUrl = (u, index = -1, cb = null) => {
       const iframe = document.createElement('iframe');
+      // Set onload for iframe and change loadingBar state based on error or success
+      iframe.onload = function(){
+          try{
+              this.contentDocument;
+              loadingBarState.ifLoading = false;
+              loadingBarState.ifLoaded = true;
+              loadingBarState.ifError = false;
+              loadingBarState.text = "Loaded: " + u;
+              menuMesh.urlMesh.updateText();
+          }
+          catch(err){
+              loadingBarState.ifLoading = false;
+              loadingBarState.ifLoaded = true;
+              loadingBarState.ifError = true;
+              loadingBarState.text = "Error: " + u;
+              menuMesh.urlMesh.updateText();
+              console.log(err);
+          }
+      };
       iframe.src = u;
       iframe.hidden = true;
       iframe.index = index;
@@ -2401,39 +2421,8 @@
       iframe.addEventListener('destroy', () => {
         screenQuad.material.uniforms.numTextures.value = 1;
       });
-        // function to test the URL on submit for a 404
-        function checkURL() {
-            let request;
-            if(window.XMLHttpRequest)
-                request = new XMLHttpRequest();
-            else
-                request = new ActiveXObject("Microsoft.XMLHTTP");
-                try{
-                    console.log("Loading");
-                    request.open('GET', u, false);
-                    request.send(); // there will be a 'pause' here until the response to come.
-                }
-                catch{
-                    console.log("URL failed to load");
-                    return false;
-                }
-            return true;
-        }
-        // if URL 404, throw error message
-        if(checkURL(u) === false){
-            loadingBarState.ifLoading = true;
-            loadingBarState.ifError = true;
-            menuMesh.urlMesh.updateText();
-        }
-        // if URL is correct and responds, show "loaded mesh" to user
-        else if(checkURL(u) === true){
-            container.appendChild(iframe);
-            iframes.push(iframe);
-            loadingBarState.ifLoading = true;
-            loadingBarState.ifLoaded = true;
-            loadingBarState.ifError = false;
-            menuMesh.urlMesh.updateText();
-        }
+        container.appendChild(iframe);
+        iframes.push(iframe);
     };
     const _closeUrl = () => {
       for (let i = 0; i < iframes.length; i++) {
