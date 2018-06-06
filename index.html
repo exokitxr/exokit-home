@@ -119,22 +119,12 @@
       measures: [],
       submit() {
         _closeUrl();
-<<<<<<< HEAD
-          loadingBarState.ifLoaded = false;
-          loadingBarState.ifLoading = true;
-          loadingBarState.ifError = false;
-          loadingBarState.text = "Loading...";
-          menuMesh.urlMesh.updateText();
-          _openUrl(urlState.text);
-=======
-
         _openUrl(urlState.text);
 
         loadingBarState.loaded = false;
         loadingBarState.loading = true;
         loadingBarState.text = "Loading...";
         menuMesh.urlMesh.updateText();
->>>>>>> upstream/master
       },
     };
     urlState.cursor = urlState.text.length;
