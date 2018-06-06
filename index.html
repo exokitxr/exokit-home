@@ -119,20 +119,21 @@
       measures: [],
       submit() {
         _closeUrl();
-          loadingBarState.ifLoaded = false;
-          loadingBarState.ifLoading = true;
-          loadingBarState.text = "Loading...";
-          menuMesh.urlMesh.updateText();
-          _openUrl(urlState.text);
+
+        _openUrl(urlState.text);
+
+        loadingBarState.loaded = false;
+        loadingBarState.loading = true;
+        loadingBarState.text = "Loading...";
+        menuMesh.urlMesh.updateText();
       },
     };
     urlState.cursor = urlState.text.length;
-
     const loadingBarState = {
-        text: '',
-        ifLoading: false,
-        ifError: false,
-        ifLoaded: false
+      text: '',
+      loading: false,
+      error: false,
+      loaded: false
     };
 
     const usernameState = {
@@ -1131,34 +1132,33 @@
             ctx.fillStyle = '#FFF';
             ctx.fillRect(5, urlBarOffset + 5, urlBarWidth - 10, urlBarHeight - 10);
 
-            // Chris`s Loading Bar
-              if(loadingBarState.ifLoading === true && loadingBarState.ifError === false && loadingBarState.ifLoaded === false){
-                  ctx.fillStyle = '#e68e04';
-                  ctx.fillRect(0, loadingBarOffset, loadingBarWidth, loadingBarHeight);
-                  ctx.fillStyle = '#FFF';
-                  ctx.fillRect(10, loadingBarOffset, loadingBarWidth -20, loadingBarHeight- 10);
-                  ctx.fillStyle = '#333';
-                  ctx.font = `${fontSize}px Arial`;
-                  ctx.fillText(loadingBarState.text, 10, loadingBarOffset + loadingBarHeight - 10*2 - 30);
-              }
-              if(loadingBarState.ifLoaded === true && loadingBarState.ifError === false){
-                  ctx.fillStyle = '#1dc008';
-                  ctx.fillRect(0, loadingBarOffset, loadingBarWidth, loadingBarHeight);
-                  ctx.fillStyle = '#FFF';
-                  ctx.fillRect(10, loadingBarOffset, loadingBarWidth -20, loadingBarHeight- 10);
-                  ctx.fillStyle = '#333';
-                  ctx.font = `${fontSize}px Arial`;
-                  ctx.fillText(loadingBarState.text, 10, loadingBarOffset + loadingBarHeight - 10*2 - 30);
-              }
-              if(loadingBarState.ifLoading === false && loadingBarState.ifLoaded === true && loadingBarState.ifError === true){
-                  ctx.fillStyle = '#ff1818';
-                  ctx.fillRect(0, loadingBarOffset, loadingBarWidth, loadingBarHeight);
-                  ctx.fillStyle = '#FFF';
-                  ctx.fillRect(10, loadingBarOffset, loadingBarWidth -20, loadingBarHeight- 10);
-                  ctx.fillStyle = '#333';
-                  ctx.font = `${fontSize}px Arial`;
-                  ctx.fillText(loadingBarState.text, 10, loadingBarOffset + loadingBarHeight - 10*2 - 30);
-              }
+            if (loadingBarState.loading && !loadingBarState.error && !loadingBarState.loaded) {
+              ctx.fillStyle = '#e68e04';
+              ctx.fillRect(0, loadingBarOffset, loadingBarWidth, loadingBarHeight);
+              ctx.fillStyle = '#FFF';
+              ctx.fillRect(10, loadingBarOffset, loadingBarWidth -20, loadingBarHeight- 10);
+              ctx.fillStyle = '#333';
+              ctx.font = `${fontSize}px Arial`;
+              ctx.fillText(loadingBarState.text, 10, loadingBarOffset + loadingBarHeight - 10*2 - 30);
+            }
+            if (loadingBarState.loaded && loadingBarState.error) {
+              ctx.fillStyle = '#1dc008';
+              ctx.fillRect(0, loadingBarOffset, loadingBarWidth, loadingBarHeight);
+              ctx.fillStyle = '#FFF';
+              ctx.fillRect(10, loadingBarOffset, loadingBarWidth -20, loadingBarHeight- 10);
+              ctx.fillStyle = '#333';
+              ctx.font = `${fontSize}px Arial`;
+              ctx.fillText(loadingBarState.text, 10, loadingBarOffset + loadingBarHeight - 10*2 - 30);
+            }
+            if (loadingBarState.loading && loadingBarState.loaded && loadingBarState.error) {
+              ctx.fillStyle = '#ff1818';
+              ctx.fillRect(0, loadingBarOffset, loadingBarWidth, loadingBarHeight);
+              ctx.fillStyle = '#FFF';
+              ctx.fillRect(10, loadingBarOffset, loadingBarWidth -20, loadingBarHeight- 10);
+              ctx.fillStyle = '#333';
+              ctx.font = `${fontSize}px Arial`;
+              ctx.fillText(loadingBarState.text, 10, loadingBarOffset + loadingBarHeight - 10*2 - 30);
+            }
 
             ctx.fillStyle = '#333';
             ctx.font = `${fontSize}px Arial`;
@@ -2372,25 +2372,32 @@
 
     const iframes = [];
     const _openUrl = (u, index = -1, cb = null) => {
+      const _drawOk = () => {
+        loadingBarState.loading = false;
+        loadingBarState.loaded = true;
+        loadingBarState.error = false;
+        loadingBarState.text = 'Load ok: ' + u;
+        menuMesh.urlMesh.updateText();
+      };
+      const _drawFail = () => {
+        loadingBarState.loading = false;
+        loadingBarState.loaded = true;
+        loadingBarState.error = true;
+        loadingBarState.text = 'Load error: ' + u;
+        menuMesh.urlMesh.updateText();
+      };
+
       const iframe = document.createElement('iframe');
-      // Set onload for iframe and change loadingBar state based on error or success
-      iframe.onload = function(){
-          try{
-              this.contentDocument;
-              loadingBarState.ifLoading = false;
-              loadingBarState.ifLoaded = true;
-              loadingBarState.ifError = false;
-              loadingBarState.text = "Loaded: " + u;
-              menuMesh.urlMesh.updateText();
-          }
-          catch(err){
-              loadingBarState.ifLoading = false;
-              loadingBarState.ifLoaded = true;
-              loadingBarState.ifError = true;
-              loadingBarState.text = "Error: " + u;
-              menuMesh.urlMesh.updateText();
-              console.log(err);
-          }
+      iframe.onload = function() {
+        try {
+          this.contentDocument; // this potentially throws
+
+          _drawOk();
+        } catch(err) {
+          console.warn(err.stack);
+
+          _drawFail();
+        }
       };
       iframe.src = u;
       iframe.hidden = true;
@@ -2421,8 +2428,8 @@
       iframe.addEventListener('destroy', () => {
         screenQuad.material.uniforms.numTextures.value = 1;
       });
-        container.appendChild(iframe);
-        iframes.push(iframe);
+      container.appendChild(iframe);
+      iframes.push(iframe);
     };
     const _closeUrl = () => {
       for (let i = 0; i < iframes.length; i++) {
