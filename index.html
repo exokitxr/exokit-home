@@ -2337,13 +2337,38 @@
       };
 
       const iframe = document.createElement('iframe');
-      iframe.onload = function() {
-        try {
-          this.contentDocument; // this potentially throws
+      iframe.onerror = e => {
+        console.warn(e.error.stack);
 
+        _drawFail();
+      };
+      iframe.onload = function() {
+        const contentDocument = (() => {
+          try {
+            if (this.contentDocument) { // this potentially throws
+              return this.contentDocument;
+            } else {
+              return null;
+            }
+          } catch(err) {
+            console.warn(err.stack);
+            return null;
+          }
+        })();
+        if (contentDocument) {
           _drawOk();
-        } catch(err) {
-          console.warn(err.stack);
+
+          if (contentDocument.resources) {
+            iframeResources = iframe.contentWindow.document.resources;
+            resources.push(iframeResources);
+
+            iframeResources.addEventListener('update', _resourcesUpdate);
+          }
+
+          floorMesh.visible = false;
+          scene.background = null;
+        } else {
+          _closeUrl(iframe);
 
           _drawFail();
         }
@@ -2351,17 +2376,6 @@
       iframe.src = u;
       iframe.hidden = true;
       let iframeResources = null;
-      iframe.addEventListener('load', () => {
-        if (iframe.contentWindow.document.resources) {
-          iframeResources = iframe.contentWindow.document.resources;
-          resources.push(iframeResources);
-
-          iframeResources.addEventListener('update', _resourcesUpdate);
-        }
-
-        floorMesh.visible = false;
-        scene.background = null;
-      });
       iframe.addEventListener('framebuffer', framebuffer => {
         screenQuad.material.uniforms.numTextures.value = 2;
 
