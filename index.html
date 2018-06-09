@@ -37,18 +37,6 @@
     const container = document.getElementById('container');
     const canvas = document.getElementById('canvas');
 
-    const getQueryVariable = variable => {
-      const query = window.location.search.substring(1);
-      const vars = query.split('&');
-      for (let i = 0; i < vars.length; i++) {
-        const pair = vars[i].split('=');
-        if (decodeURIComponent(pair[0]) == variable) {
-          return decodeURIComponent(pair[1]);
-        }
-      }
-      return null;
-    };
-
     const REGISTRY_QUERY_URL = 'https://registry.webmr.io/q';
     const DEFAULT_USER_HEIGHT = 1.6;
     const DEFAULT_SKIN_URL = 'img/skins/male.png';
