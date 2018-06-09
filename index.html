@@ -2606,6 +2606,7 @@
               controllerMeshes[controllerIndex].keyMesh.visible = false;
               const gamepad = fakeDisplay.gamepads[controllerIndex];
               for (let i = 0; i < 4; i++) {
+                gamepad.buttons[i].value = 0;
                 gamepad.buttons[i].pressed = false;
               }
               controllerIndex = 1;
@@ -2624,6 +2625,7 @@
               controllerMeshes[controllerIndex].keyMesh.visible = false;
               const gamepad = fakeDisplay.gamepads[controllerIndex];
               for (let i = 0; i < 4; i++) {
+                gamepad.buttons[i].value = 0;
                 gamepad.buttons[i].pressed = false;
               }
               controllerIndex = 0;
@@ -2633,10 +2635,12 @@
               break;
             }
             case 69: { // E
+              fakeDisplay.gamepads[controllerIndex].buttons[3].value = 1;
               fakeDisplay.gamepads[controllerIndex].buttons[3].pressed = true;
               break;
             }
             case 70: { // F
+              fakeDisplay.gamepads[controllerIndex].buttons[2].value = 1;
               fakeDisplay.gamepads[controllerIndex].buttons[2].pressed = true;
               break;
             }
@@ -2767,10 +2771,12 @@
             break;
           }
           case 69: { // E
+            fakeDisplay.gamepads[controllerIndex].buttons[3].value = 0;
             fakeDisplay.gamepads[controllerIndex].buttons[3].pressed = false;
             break;
           }
           case 70: { // F
+            fakeDisplay.gamepads[controllerIndex].buttons[2].value = 0;
             fakeDisplay.gamepads[controllerIndex].buttons[2].pressed = false;
             break;
           }
@@ -2797,6 +2803,7 @@
       } else {
         const gamepad = fakeDisplay.gamepads[1];
         if (gamepad) {
+          fakeDisplay.gamepads[controllerIndex].buttons[1].value = 1;
           fakeDisplay.gamepads[controllerIndex].buttons[1].pressed = true;
         }
       }
@@ -2804,6 +2811,7 @@
     window.addEventListener('mouseup', () => {
       const gamepad = fakeDisplay.gamepads[controllerIndex];
       if (gamepad) {
+        gamepad.buttons[1].value = 0;
         gamepad.buttons[1].pressed = false;
       }
     });
