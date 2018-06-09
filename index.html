@@ -389,7 +389,8 @@
     let renderTarget = _makeRenderTarget(canvas.width, canvas.height);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xFFFFFF);
+    const _makeBackground = () => new THREE.Color(0xFFFFFF);
+    scene.background = _makeBackground();
 
     const ambientLight = new THREE.AmbientLight(0x808080);
     scene.add(ambientLight);
@@ -2389,6 +2390,7 @@
         }
 
         floorMesh.visible = false;
+        scene.background = null;
       });
       iframe.addEventListener('framebuffer', framebuffer => {
         screenQuad.material.uniforms.numTextures.value = 2;
@@ -2421,6 +2423,7 @@
         }
 
         floorMesh.visible = true;
+        scene.background = _makeBackground();
       });
       container.appendChild(iframe);
       iframes.push(iframe);
