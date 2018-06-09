@@ -268,8 +268,6 @@
         }
       };
       xrmp.updateRemoteApps = () => {
-        console.log('update remote apps', currentApps.slice());
-
         xrmp.xrmp.setState({
           apps: currentApps.slice(),
         });
@@ -2416,8 +2414,6 @@
       screenQuad.material.uniforms.uDepth2.value = null;
     };
     const _updateLocalApps = () => {
-      console.log('update local apps', currentApps);
-
       const iframesToKeep = [];
       for (let i = 0; i < iframes.length; i++) {
         const iframe = iframes[i];
