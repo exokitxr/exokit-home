@@ -2644,6 +2644,11 @@
               fakeDisplay.gamepads[controllerIndex].buttons[2].pressed = true;
               break;
             }
+            case 81: { // Q
+              fakeDisplay.gamepads[controllerIndex].buttons[0].value = 1;
+              fakeDisplay.gamepads[controllerIndex].buttons[0].pressed = true;
+              break;
+            }
             case 84: { // T
               if (_isMpOpen() && !voicechatEnabled && !xrmp.localPlayerMesh.getMediaStream()) {
                 _openMic();
@@ -2780,6 +2785,11 @@
             fakeDisplay.gamepads[controllerIndex].buttons[2].pressed = false;
             break;
           }
+          case 81: { // Q
+              fakeDisplay.gamepads[controllerIndex].buttons[0].value = 0;
+              fakeDisplay.gamepads[controllerIndex].buttons[0].pressed = false;
+              break;
+            }
           case 84: { // T
             if (_isMpOpen() && !voicechatEnabled && xrmp.localPlayerMesh.getMediaStream()) {
               _closeMic();
