@@ -134,7 +134,10 @@
       text: '',
       loading: false,
       error: false,
-      loaded: false
+      loaded: false,
+      value: 0,
+      total: 0,
+      progress: 0,
     };
 
     const usernameState = {
@@ -1302,6 +1305,13 @@
             }
           }
 
+          if (tab === 'URL' || tab === 'Apps') {
+            if (loadingBarState.progress < 1) {
+              ctx.fillStyle = '#2196F3';
+              ctx.fillRect(0, 0, loadingBarWidth * loadingBarState.progress, 10);
+            }
+          }
+
           ctx.font = `${fontSize*0.7}px Arial`;
           if (!user) {
             ctx.fillStyle = '#333';
@@ -2407,6 +2417,17 @@
       iframe.src = u;
       iframe.hidden = true;
       iframe.index = index;
+      let iframeResources = null;
+      iframe.addEventListener('load', () => {
+        if (iframe.contentWindow.document.resources) {
+          iframeResources = iframe.contentWindow.document.resources;
+          resources.push(iframeResources);
+
+          iframeResources.addEventListener('update', _resourcesUpdate);
+        }
+
+        floorMesh.visible = false;
+      });
       iframe.addEventListener('framebuffer', framebuffer => {
         screenQuad.material.uniforms.numTextures.value = 2;
 
@@ -2432,6 +2453,12 @@
       });
       iframe.addEventListener('destroy', () => {
         screenQuad.material.uniforms.numTextures.value = 1;
+
+        if (iframeResources) {
+          resources.splice(resources.indexOf(iframeResources), 1);
+        }
+
+        floorMesh.visible = true;
       });
       container.appendChild(iframe);
       iframes.push(iframe);
@@ -2489,6 +2516,29 @@
     _updateDisplays();
     window.addEventListener('vrdisplayconnect', _updateDisplays);
     window.addEventListener('vrdisplaydisconnect', _updateDisplays);
+
+    const resources = [];
+    const _resourcesUpdate = () => {
+      let value = 0;
+      let total =  0;
+      for (let i = 0; i < resources.length; i++) {
+        for (let j = 0; j < resources[i].resources.length; j++) {
+          const resource = resources[i].resources[j];
+          value += resource.value;
+          total += resource.total;
+        }
+      }
+      loadingBarState.value = value;
+      loadingBarState.total = total;
+      loadingBarState.progress = loadingBarState.total > 0 ? (loadingBarState.value/loadingBarState.total) : 0;
+      menuMesh.urlMesh.updateText();
+    };
+    if (window.document.resources) {
+      resources.push(window.document.resources);
+    }
+    for (let i = 0; i < resources.length; i++) {
+      window.document.resources.addEventListener('update', _resourcesUpdate);
+    }
 
     const audioCtx = new AudioContext();
     THREE.AudioContext.setContext(audioCtx);
