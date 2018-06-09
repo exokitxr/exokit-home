@@ -2337,7 +2337,7 @@
     };
 
     const iframes = [];
-    const _openUrl = (u, index = -1, cb = null) => {
+    const _openUrl = u => {
       const _drawOk = () => {
         loadingBarState.loading = false;
         loadingBarState.loaded = true;
@@ -2397,10 +2397,6 @@
         };
         depthProperties.__webglInit = true;
         screenQuad.material.uniforms.uDepth2.value = depthTexture;
-
-        if (cb) {
-          cb(framebuffer);
-        }
       });
       iframe.addEventListener('destroy', () => {
         screenQuad.material.uniforms.numTextures.value = 1;
