@@ -69,14 +69,18 @@
       cursor: -1,
       measures: [],
       submit() {
-        _closeUrl();
+        currentApps = [urlState.text];
+        _updateLocalApps();
 
-        _openUrl(urlState.text);
+        if (_isMpOpen()) {
+          xrmp.updateRemoteApps();
+        }
 
         loadingBarState.loaded = false;
         loadingBarState.loading = true;
         loadingBarState.error = false;
         loadingBarState.text = 'Loading...';
+
         menuMesh.urlMesh.updateText();
       },
     };
@@ -218,8 +222,8 @@
       xrmp = new XRMultiplayerTHREE(new XRMultiplayer(url));
       xrmp.localPlayerMesh = null;
       xrmp.onsync = () => {
-        xrmp.pullApps(xrmp.xrmp.state.apps || []);
-        xrmp.pushApps(currentApps);
+        currentApps = xrmp.xrmp.state.apps ? xrmp.xrmp.state.apps.slice() : [];
+        _updateLocalApps();
 
         camera.add(xrmp.getAudioListener());
 
@@ -259,36 +263,15 @@
         const {update} = e;
 
         if (update.apps) {
-          xrmp.pullApps(update.apps);
+          currentApps = update.apps;
+          _updateLocalApps();
         }
       };
-      xrmp.pullApps = srcApps => {
-        for (let i = 0; i < srcApps.length; i++) {
-          const srcApp = srcApps[i];
-          if (!currentApps.includes(srcApp)) {
-            currentApps.push(srcApp);
-          }
-        }
-      };
-      xrmp.pushApps = currentApps => {
-        const stateApps = xrmp.xrmp.state.apps ? xrmp.xrmp.state.apps.slice() : [];
-        let stateAppsUpdated = false;
-        for (let i = 0; i < currentApps.length; i++) {
-          const currentApp = currentApps[i];
-          if (!stateApps.includes(currentApp)) {
-            stateApps.push(currentApp);
-            stateAppsUpdated = true;
-          }
-        }
-        if (stateAppsUpdated) {
-          xrmp.xrmp.setState({
-            apps: stateApps,
-          });
-        }
-      };
-      xrmp.forcePushApps = currentApps => {
+      xrmp.updateRemoteApps = () => {
+        console.log('update remote apps', currentApps.slice());
+
         xrmp.xrmp.setState({
-          apps: currentApps,
+          apps: currentApps.slice(),
         });
       };
     };
@@ -943,7 +926,7 @@
     let files = [];
     let user = null;
     let currentTabIndex = 0;
-    const currentApps = [];
+    let currentApps = [];
     let currentFileIndex = -1;
     let currentServerIndex = -1;
     const _resJson = res => {
@@ -2051,18 +2034,15 @@
               const app = apps[appIndex];
               const currentAppIndex = currentApps.indexOf(app);
               if (currentAppIndex === -1) {
-                currentApps.push(app);
-
-                _closeUrl();
-                _openUrl(app); // XXX
+                currentApps = [app];
+                _updateLocalApps();
               } else {
                 currentApps.splice(currentAppIndex, 1);
-
-                _closeUrl(); // XXX
+                _updateLocalApps();
               }
 
               if (_isMpOpen()) {
-                xrmp.forcePushApps(currentApps);
+                xrmp.updateRemoteApps();
               }
 
               menuMesh.urlMesh.updateText();
@@ -2080,6 +2060,9 @@
 
                 _closeMp();
                 voicechatEnabled = false;
+
+                currentApps = [];
+                _updateLocalApps();
               }
 
               menuMesh.urlMesh.updateText();
@@ -2336,7 +2319,7 @@
       }
     };
 
-    const iframes = [];
+    let iframes = [];
     const _openUrl = u => {
       const _drawOk = () => {
         loadingBarState.loading = false;
@@ -2409,22 +2392,51 @@
         scene.background = _makeBackground();
       });
       container.appendChild(iframe);
-      iframes.push(iframe);
-    };
-    const _closeUrl = () => {
-      for (let i = 0; i < iframes.length; i++) {
-        const iframe = iframes[i];
-        if (iframe.destroy) {
-          iframe.destroy();
-        }
 
-        container.removeChild(iframe);
+      return iframe;
+    };
+    const _closeUrl = iframe => {
+      if (iframe.destroy) {
+        iframe.destroy();
       }
-      iframes.length = 0;
+
+      container.removeChild(iframe);
 
       screenQuad.material.uniforms.numTextures.value = 1;
       screenQuad.material.uniforms.uTexture2.value = null;
       screenQuad.material.uniforms.uDepth2.value = null;
+    };
+    const _updateLocalApps = () => {
+      console.log('update local apps', currentApps);
+
+      const iframesToKeep = [];
+      for (let i = 0; i < iframes.length; i++) {
+        const iframe = iframes[i];
+
+        if (currentApps.includes(iframe.src)) {
+          iframesToKeep.push(iframe);
+        } else {
+          _closeUrl(iframe);
+        }
+      }
+      iframes = iframesToKeep;
+
+      let appsUpdated = false;
+      for (let i = 0; i < currentApps.length; i++) {
+        const currentApp = currentApps[i];
+
+        if (!iframes.includes(currentApp)) {
+          const iframe = _openUrl(currentApp);
+          iframes.push(iframe);
+        }
+        if (!apps.includes(currentApp)) {
+          apps.unshift(currentApp);
+          appsUpdated = true;
+        }
+      }
+      if (appsUpdated) {
+        menuMesh.urlMesh.updateText();
+      }
     };
 
     window.addEventListener('resize', e => {
