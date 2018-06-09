@@ -2337,11 +2337,6 @@
       };
 
       const iframe = document.createElement('iframe');
-      iframe.onerror = e => {
-        console.warn(e.error.stack);
-
-        _drawFail();
-      };
       iframe.onload = function() {
         const contentDocument = (() => {
           try {
