@@ -29,7 +29,12 @@ window.ScreenQuad = (() => {
         if (depth2 <= depth1) {
           gl_FragColor = texture2D(uTexture2, vUv);
         } else {
-          gl_FragColor = texture2D(uTexture1, vUv);
+          vec4 menuColor = texture2D(uTexture1, vUv);
+          if (menuColor.a >= 0.9) {
+            gl_FragColor = menuColor;
+          } else {
+            gl_FragColor = texture2D(uTexture2, vUv);
+          }
         }
       }
 		}`
