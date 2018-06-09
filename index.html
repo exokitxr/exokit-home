@@ -2159,13 +2159,16 @@
       const _animateControllers = () => {
         const gamepads = _getGamepads();
 
+        const controllersVisible = menuOpen || iframes.length === 0;
         for (let i = 0; i < gamepads.length; i++) {
           const gamepad = gamepads[i];
-          if (gamepad) {
-            const controllerMesh = controllerMeshes[i];
-
+          const controllerMesh = controllerMeshes[i];
+          if (gamepad && controllersVisible) {
             const {pressed} = gamepad.buttons[1];
             controllerMesh.rayMesh.material.color.setHex(pressed ? RAY_HIGHLIGHT_COLOR : RAY_COLOR);
+            controllerMesh.visible = true;
+          } else {
+            controllerMesh.visible = false;
           }
         }
 
