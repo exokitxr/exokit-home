@@ -26,7 +26,7 @@ window.ScreenQuad = (() => {
       } else {
         float depth1 = texture2D(uDepth1, vUv).r;
         float depth2 = texture2D(uDepth2, vUv).r;
-        if (depth2 <= depth1) {
+        if (depth2 > 0.0 && depth2 <= depth1) {
           gl_FragColor = texture2D(uTexture2, vUv);
         } else {
           vec4 menuColor = texture2D(uTexture1, vUv);
