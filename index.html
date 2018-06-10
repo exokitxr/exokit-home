@@ -196,7 +196,7 @@
               for (let i = 0; i < onends.length; i++) {
                 onends[i]();
               }
-              return Promise.resolve();
+              return fakeDisplay.exitPresent();
             }
           };
           fakeDisplay.session = session;
