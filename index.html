@@ -150,7 +150,7 @@
     fakeDisplay.quaternion.copy(camera.quaternion);
     camera.projectionMatrix.toArray(fakeDisplay._frameData.leftProjectionMatrix);
     fakeDisplay.update();
-    fakeDisplay.onrequestanimationframe = fn => window.requestAnimationFrame(fn);
+    fakeDisplay.onrequestanimationframe = fn => window.requestAnimationFrame(fn, 1);
     fakeDisplay.requestPresent([{source: canvas}])
       .then(() => {
         renderer.vr.setDevice(fakeDisplay);
@@ -191,7 +191,7 @@
             device: fakeDisplay,
             requestAnimationFrame: fn => window.requestAnimationFrame(timestamp => {
               fn(timestamp, frame);
-            }),
+            }, 1),
             end() {
               for (let i = 0; i < onends.length; i++) {
                 onends[i]();
@@ -2245,27 +2245,34 @@
       _updateObjects();
       _updateMp();
 
-      const device = renderer.vr.getDevice();
-      if (device && device.constructor.name === 'FakeVRDisplay') {
-        camera.position.copy(device.position);
-        camera.quaternion.copy(device.quaternion);
-
-        camera.projectionMatrix.fromArray(device._frameData.leftProjectionMatrix);
-
-        renderer.vr.enabled = false;
-        renderer.render(scene, camera, renderTarget);
-        renderer.vr.enabled = true;
-      } else {
-        renderer.render(scene, camera, renderTarget);
-      }
-      renderer.vr.enabled = false;
-      renderer.render(compositeScene, camera);
-      renderer.vr.enabled = true;
-
-      if (!device) {
-        window.requestAnimationFrame(animate);
+      if (!renderer.vr.getDevice()) {
+        window.requestAnimationFrame(animate, 1);
       }
     }
+
+    (function recurse() {
+      window.requestAnimationFrame(() => {
+        const device = renderer.vr.getDevice();
+        if (device && device.constructor.name === 'FakeVRDisplay') {
+          camera.position.copy(device.position);
+          camera.quaternion.copy(device.quaternion);
+
+          camera.projectionMatrix.fromArray(device._frameData.leftProjectionMatrix);
+
+          renderer.vr.enabled = false;
+          renderer.render(scene, camera, renderTarget);
+          renderer.vr.enabled = true;
+        } else {
+          renderer.render(scene, camera, renderTarget);
+        }
+
+        renderer.vr.enabled = false;
+        renderer.render(compositeScene, camera);
+        renderer.vr.enabled = true;
+
+        recurse();
+      }, -1);
+    })();
 
     const _handleDefaultKey = (code, shiftKey) => {
       let c = String.fromCharCode(code);
