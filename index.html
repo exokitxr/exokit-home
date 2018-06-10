@@ -1454,12 +1454,28 @@
     const velocity = new THREE.Vector3();
     const speed = 0.0001;
     let lastTime = Date.now();
+    const _updateGamepads = () => {
+      for (let i = 0; i < 2; i++) {
+        const gamepad = fakeDisplay.gamepads[i];
+        if (gamepad) {
+          const controllerOffset = controllerOffsets[i];
+
+          localVector.copy(fakeDisplay.position)
+            .add(
+              localVector2.set(-0.1 + (i*0.1*2), -0.1, -0.2)
+                .add(controllerOffset)
+                .applyQuaternion(fakeDisplay.quaternion)
+            ).toArray(gamepad.pose.position);
+          fakeDisplay.quaternion.toArray(fakeDisplay.gamepads[i].pose.orientation);
+        }
+      }
+    };
     function animate() {
       const currentTime = Date.now();
       const timePassed = Math.max(currentTime - lastTime, 1);
       lastTime = currentTime;
 
-      const _updateControls = () => {
+      const _updateMovement = () => {
         if (window.document.pointerLockElement) {
           let moving = false;
           if (keys.up) {
@@ -1486,22 +1502,9 @@
               .applyEuler(localEuler)
           );
 
-          for (let i = 0; i < 2; i++) {
-            const gamepad = fakeDisplay.gamepads[i];
-            if (gamepad) {
-              const controllerOffset = controllerOffsets[i];
-
-              localVector.copy(fakeDisplay.position)
-                .add(
-                  localVector2.set(-0.1 + (i*0.1*2), -0.1, -0.2)
-                    .add(controllerOffset)
-                    .applyQuaternion(fakeDisplay.quaternion)
-                ).toArray(gamepad.pose.position);
-              fakeDisplay.quaternion.toArray(fakeDisplay.gamepads[i].pose.orientation);
-            }
-          }
-
           fakeDisplay.update();
+
+          _updateGamepads();
         }
       };
       const _updateControllers = () => {
@@ -2232,7 +2235,7 @@
           xrmp.pushUpdate();
         }
       };
-      _updateControls();
+      _updateMovement();
       _updateControllers();
       _updateHands();
       _updateIntersections();
@@ -2849,6 +2852,8 @@
 
           fakeDisplay.update();
         }
+
+        _updateGamepads();
       }
     });
     window.document.addEventListener('pointerlockchange', e => {
