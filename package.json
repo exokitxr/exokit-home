@@ -1,6 +1,6 @@
 {
   "name": "exokit-home",
-  "version": "0.0.42",
+  "version": "0.0.43",
   "description": "Exokit home environment",
   "main": "index.js",
   "scripts": {
