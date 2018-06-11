@@ -150,7 +150,7 @@
     fakeDisplay.quaternion.copy(camera.quaternion);
     camera.projectionMatrix.toArray(fakeDisplay._frameData.leftProjectionMatrix);
     fakeDisplay.update();
-    fakeDisplay.onrequestanimationframe = fn => window.requestAnimationFrame(fn, 1);
+    fakeDisplay.onrequestanimationframe = fn => window.tickAnimationFrame.window.requestAnimationFrame(fn, 1);
     fakeDisplay.onvrdisplaypresentchange = () => {
       setTimeout(() => {
         const e = new Event('vrdisplaypresentchange');
