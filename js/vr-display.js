@@ -163,6 +163,11 @@ class MRDisplay {
     this.depthFar = 10000.0;
     this.stageParameters = new VRStageParameters();
 
+    this.onrequestpresent = null;
+    this.onexitpresent = null;
+    this.onrequestanimationframe = null;
+    this.onvrdisplaypresentchange = null;
+
     this._width = defaultCanvasSize[0] / 2;
     this._height = defaultCanvasSize[1];
     this._leftOffset = 0;
@@ -205,11 +210,10 @@ class MRDisplay {
 
     this.isPresenting = true;
 
-    setImmediate(() => {
-      if (this.onvrdisplaypresentchange) {
-        this.onvrdisplaypresentchange();
-      }
-    });
+    if (this.onvrdisplaypresentchange) {
+      this.onvrdisplaypresentchange();
+    }
+
     return Promise.resolve();
   }
 
@@ -231,9 +235,9 @@ class MRDisplay {
 
   requestAnimationFrame(fn) {
     if (this.onrequestanimationframe) {
-      const animationFrame = this.onrequestanimationframe((timestamp, frame) => {
+      const animationFrame = this.onrequestanimationframe(timestamp => {
         this._rafs.splice(animationFrame, 1);
-        fn(timestamp, frame);
+        fn(timestamp);
       });
       this._rafs.push(animationFrame);
       return animationFrame;
@@ -252,6 +256,14 @@ class MRDisplay {
   }
 
   submitFrame() {}
+
+  clone() {
+    const o = new this.constructor();
+    for (const k in this) {
+      o[k] = this[k];
+    }
+    return o;
+  }
 
   destroy() {
     for (let i = 0; i < this._rafs.length; i++) {
@@ -349,7 +361,7 @@ class FakeVRDisplay extends MRDisplay {
   }
 
   setSize(width, height) {
-    this._width = width;
+    this._width = width / 2;
     this._height = height;
   }
 
@@ -370,17 +382,23 @@ class FakeVRDisplay extends MRDisplay {
   }
 
   requestPresent() {
-    return Promise.resolve()
-      .then(() => {
-        this.isPresenting = true;
-      });
+    this.isPresenting = true;
+
+    if (this.onvrdisplaypresentchange) {
+      this.onvrdisplaypresentchange();
+    }
+
+    return Promise.resolve();
   }
 
   exitPresent() {
-    return Promise.resolve()
-      .then(() => {
-        this.isPresenting = false;
-      });
+    this.isPresenting = false;
+
+    if (this.onvrdisplaypresentchange) {
+      this.onvrdisplaypresentchange();
+    }
+
+    return Promise.resolve();
   }
 
   getFrameData(frameData) {
