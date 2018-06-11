@@ -2525,7 +2525,9 @@
       window.document.resources.addEventListener('update', _resourcesUpdate);
     }
 
-    const audioCtx = new AudioContext();
+    const audioCtx = new AudioContext({
+      sampleRate: 48000,
+    });
     THREE.AudioContext.setContext(audioCtx);
 
     const _isPrintableKey = code =>
