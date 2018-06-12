@@ -149,6 +149,7 @@
     fakeDisplay.position.copy(camera.position);
     fakeDisplay.quaternion.copy(camera.quaternion);
     camera.projectionMatrix.toArray(fakeDisplay._frameData.leftProjectionMatrix);
+    fakeDisplay.stereo = false;
     fakeDisplay.update();
     if (window.tickAnimationFrame) {
       fakeDisplay.onrequestanimationframe = fn => window.tickAnimationFrame.window.requestAnimationFrame(fn, 1);
@@ -162,62 +163,93 @@
         window.dispatchEvent(e);
       });
     };
-    fakeDisplay.requestPresent([{source: canvas}])
-      .then(() => {
-        renderer.vr.setDevice(fakeDisplay);
-        renderer.vr.setAnimationLoop(animate);
+    const _enterFakeDisplay = (stereo = false) => {
+      if (fakeDisplay.session) {
+        fakeDisplay.session.end();
+      }
 
-        if (navigator.xr) {
-          const views = [{
-            projectionMatrix: fakeDisplay._frameData.leftProjectionMatrix,
-            _viewport: {
-              x: 0,
-              y: 0,
-              width: fakeDisplay._width,
-              height: fakeDisplay._height,
-            },
-          }];
-          const devicePose = {
-            getViewMatrix() {
-              return fakeDisplay._frameData.leftViewMatrix;
-            },
-          };
-          const frame = {
-            views,
-            getDevicePose() {
-              return devicePose;
-            },
-          };
-          const onends = [];
-          const session = {
-            addEventListener(e, fn) {
-              if (e === 'end') {
-                onends.push(fn);
-              }
-            },
-            baseLayer: null,
-            requestFrameOfReference() {
-              return Promise.resolve(null);
-            },
-            device: fakeDisplay,
-            requestAnimationFrame: fn => window.requestAnimationFrame(timestamp => {
-              fn(timestamp, frame);
-            }, 1),
-            end() {
-              for (let i = 0; i < onends.length; i++) {
-                onends[i]();
-              }
-              return fakeDisplay.exitPresent();
-            }
-          };
-          fakeDisplay.session = session;
-          renderer.vr.setSession(session, {
-            frameOfReferenceType: 'stage',
-          });
-        } else {
-          window.dispatchEvent(new Event('vrdisplaypresentchange'));
-        }
-      });
+      fakeDisplay.requestPresent([{source: canvas}])
+        .then(() => {
+          renderer.vr.setDevice(fakeDisplay);
+          renderer.vr.setAnimationLoop(animate);
+
+          if (navigator.xr) {
+            const views = !stereo ? [{
+              eye: 'left',
+              projectionMatrix: fakeDisplay._frameData.leftProjectionMatrix,
+              _viewport: {
+                x: 0,
+                y: 0,
+                width: fakeDisplay._width,
+                height: fakeDisplay._height,
+              },
+            }] : [
+              {
+                eye: 'left',
+                projectionMatrix: fakeDisplay._frameData.leftProjectionMatrix,
+                _viewport: {
+                  x: 0,
+                  y: 0,
+                  width: fakeDisplay._width / 2,
+                  height: fakeDisplay._height,
+                },
+              },
+              {
+                eye: 'right',
+                projectionMatrix: fakeDisplay._frameData.rightProjectionMatrix,
+                _viewport: {
+                  x: fakeDisplay._width / 2,
+                  y: 0,
+                  width: fakeDisplay._width / 2,
+                  height: fakeDisplay._height,
+                }
+              },
+            ];
+            const devicePose = {
+              getViewMatrix(view) {
+                return fakeDisplay._frameData[view.eye === 'left' ? 'leftViewMatrix' : 'rightViewMatrix'];
+              },
+            };
+            const frame = {
+              views,
+              getDevicePose() {
+                return devicePose;
+              },
+            };
+            const onends = [];
+            const session = {
+              addEventListener(e, fn) {
+                if (e === 'end') {
+                  onends.push(fn);
+                }
+              },
+              baseLayer: null,
+              requestFrameOfReference() {
+                return Promise.resolve({});
+              },
+              device: fakeDisplay,
+              requestAnimationFrame: fn => window.requestAnimationFrame(timestamp => {
+                fn(timestamp, frame);
+              }, 1),
+              end() {
+                for (let i = 0; i < onends.length; i++) {
+                  onends[i]();
+                }
+                return fakeDisplay.exitPresent();
+              },
+            };
+            fakeDisplay.session = session;
+            renderer.vr.setSession(session, {
+              frameOfReferenceType: 'stage',
+            });
+          } else {
+            window.dispatchEvent(new Event('vrdisplaypresentchange'));
+          }
+
+          fakeDisplay.stereo = stereo;
+        });
+    };
+    _enterFakeDisplay();
 
     const _getGamepads = () => {
       if (fakeDisplay.isPresenting) {
@@ -2733,7 +2765,7 @@
                     });
 
                     const viewport = session.baseLayer.getViewport(frame.views[0]);
-                    const width = viewport.width * 2;
+                    const width = viewport.width;
                     const height = viewport.height;
 
                     renderer.setSize(width, height);
@@ -2776,6 +2808,14 @@
                   scene.background = null;
                 });
             }
+            break;
+          }
+          case 52: { // 4
+            console.log('enable stereo');
+
+            const newStereo = !fakeDisplay.getStereo();
+            fakeDisplay.setStereo(newStereo);
+            _enterFakeDisplay(newStereo);
             break;
           }
           default: {
