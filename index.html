@@ -1487,11 +1487,7 @@
         camera.position.copy(device.position);
         camera.quaternion.copy(device.quaternion);
 
-        camera.projectionMatrix.fromArray(device._frameData.leftProjectionMatrix);
-
-        renderer.vr.enabled = false;
         renderer.render(scene, camera, renderTarget);
-        renderer.vr.enabled = true;
       } else {
         renderer.render(scene, camera, renderTarget);
       }
