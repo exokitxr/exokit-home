@@ -3,6 +3,7 @@ const vrDisplay = THREE => {
 const defaultCanvasSize = [1280, 1024];
 
 const localVector = new THREE.Vector3();
+const localVector2 = new THREE.Vector3();
 const localMatrix = new THREE.Matrix4();
 
 class VRPose {
@@ -358,23 +359,53 @@ class FakeVRDisplay extends MRDisplay {
     this.stageParameters = new VRStageParameters();
 
     this._frameData = new VRFrameData();
+    this._stereo = false;
   }
 
   setSize(width, height) {
-    this._width = width / 2;
+    this._width = width;
     this._height = height;
   }
 
+  getStereo(newStereo) {
+    return this._stereo;
+  }
+  setStereo(newStereo) {
+    this._stereo = newStereo;
+  }
+
   update() {
-    localMatrix.compose(
-      this.position,
-      this.quaternion,
-      localVector.set(1, 1, 1)
-    )
-     .getInverse(localMatrix)
-     .toArray(this._frameData.leftViewMatrix);
-    this._frameData.rightViewMatrix.set(this._frameData.leftViewMatrix);
-    this._frameData.pose.set(this.position, this.quaternion);
+    if (!this._stereo) {
+      localMatrix.compose(
+        this.position,
+        this.quaternion,
+        localVector.set(1, 1, 1)
+      )
+       .getInverse(localMatrix)
+       .toArray(this._frameData.leftViewMatrix);
+      this._frameData.rightViewMatrix.set(this._frameData.leftViewMatrix);
+      this._frameData.pose.set(this.position, this.quaternion);
+    } else {
+      localMatrix.compose(
+        localVector.copy(this.position)
+          .add(localVector2.set(-0.1, 0, 0).applyQuaternion(this.quaternion)),
+        this.quaternion,
+        localVector2.set(1, 1, 1)
+      )
+       .getInverse(localMatrix)
+       .toArray(this._frameData.leftViewMatrix);
+       
+     localMatrix.compose(
+        localVector.copy(this.position)
+          .add(localVector2.set(0.1, 0, 0).applyQuaternion(this.quaternion)),
+        this.quaternion,
+        localVector2.set(1, 1, 1)
+      )
+       .getInverse(localMatrix)
+       .toArray(this._frameData.rightViewMatrix);
+
+      this._frameData.pose.set(this.position, this.quaternion);
+    }
 
     const globalGamepads = getAllGamepads();
     gamepads[0] = globalGamepads[0];
@@ -406,13 +437,31 @@ class FakeVRDisplay extends MRDisplay {
   }
 
   getLayers() {
-    return [
-      {
-        leftBounds: [0, 0, 1, 1],
-        rightBounds: [1, 0, 1, 1],
-        source: null,
-      }
-    ];
+    if (!this._stereo) {
+      return [
+        {
+          leftBounds: [0, 0, 1, 1],
+          rightBounds: [1, 0, 1, 1],
+          source: null,
+        }
+      ];
+    } else {
+      return [
+        {
+          leftBounds: [0, 0, 0.5, 1],
+          rightBounds: [0.5, 0, 1, 1],
+          source: null,
+        }
+      ];
+    }
+  }
+  
+  getEyeParameters(eye) {
+    const result = super.getEyeParameters(eye);
+    if (this._stereo) {
+      result.renderWidth /= 2;
+    }
+    return result;
   }
 }
 
