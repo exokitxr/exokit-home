@@ -225,7 +225,7 @@
               },
               baseLayer: null,
               requestFrameOfReference() {
-                return Promise.resolve({});
+                return Promise.resolve(stereo ? {} : null);
               },
               device: fakeDisplay,
               requestAnimationFrame: fn => window.requestAnimationFrame(timestamp => {
