@@ -149,6 +149,7 @@
     fakeDisplay.position.copy(camera.position);
     fakeDisplay.quaternion.copy(camera.quaternion);
     camera.projectionMatrix.toArray(fakeDisplay._frameData.leftProjectionMatrix);
+    camera.projectionMatrix.toArray(fakeDisplay._frameData.rightProjectionMatrix);
     fakeDisplay.stereo = false;
     fakeDisplay.update();
     if (window.tickAnimationFrame) {
@@ -2509,6 +2510,7 @@
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       camera.projectionMatrix.toArray(fakeDisplay._frameData.leftProjectionMatrix);
+      camera.projectionMatrix.toArray(fakeDisplay._frameData.rightProjectionMatrix);
 
       const device = renderer.vr.getDevice();
       if (device === fakeDisplay) {
