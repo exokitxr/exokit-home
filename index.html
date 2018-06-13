@@ -2750,35 +2750,35 @@
               renderer.vr.setDevice(null);
               renderer.vr.setAnimationLoop(null);
 
-              fakeDisplay.session.end();
+              fakeDisplay.session.end()
+                .then(() =>
+                  display.requestSession({
+                    exclusive: true,
+                  })
+                    .then(session => {
+                      display.session = session;
 
-              display.requestSession({
-                exclusive: true,
-                outputContext: renderer.getContext(),
-              })
-                .then(session => {
-                  display.session = session;
+                      session.requestAnimationFrame((timestamp, frame) => {
+                        renderer.vr.setSession(session, {
+                          frameOfReferenceType: 'stage',
+                        });
 
-                  session.requestAnimationFrame((timestamp, frame) => {
-                    renderer.vr.setSession(session, {
-                      frameOfReferenceType: 'stage',
-                    });
+                        const viewport = session.baseLayer.getViewport(frame.views[0]);
+                        const width = viewport.width;
+                        const height = viewport.height;
 
-                    const viewport = session.baseLayer.getViewport(frame.views[0]);
-                    const width = viewport.width;
-                    const height = viewport.height;
+                        renderer.setSize(width * 2, height);
 
-                    renderer.setSize(width, height);
+                        renderer.vr.setDevice(display);
+                        renderer.vr.setAnimationLoop(animate);
 
-                    renderer.vr.setDevice(display);
-                    renderer.vr.setAnimationLoop(animate);
+                        renderTarget = _makeRenderTarget(width * 2, height);
 
-                    renderTarget = _makeRenderTarget(width, height);
-
-                    screenQuad.material.uniforms.uTexture1.value = renderTarget.texture;
-                    screenQuad.material.uniforms.uDepth1.value = renderTarget.depthTexture;
-                  });
-                })
+                        screenQuad.material.uniforms.uTexture1.value = renderTarget.texture;
+                        screenQuad.material.uniforms.uDepth1.value = renderTarget.depthTexture;
+                      });
+                    })
+                )
                 .catch(err => {
                   console.warn(err.stack);
                 });
