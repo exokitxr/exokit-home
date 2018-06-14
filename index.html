@@ -266,9 +266,6 @@
       xrmp = new XRMultiplayerTHREE(new XRMultiplayer(url));
       xrmp.localPlayerMesh = null;
       xrmp.onsync = () => {
-        currentApps = xrmp.xrmp.state.apps ? xrmp.xrmp.state.apps.slice() : [];
-        _updateLocalApps();
-
         camera.add(xrmp.getAudioListener());
 
         xrmp.localPlayerMesh = xrmp.createLocalPlayerMesh(undefined, {
