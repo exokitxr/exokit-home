@@ -171,9 +171,9 @@ class MRDisplay {
 
     this._width = defaultCanvasSize[0] / 2;
     this._height = defaultCanvasSize[1];
-    this._leftOffset = 0;
+    this._leftOffset = Float32Array.from([-0.1, 0, 0]);
     this._leftFov = Float32Array.from([45, 45, 45, 45]);
-    this._rightOffset = 0;
+    this._rightOffset = Float32Array.from([0.1, 0, 0]);
     this._rightFov = Float32Array.from([45, 45, 45, 45]);
     this._rafs = [];
   }
@@ -316,16 +316,16 @@ class VRDisplay extends MRDisplay {
       this._height = renderHeight;
     }
     if (leftOffset !== undefined) {
-      this._leftOffset = leftOffset;
+      this._leftOffset.set(leftOffset);
     }
     if (leftFov !== undefined) {
-      this._leftFov = leftOffset;
+      this._leftFov.set(leftFov);
     }
     if (rightOffset !== undefined) {
-      this._rightOffset = rightOffset;
+      this._rightOffset.set(rightOffset);
     }
     if (rightFov !== undefined) {
-      this._rightFov = rightFov;
+      this._rightFov.set(rightFov);
     }
     if (frameData !== undefined) {
       this._frameData.copy(frameData);
@@ -352,10 +352,10 @@ class FakeVRDisplay extends MRDisplay {
     this.depthFar = 10 * 1024;
     this._width = defaultCanvasSize[0];
     this._height = defaultCanvasSize[1];
-    this._leftOffset = 0;
-    this._leftFov = 90;
-    this._rightOffset = 0;
-    this._rightFov = 90;
+    this._leftOffset = Float32Array.from([-0.1, 0, 0]);
+    this._leftFov = Float32Array.from([45, 45, 45, 45]);
+    this._rightOffset = Float32Array.from([0.1, 0, 0]);
+    this._rightFov = Float32Array.from([45, 45, 45, 45]);
     this.stageParameters = new VRStageParameters();
 
     this._frameData = new VRFrameData();
@@ -389,7 +389,6 @@ class FakeVRDisplay extends MRDisplay {
        .getInverse(localMatrix)
        .toArray(this._frameData.leftViewMatrix);
       localMatrix.toArray(this._frameData.rightViewMatrix);
-      this._frameData.rightViewMatrix.set(this._frameData.leftViewMatrix);
       this._frameData.pose.set(this.position, this.quaternion);
     } else {
       localMatrix.compose(
