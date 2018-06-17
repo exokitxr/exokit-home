@@ -2442,27 +2442,31 @@
       iframe.addEventListener('framebuffer', newFramebuffer => {
         framebuffer = newFramebuffer;
 
-        screenQuad.material.uniforms.numTextures.value = 2;
+        if (framebuffer) {
+          screenQuad.material.uniforms.numTextures.value = 2;
 
-        const colorTexture = new THREE.Texture();
-        const colorProperties = renderer.properties.get(colorTexture);
-        colorProperties.__webglTexture = {
-          id: newFramebuffer.colorTexture,
-        };
-        colorProperties.__webglInit = true;
-        screenQuad.material.uniforms.uTexture2.value = colorTexture;
+          const colorTexture = new THREE.Texture();
+          const colorProperties = renderer.properties.get(colorTexture);
+          colorProperties.__webglTexture = {
+            id: framebuffer.colorTexture,
+          };
+          colorProperties.__webglInit = true;
+          screenQuad.material.uniforms.uTexture2.value = colorTexture;
 
-        const depthTexture = new THREE.Texture();
-        const depthProperties = renderer.properties.get(depthTexture);
-        depthProperties.__webglTexture = {
-          id: newFramebuffer.depthStencilTexture,
-        };
-        depthProperties.__webglInit = true;
-        screenQuad.material.uniforms.uDepth2.value = depthTexture;
+          const depthTexture = new THREE.Texture();
+          const depthProperties = renderer.properties.get(depthTexture);
+          depthProperties.__webglTexture = {
+            id: framebuffer.depthStencilTexture,
+          };
+          depthProperties.__webglInit = true;
+          screenQuad.material.uniforms.uDepth2.value = depthTexture;
+        } else {
+          screenQuad.material.uniforms.numTextures.value = 1;
+          screenQuad.material.uniforms.uTexture2.value = null;
+          screenQuad.material.uniforms.uDepth2.value = null;
+        }
       });
       iframe.addEventListener('destroy', () => {
-        screenQuad.material.uniforms.numTextures.value = 1;
-
         if (iframeResources) {
           resources.splice(resources.indexOf(iframeResources), 1);
         }
@@ -2480,10 +2484,6 @@
       }
 
       container.removeChild(iframe);
-
-      screenQuad.material.uniforms.numTextures.value = 1;
-      screenQuad.material.uniforms.uTexture2.value = null;
-      screenQuad.material.uniforms.uDepth2.value = null;
     };
     const _updateLocalApps = () => {
       const iframesToKeep = [];
