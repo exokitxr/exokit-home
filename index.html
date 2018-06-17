@@ -61,7 +61,7 @@
     const loadingBarHeight = 200;
     const loadingBarOffset = loadingBarHeight*1.4 + 202;
     let menuOpen = true;
-    const fileMeshes = [];
+    let fileMeshes = [];
     const fetchManager = new FetchManager();
 
     const urlState = {
@@ -2119,6 +2119,14 @@
                 if (_isIdOpen()) {
                   const file = files[fileIndex];
                   files.splice(fileIndex, 1);
+                  fileMeshes = fileMeshes.filter(fileObject => {
+                    if (fileObject.file.url === file.url) {
+                      scene.remove(fileObject);
+                      return false;
+                    } else {
+                      return true;
+                    }
+                  });
 
                   currentFileIndex = -1;
 
