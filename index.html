@@ -3061,7 +3061,7 @@
 
                     const fr = new FileReader();
                     fr.onload = () => {
-                      tar.append(file.path, new Uint8Array(fr.result), () => {
+                      tar.append(file.path.replace(/^[A-Z]:/, '').replace(/\\/g, '/'), new Uint8Array(fr.result), () => {
                         _recurse(i + 1);
                       });
                     };
