@@ -2118,17 +2118,16 @@
               if (currentFileIndex === fileIndex && fileRemove) {
                 if (_isIdOpen()) {
                   const file = files[fileIndex];
+                  files.splice(fileIndex, 1);
+
+                  currentFileIndex = -1;
 
                   xrid.remove(file.name)
-                    .then(() => xrid.getFiles())
-                    .then(newFiles => {
-                      files = newFiles;
-
-                      menuMesh.urlMesh.updateText();
-                    })
                     .catch(err => {
                       console.warn(err.stack);
                     });
+
+                  menuMesh.urlMesh.updateText();
                 }
               } else {
                 currentFileIndex = fileIndex;
