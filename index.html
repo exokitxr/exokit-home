@@ -1172,6 +1172,7 @@
                 ctx.fillStyle = '#FFF';
               }
               ctx.fillText(match[1], fontSize * 1.2, urlBarOffset + (i+1)*fontSize);
+              ctx.fillText('x', urlBarWidth - fontSize * 1.2, urlBarOffset + (i+1)*fontSize);
             }
           } else if (tab === 'Apps') {
             for (let i = 0; i < apps.length; i++) {
@@ -1692,6 +1693,7 @@
           let urlCoords = null;
           let appIndex = -1;
           let fileIndex = -1;
+          let fileRemove = false;
           let serverIndex = -1;
           let loginHovered = false;
           let voicechatHovered = false;
@@ -1761,6 +1763,10 @@
 
                       if (y >= yTop && y < yBottom) {
                         fileIndex = j;
+
+                        if (x >= menuWidth * 0.9) {
+                          fileRemove = true;
+                        }
 
                         controllerMesh.rayMesh.scale.z = distance;
                         controllerMesh.updateMatrixWorld();
@@ -2109,9 +2115,24 @@
 
               menuMesh.urlMesh.updateText();
             } else if (fileIndex !== -1) {
-              currentFileIndex = fileIndex;
+              if (currentFileIndex === fileIndex && fileRemove) {
+                if (_isIdOpen()) {
+                  const file = files[fileIndex];
 
-              menuMesh.urlMesh.updateText();
+                  console.log('remove file', file); // XXX
+
+                  xrid.getFiles()
+                    .then(newFiles => {
+                      files = newFiles;
+
+                      menuMesh.urlMesh.updateText();
+                    });
+                }
+              } else {
+                currentFileIndex = fileIndex;
+
+                menuMesh.urlMesh.updateText();
+              }
             } else if (serverIndex !== -1) {
               if (currentServerIndex !== serverIndex) {
                 currentServerIndex = serverIndex;
