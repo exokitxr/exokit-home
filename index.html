@@ -1158,8 +1158,8 @@
           } else if (tab === 'Files') {
             for (let i = 0; i < files.length; i++) {
               const file = files[i];
-              const {name} = file;
-              const match = name.match(/([^\/]+)$/);
+              const {url} = file;
+              const match = url.match(/([^\/]+)$/);
 
               const selected = i === currentFileIndex;
               if (selected) {
@@ -1990,7 +1990,7 @@
               if (_isIdOpen()) {
                 const placementPosition = controllerMesh.position.clone();
 
-                fetch(file.name)
+                fetch(file.url)
                   .then(res => {
                     if (res.ok) {
                       return Promise.resolve(res);
@@ -2119,13 +2119,15 @@
                 if (_isIdOpen()) {
                   const file = files[fileIndex];
 
-                  console.log('remove file', file); // XXX
-
-                  xrid.getFiles()
+                  xrid.remove(file.name)
+                    .then(() => xrid.getFiles())
                     .then(newFiles => {
                       files = newFiles;
 
                       menuMesh.urlMesh.updateText();
+                    })
+                    .catch(err => {
+                      console.warn(err.stack);
                     });
                 }
               } else {
@@ -3018,7 +3020,7 @@
       return xrid.upload(file)
         .then(result => {
           const fileObject = _makeFileObject({
-            name: result.url,
+            url: result.url,
           });
           fileObject.position.copy(dropPositon);
           scene.add(fileObject);
