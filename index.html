@@ -1489,6 +1489,7 @@
       texture1: renderTarget.texture,
       depth1: renderTarget.depthTexture,
     });
+    let framebuffer = null;
     compositeScene.add(screenQuad);
 
     const position = new THREE.Vector3();
@@ -1512,6 +1513,10 @@
       }
     };
     const _render = () => {
+      if (framebuffer) {
+        framebuffer.render();
+      }
+
       const device = renderer.vr.getDevice();
       if (device && device.constructor.name === 'FakeVRDisplay') {
         camera.position.copy(device.position);
@@ -2434,13 +2439,15 @@
       iframe.src = u;
       iframe.hidden = true;
       let iframeResources = null;
-      iframe.addEventListener('framebuffer', framebuffer => {
+      iframe.addEventListener('framebuffer', newFramebuffer => {
+        framebuffer = newFramebuffer;
+
         screenQuad.material.uniforms.numTextures.value = 2;
 
         const colorTexture = new THREE.Texture();
         const colorProperties = renderer.properties.get(colorTexture);
         colorProperties.__webglTexture = {
-          id: framebuffer.colorTexture,
+          id: newFramebuffer.colorTexture,
         };
         colorProperties.__webglInit = true;
         screenQuad.material.uniforms.uTexture2.value = colorTexture;
@@ -2448,7 +2455,7 @@
         const depthTexture = new THREE.Texture();
         const depthProperties = renderer.properties.get(depthTexture);
         depthProperties.__webglTexture = {
-          id: framebuffer.depthStencilTexture,
+          id: newFramebuffer.depthStencilTexture,
         };
         depthProperties.__webglInit = true;
         screenQuad.material.uniforms.uDepth2.value = depthTexture;
