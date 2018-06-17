@@ -2002,7 +2002,7 @@
                     const {headers} = res;
                     const type = headers.get('content-type');
 
-                    if (/^application\/x-tar;?/.test(type)) {
+                    if (type === 'application/x-tar') {
                       return res.arrayBuffer()
                         .then(arrayBuffer => untar(arrayBuffer))
                         .then(files => {
@@ -3071,16 +3071,14 @@
                     fr.readAsArrayBuffer(file);
                   } else {
                     const bestFile = files.find(file => /\.fbx/.test(file.name)) || files[0];
-                    const match = bestFile.name.match(/\.([^\.]+)$/);
-                    const bestFileExt = match ? match[1] : '';
                     const blob = new Blob([tar.out], {
-                      type: 'application/x-tar' + (bestFileExt ? ('; type=' + bestFileExt) : ''),
+                      type: 'application/x-tar',
                     });
                     blob.name = bestFile.name + '.tar';
 
                     _uploadFile(blob)
                       .then(() => {
-                        console.log('done upload');
+                        console.log('done upload', blob.name);
                       })
                       .catch(err => {
                         console.warn(err);
