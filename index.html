@@ -139,6 +139,8 @@
     const localQuaternion = new THREE.Quaternion();
     const localEuler = new THREE.Euler();
     localEuler.order = 'YXZ';
+    const localEuler2 = new THREE.Euler();
+    localEuler2.order = 'localEuler.order;
 
     const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 10 * 1024);
     camera.position.set(0, DEFAULT_USER_HEIGHT, 1);
@@ -796,10 +798,8 @@
     scene.add(floorMesh);
 
     const _makeSkinMesh = (() => {
-      const hmdEuler = new THREE.Euler();
       const controllerPosition = new THREE.Vector3();
       const controllerQuaternion = new THREE.Quaternion();
-      const playerEuler = new THREE.Euler();
       const meshWorldPosition = new THREE.Vector3();
       const meshEyeWorldPosition = new THREE.Vector3();
       const playerQuaternionInverse = new THREE.Quaternion();
@@ -846,8 +846,8 @@
         })(mesh.onBeforeRender);
 
         playerMesh.onupdate = () => {
-          hmdEuler.setFromQuaternion(playerMesh.hmd.quaternion, camera.rotation.order);
-          playerEuler.setFromQuaternion(mesh.quaternion, camera.rotation.order);
+          const hmdEuler = localEuler.setFromQuaternion(playerMesh.hmd.quaternion, camera.rotation.order);
+          const playerEuler = localEuler2.setFromQuaternion(mesh.quaternion, camera.rotation.order);
           const angleDiff = _angleDiff(hmdEuler.y, playerEuler.y);
           const angleDiffAbs = Math.abs(angleDiff);
           if (angleDiffAbs > Math.PI / 2) {
