@@ -2979,36 +2979,40 @@
     window.addEventListener('dragover', e => {
       e.preventDefault();
     });
-    const _getFiles = items => {
-      const entries = Array.from(items)
-        .map(item => item.webkitGetAsEntry())
-        .filter(entry => entry !== null);
+    const _getFiles = dataTransfer => {
+      if (dataTransfer.items.length > 0) {
+        const entries = Array.from(items)
+          .map(item => item.webkitGetAsEntry())
+          .filter(entry => entry !== null);
 
-      const files = [];
-      const _recurseEntries = entries => Promise.all(entries.map(_recurseEntry));
-      const _recurseEntry = entry => new Promise((accept, reject) => {
-        if (entry.isFile) {
-          entry.file(file => {
-            file.path = entry.fullPath.slice(1);
+        const files = [];
+        const _recurseEntries = entries => Promise.all(entries.map(_recurseEntry));
+        const _recurseEntry = entry => new Promise((accept, reject) => {
+          if (entry.isFile) {
+            entry.file(file => {
+              file.path = entry.fullPath.slice(1);
 
-            files.push(file);
+              files.push(file);
 
+              accept();
+            });
+          } else if (entry.isDirectory) {
+            const directoryReader = entry.createReader();
+            directoryReader.readEntries(entries => {
+              _recurseEntries(Array.from(entries))
+                .then(() => {
+                  accept();
+                });
+            });
+          } else {
             accept();
-          });
-        } else if (entry.isDirectory) {
-          const directoryReader = entry.createReader();
-          directoryReader.readEntries(entries => {
-            _recurseEntries(Array.from(entries))
-              .then(() => {
-                accept();
-              });
-          });
-        } else {
-          accept();
-        }
-      });
-      return _recurseEntries(entries)
-        .then(() => files);
+          }
+        });
+        return _recurseEntries(entries)
+          .then(() => files);
+      } else {
+        return Promise.resolve(dataTransfer.files);
+      }
     };
     const _uploadFile = file => {
       const dropPositon = camera.position.clone()
@@ -3041,7 +3045,7 @@
         const {dataTransfer} = e;
         if (dataTransfer.files.length > 0) {
           if (dataTransfer.files.length > 1) {
-            _getFiles(dataTransfer.items)
+            _getFiles(dataTransfer)
               .then(files => {
                 const tar = new Tar();
                 const _recurse = i => {
@@ -3059,11 +3063,13 @@
                     };
                     fr.readAsArrayBuffer(file);
                   } else {
+                    const bestFile = files.find(file => /\.fbx/.test(file.name)) || files[0];
+                    const match = bestFile.name.match(/\.([^\.]+)$/);
+                    const bestFileExt = match ? match[1] : '';
                     const blob = new Blob([tar.out], {
-                      type: 'application/x-tar; type=fbx',
+                      type: 'application/x-tar' + (bestFileExt ? ('; type=' + bestFileExt) : ''),
                     });
-                    const fbxFile = files.find(file => /\.fbx/.test(file.name));
-                    blob.name = fbxFile ? 'model.fbx.tar' : 'bundle.tar';
+                    blob.name = bestFile.name + '.tar';
 
                     _uploadFile(blob)
                       .then(() => {
