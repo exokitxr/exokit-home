@@ -6,7 +6,7 @@ THREE.Model = (() => {
   const localEuler = new THREE.Euler(0, 0, 0, 'YXZ');
   const localBox = new THREE.Box3();
 
-  const _bindModel = (object, skinnedMesh, head, leftHand, rightHand, height) => {
+  const _bindModel = (object, skinnedMesh, head, leftHand, rightHand) => {
     const {skeleton} = skinnedMesh;
     const {bones} = skeleton;
     for (let i = 0; i < bones.length; i++) {
@@ -310,21 +310,18 @@ THREE.Model = (() => {
 
     object.scale.divideScalar(scale);
 
-    object.bindAvatar = (
-      head,
-      leftHand,
-      rightHand,
-      height,
-    ) => {
+    object.setHeight = height => {
       object.scale.multiplyScalar(height);
       object.updateMatrixWorld();
-
-      const ticks = skinnedMeshes.map(skinnedMesh => _bindModel(object, skinnedMesh, head, leftHand, rightHand, height));
-      return () => {
-        for (let i = 0; i < ticks.length; i++) {
-          ticks[i]();
-        }
-      };
+    };
+    let ticks = null;
+    object.update = (head, hands) => {
+      if (!ticks) {
+        ticks = skinnedMeshes.map(skinnedMesh => _bindModel(object, skinnedMesh, head, hands[0], hands[1]));
+      }
+      for (let i = 0; i < ticks.length; i++) {
+        ticks[i]();
+      }
     };
   };
   return {
