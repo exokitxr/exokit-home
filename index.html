@@ -140,7 +140,7 @@
     const localEuler = new THREE.Euler();
     localEuler.order = 'YXZ';
     const localEuler2 = new THREE.Euler();
-    localEuler2.order = 'localEuler.order;
+    localEuler2.order = localEuler.order;
 
     const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 10 * 1024);
     camera.position.set(0, DEFAULT_USER_HEIGHT, 1);
