@@ -873,7 +873,7 @@
 
                       return THREE.Model.FBX(fbxFileUrl)
                         .then(mesh => {
-                          mesh.setHeight(DEFAULT_USER_HEIGHT);
+                         mesh.setHeight(DEFAULT_USER_HEIGHT);
 
                           onupdate = (hmd, gamepads) => {
                             mesh.update(hmd, gamepads);
