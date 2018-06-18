@@ -286,13 +286,12 @@
       };
       xrmp.onplayerenter = playerMesh => {
         const skinMesh = _makeSkinMesh();
-        playerMesh.add(skinMesh);
+        playerMesh.skinMesh = skinMesh;
 
         playerMesh.onupdate = () => {
           skinMesh.update(playerMesh.hmd, playerMesh.gamepads);
         };
-        playerMesh.player.onstateupdate = e => {
-          const {state} = e;
+        const _updateState = state => {
           const {username} = (state._exokit || {});
 
           if (username) {
@@ -306,13 +305,18 @@
           } else {
             skinMesh.setSkinUrl(DEFAULT_SKIN_URL);
           }
-          console.log('player state update', {state}); // XXX set the skin here
+        };
+        _updateState(playerMesh.player.state);
+        playerMesh.player.onstateupdate = e => {
+          _updateState(e.state);
         };
 
         scene.add(playerMesh);
       };
       xrmp.onplayerleave = playerMesh => {
         scene.remove(playerMesh);
+
+        playerMesh.skinMesh.destroy();
       };
       /* xrmp.onobjectadd = objectMesh => {
         scene.add(objectMesh);
@@ -854,6 +858,7 @@
 
                     if (object.skinMesh) {
                       object.skinMesh.parent.remove(object.skinMesh);
+                      object.skinMesh = null;
                     }
 
                     scene.add(mesh);
@@ -881,6 +886,7 @@
 
                           if (object.skinMesh) {
                             object.skinMesh.parent.remove(object.skinMesh);
+                            object.skinMesh = null;
                           }
 
                           scene.add(mesh);
@@ -908,6 +914,14 @@
       };
       object.update = (hmd, gamepads) => {
         onupdate && onupdate(hmd, gamepads);
+      };
+      object.destroy = () => {
+        onupdate = null;
+
+        if (object.skinMesh) {
+          object.skinMesh.parent.remove(object.skinMesh);
+          object.skinMesh = null;
+        }
       };
       object.skinMesh = null;
       return object;
