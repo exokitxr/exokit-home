@@ -939,7 +939,9 @@
 
     const localSkinMesh = _makeSkinMesh();
     animations.push(() => {
-      localSkinMesh.update(camera, controllerMeshes);
+      const vrCamera = renderer.vr.getCamera(camera);
+      vrCamera.matrixWorld.decompose(vrCamera.position, vrCamera.quaternion, vrCamera.scale);
+      localSkinMesh.update(vrCamera, controllerMeshes);
     });
 
     const _requestSpriteMesh = itemType => new Promise((accept, reject) => {
