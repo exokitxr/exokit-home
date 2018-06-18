@@ -6,7 +6,7 @@ THREE.Model = (() => {
   const localEuler = new THREE.Euler(0, 0, 0, 'YXZ');
   const localBox = new THREE.Box3();
 
-  const _bindModel = (object, skinnedMesh, head, leftHand, rightHand) => {
+  const _bindModel = (object, skinnedMesh, leftHand, rightHand) => {
     const {skeleton} = skinnedMesh;
     const {bones} = skeleton;
     for (let i = 0; i < bones.length; i++) {
@@ -137,7 +137,7 @@ THREE.Model = (() => {
 
     const headTarget = new THREE.Object3D();
     headTarget.position.z = -10;
-    head.add(headTarget);
+    headTarget.updateMatrix();
     ik.add(_addBone(headM, chest, 160, false, headTarget));
     ik.add(_addBone(handL, shoulderL, 120, true, leftHand));
     ik.add(_addBone(handR, shoulderR, 120, true, rightHand));
@@ -146,13 +146,14 @@ THREE.Model = (() => {
       const result = Array(8);
       for (let i = 0; i < result.length; i++) {
         result[i] = {
-          position: head.position.clone(),
-          timestamp: Date.now(),
+          position: new THREE.Vector3(),
+          timestamp: 0,
         };
       }
       return result;
     })();
     let positionShapshotIndex = 0;
+    let positionShapshotsInitialized = false;
     const _capturePositionSnapshot = (position, timestamp) => {
       const snapshot = positionShapshots[positionShapshotIndex];
       snapshot.position.copy(position);
@@ -177,7 +178,7 @@ THREE.Model = (() => {
     const initialThighLQuaternion = thighL.quaternion.clone();
     const initialKneeRQuaternion = kneeR.quaternion.clone();
     const initialThighRQuaternion = thighR.quaternion.clone();
-    return () => {
+    return head => {
       if (reverts.length > 0) {
         for (let i = 0; i < reverts.length; i++) {
           reverts[i]();
@@ -185,7 +186,19 @@ THREE.Model = (() => {
         reverts.length = 0;
       }
 
+      if (!positionShapshotsInitialized) {
+        const now = Date.now();
+        for (let i = 0; i < positionShapshots.length; i++) {
+          const positionShapshot = positionShapshots[i];
+          positionShapshot.position.copy(head.position);
+          positionShapshot.timestamp = now;
+        }
+        positionShapshotsInitialized = true;
+      }
+
       _capturePositionSnapshot(head.position, Date.now());
+
+      headTarget.matrixWorld.multiplyMatrices(head.matrixWorld, headTarget.matrix);
 
       object.quaternion.setFromEuler(
         localEuler.setFromQuaternion(head.quaternion, localEuler.order)
@@ -317,10 +330,10 @@ THREE.Model = (() => {
     let ticks = null;
     object.update = (head, hands) => {
       if (!ticks) {
-        ticks = skinnedMeshes.map(skinnedMesh => _bindModel(object, skinnedMesh, head, hands[0], hands[1]));
+        ticks = skinnedMeshes.map(skinnedMesh => _bindModel(object, skinnedMesh, hands[0], hands[1]));
       }
       for (let i = 0; i < ticks.length; i++) {
-        ticks[i]();
+        ticks[i](head);
       }
     };
   };
