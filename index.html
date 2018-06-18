@@ -718,144 +718,165 @@
     scene.add(floorMesh);
 
     const animations = [];
-    const _makeSkinMesh = (() => {
-      const controllerPosition = new THREE.Vector3();
-      const controllerQuaternion = new THREE.Quaternion();
-      const meshWorldPosition = new THREE.Vector3();
-      const meshEyeWorldPosition = new THREE.Vector3();
-      const playerQuaternionInverse = new THREE.Quaternion();
-      const headQuaternion = new THREE.Quaternion();
-      const headQuaternionInverse = new THREE.Quaternion();
-      const localUpVector = new THREE.Vector3();
-      const armWorldPosition = new THREE.Vector3();
-      const armQuaternion = new THREE.Quaternion();
-      const armQuaternionInverse = new THREE.Quaternion();
-      const rotationMatrix = new THREE.Matrix4();
 
-      const _mod = (value, divisor) => {
-        const n = value % divisor;
-        return n < 0 ? (divisor + n) : n
-      };
-      const _angleDiff = (a, b) => _mod((b - a) + Math.PI, Math.PI * 2) - Math.PI;
+    const _mod = (v, d) => {
+      const n = v % d;
+      return n < 0 ? (d + n) : n;
+    };
+    const _angleDiff = (a, b) => _mod((b - a) + Math.PI, Math.PI * 2) - Math.PI;
+    const _makeSkinMesh = playerMesh => {
+      const mesh = skin({
+        limbs: true,
+      });
 
-      return playerMesh => {
-        const mesh = skin({
-          limbs: true,
-        });
+      const uniforms = THREE.UniformsUtils.clone(skin.SKIN_SHADER.uniforms);
 
-        const uniforms = THREE.UniformsUtils.clone(skin.SKIN_SHADER.uniforms);
+      const handMeshes = Array(2);
+      for (let i = 0; i < handMeshes.length; i++) {
+        const handMesh = _makeHandMesh();
+        scene.add(handMesh);
+        handMeshes[i] = handMesh;
+      }
+      mesh.handMeshes = handMeshes;
 
-        const handMeshes = Array(2);
-        for (let i = 0; i < handMeshes.length; i++) {
-          const handMesh = _makeHandMesh();
-          scene.add(handMesh);
-          handMeshes[i] = handMesh;
-        }
-        mesh.handMeshes = handMeshes;
+      mesh.onBeforeRender = (function(onBeforeRender) {
+        return function() {
+          mesh.material.uniforms.headRotation.value.copy(uniforms.headRotation.value);
+          mesh.material.uniforms.leftArmRotation.value.copy(uniforms.leftArmRotation.value);
+          mesh.material.uniforms.rightArmRotation.value.copy(uniforms.rightArmRotation.value);
+          mesh.material.uniforms.theta.value = uniforms.theta.value;
+          mesh.material.uniforms.headVisible.value = uniforms.headVisible.value;
+          mesh.material.uniforms.hit.value = uniforms.hit.value;
 
-        mesh.onBeforeRender = (function(onBeforeRender) {
-          return function() {
-            mesh.material.uniforms.headRotation.value.copy(uniforms.headRotation.value);
-            mesh.material.uniforms.leftArmRotation.value.copy(uniforms.leftArmRotation.value);
-            mesh.material.uniforms.rightArmRotation.value.copy(uniforms.rightArmRotation.value);
-            mesh.material.uniforms.theta.value = uniforms.theta.value;
-            mesh.material.uniforms.headVisible.value = uniforms.headVisible.value;
-            mesh.material.uniforms.hit.value = uniforms.hit.value;
-
-            onBeforeRender.apply(this, arguments);
-          };
-        })(mesh.onBeforeRender);
-
-        playerMesh.onupdate = () => {
-          const hmdEuler = localEuler.setFromQuaternion(playerMesh.hmd.quaternion, camera.rotation.order);
-          const playerEuler = localEuler2.setFromQuaternion(mesh.quaternion, camera.rotation.order);
-          const angleDiff = _angleDiff(hmdEuler.y, playerEuler.y);
-          const angleDiffAbs = Math.abs(angleDiff);
-          if (angleDiffAbs > Math.PI / 2) {
-            playerEuler.y += (angleDiffAbs - (Math.PI / 2)) * (angleDiff < 0 ? 1 : -1);
-            mesh.quaternion.setFromEuler(playerEuler);
-          }
-
-          mesh.getWorldPosition(meshWorldPosition);
-          mesh.eye.getWorldPosition(meshEyeWorldPosition);
-          mesh.position.copy(playerMesh.hmd.position)
-            .sub(meshEyeWorldPosition)
-            .add(meshWorldPosition);
-
-          playerQuaternionInverse.copy(mesh.quaternion).inverse();
-          headQuaternion.copy(playerQuaternionInverse).multiply(playerMesh.hmd.quaternion);
-          headQuaternionInverse.copy(headQuaternion).inverse();
-          uniforms.headRotation.value.set(headQuaternionInverse.x, headQuaternionInverse.y, headQuaternionInverse.z, headQuaternionInverse.w);
-          mesh.head.quaternion.copy(headQuaternion);
-          mesh.updateMatrixWorld();
-
-          for (let i = 0; i < 2; i++) {
-            const side = SIDES[i];
-            const armRotation = uniforms[side === 'left' ? 'leftArmRotation' : 'rightArmRotation'];
-
-            if (playerMesh.gamepads[i].visible) {
-              controllerPosition.copy(playerMesh.gamepads[i].position);
-              controllerQuaternion.copy(playerMesh.gamepads[i].quaternion);
-              localUpVector.copy(upVector).applyQuaternion(controllerQuaternion);
-
-              mesh.arms[side].getWorldPosition(armWorldPosition);
-              rotationMatrix.lookAt(
-                armWorldPosition,
-                controllerPosition,
-                localUpVector
-              );
-              armQuaternion
-                .setFromRotationMatrix(rotationMatrix)
-                .multiply(armQuaternionOffset)
-                .premultiply(playerQuaternionInverse);
-              armQuaternionInverse.copy(armQuaternion).inverse();
-              armRotation.value.set(armQuaternionInverse.x, armQuaternionInverse.y, armQuaternionInverse.z, armQuaternionInverse.w);
-            } else {
-              armRotation.value.set(0, 0, 0, 1);
-            }
-          }
-
-          /* for (let i = 0; i < handMeshes.length; i++) { // XXX
-            handMeshes[i].updatePlayerMatrix(playerMatrix.hands[i]);
-          } */
+          onBeforeRender.apply(this, arguments);
         };
+      })(mesh.onBeforeRender);
 
-        const _setSkin = skinUrl => new Promise((accept, reject) => {
-          skinUrl = skinUrl || DEFAULT_SKIN_URL;
+      playerMesh.onupdate = () => {
+        const hmdEuler = localEuler.setFromQuaternion(playerMesh.hmd.quaternion, camera.rotation.order);
+        const playerEuler = localEuler2.setFromQuaternion(mesh.quaternion, camera.rotation.order);
+        const angleDiff = _angleDiff(hmdEuler.y, playerEuler.y);
+        const angleDiffAbs = Math.abs(angleDiff);
+        if (angleDiffAbs > Math.PI / 2) {
+          playerEuler.y += (angleDiffAbs - (Math.PI / 2)) * (angleDiff < 0 ? 1 : -1);
+          mesh.quaternion.setFromEuler(playerEuler);
+        }
 
-          const skinImg = new Image();
-          skinImg.crossOrigin = 'Anonymous';
-          skinImg.src = skinUrl;
-          skinImg.onload = () => {
-            mesh.setImage(skinImg);
+        mesh.position.copy(playerMesh.hmd.position)
+          .sub(mesh.eye.getWorldPosition(localVector))
+          .add(mesh.getWorldPosition(localVector));
 
-            accept();
-          };
-          skinImg.onerror = err => {
-            reject(err);
-          };
-        });
-        mesh.setSkin = _setSkin;
+        const playerQuaternionInverse = localQuaternion.copy(mesh.quaternion).inverse();
+        mesh.head.quaternion.copy(playerQuaternionInverse).multiply(playerMesh.hmd.quaternion);
+        mesh.updateMatrixWorld();
 
-        (() => {
-          const {username} = (playerMesh.player.state._exokit || {});
-          if (username) {
-            return xrid.get('_exokit.skin', {
-              user: username,
-              format: 'text',
-            });
+        uniforms.headRotation.value.copy(mesh.head.quaternion).inverse();
+
+        for (let i = 0; i < 2; i++) {
+          const side = SIDES[i];
+          const armRotation = uniforms[side === 'left' ? 'leftArmRotation' : 'rightArmRotation'];
+
+          const gamepad = playerMesh.gamepads[i];
+          if (gamepad.visible) {
+            armRotation.value.setFromRotationMatrix(
+              localMatrix.lookAt(
+                mesh.arms[side].getWorldPosition(localVector),
+                gamepad.position,
+                localVector2.copy(upVector).applyQuaternion(gamepad.quaternion)
+              )
+            )
+              .multiply(armQuaternionOffset)
+              .premultiply(playerQuaternionInverse)
+              .inverse();
           } else {
-            return Promise.resolve(null);
+            armRotation.value.set(0, 0, 0, 1);
           }
-        })()
-          .then(_setSkin)
+        }
+
+        /* for (let i = 0; i < handMeshes.length; i++) { // XXX
+          handMeshes[i].updatePlayerMatrix(playerMatrix.hands[i]);
+        } */
+      };
+
+      const _setSkin = skinUrl => {
+        skinUrl = skinUrl || DEFAULT_SKIN_URL;
+
+        return fetch(skinUrl)
+          .then(res => {
+            if (res.ok) {
+              return res.arrayBuffer()
+                .then(arrayBuffer => ({
+                  type: res.headers.get('content-type'),
+                  arrayBuffer,
+                }));
+            } else {
+              return Promise.reject(new Error('invalid status code: ' + res.status));
+            }
+          })
+          .then(({type, arrayBuffer}) => {
+            if (/^image\//.test(type)) {
+              return new Promise((accept, reject) => {
+                const skinImg = new Image();
+                skinImg.crossOrigin = 'Anonymous';
+                skinImg.src = skinUrl;
+                skinImg.onload = () => {
+                  mesh.setImage(skinImg);
+
+                  accept();
+                };
+                skinImg.onerror = err => {
+                  reject(err);
+                };
+              });
+            } else if (type === 'application/x-tar') {
+              return untar(arrayBuffer)
+                .then(files => {
+                  const fbxFile = files.find(file => /\.fbx/.test(file.name));
+
+                  if (fbxFile) {
+                    const directoryUrl = fetchManager.addDirectory(files);
+                    const fbxFileUrl = directoryUrl + '/' + fbxFile.name;
+
+                    return THREE.Model.FBX(fbxFileUrl)
+                      .then(object => {
+                        object.position.copy(placementPosition);
+                        scene.add(object);
+
+                        const fn = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
+                        animations.push(fn);
+                      });
+                  } else {
+                    return Promise.reject(new Error('no model found in tar:' + skinUrl));
+                  }
+                });
+            } else {
+              return Promise.reject(new Error('invalid skin type: ' + type));
+            }
+          })
           .catch(err => {
             console.warn(err.stack);
           });
-
-        return mesh;
       };
-    })();
+      mesh.setSkin = _setSkin;
+
+      (() => {
+        const {username} = (playerMesh.player.state._exokit || {});
+        if (username) {
+          return xrid.get('_exokit.skin', {
+            user: username,
+            format: 'text',
+          });
+        } else {
+          return Promise.resolve(null);
+        }
+      })()
+        .then(_setSkin)
+        .catch(err => {
+          console.warn(err.stack);
+        });
+
+      return mesh;
+    };
 
     const _requestSpriteMesh = itemType => new Promise((accept, reject) => {
       const img = new Image();
