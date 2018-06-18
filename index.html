@@ -900,7 +900,7 @@
                     }
                   });
               } else {
-                return Promise.reject(new Error('cannot open unknown file type: ' + JSON.stringify(type)));
+                return Promise.reject(new Error('cannot open unknown file type: ' + JSON.stringify({url: skinUrl, type})));
               }
             });
         } else {
