@@ -522,7 +522,7 @@ var IKChain = function () {
     this.totalLengths = 0;
     this.base = null;
     this.effector = null;
-    this.effectorIndex = null;
+    // this.effectorIndex = null;
     this.chains = new Map();
     this.origin = null;
     this.iterations = 100;
@@ -569,7 +569,7 @@ var IKChain = function () {
         }
       if (target) {
         this.effector = joint;
-        this.effectorIndex = joint;
+        // this.effectorIndex = joint;
         this.target = target;
       }
       return this;
