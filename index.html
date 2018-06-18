@@ -396,6 +396,14 @@
 
       menuMesh.urlMesh.updateText();
 
+      if (_isMpOpen()) {
+        xrmp.localPlayerMesh.player.setState({
+          _exokit: {
+            username: null,
+          },
+        });
+      }
+
       localSkinMesh.destroy();
     };
 
@@ -1991,8 +1999,12 @@
                     .then(() => {
                       if (_isMpOpen()) {
                         return xrmp.localPlayerMesh.player.setState({
-                          username: xrid.user.username,
+                          _exokit: {
+                            username: xrid.user.username,
+                          },
                         });
+                      } else {
+                        return Promise.resolve();
                       }
                     }),
                   localSkinMesh.setSkinUrl(file.url),
