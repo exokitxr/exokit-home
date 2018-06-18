@@ -2037,13 +2037,13 @@
                         });
                     } else if (/^image\//.test(type)) {
                       return Promise.all([
-                        _requestSkinPreviewCanvas(file.name)
+                        _requestSkinPreviewCanvas(file.url)
                           .then(canvas => {
                             skinPreviewCanvas = canvas;
 
                             menuMesh.urlMesh.updateText();
                           }),
-                        xrid.set('_exokit.skin', file.name)
+                        xrid.set('_exokit.skin', file.url)
                           .then(() => {
                             if (_isMpOpen()) {
                               return xrmp.localPlayerMesh.player.setState({
