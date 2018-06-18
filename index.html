@@ -1923,40 +1923,9 @@
                     const {headers} = res;
                     const type = headers.get('content-type');
 
-                    if (type === 'application/x-tar') {
-                      return res.arrayBuffer()
-                        .then(arrayBuffer => untar(arrayBuffer))
-                        .then(files => {
-                          const fbxFile = files.find(file => /\.fbx/.test(file.name));
+                    if (/^image\//.test(type)) {
+                      console.log('set image skin', file.url);
 
-                          if (fbxFile) {
-                            const directoryUrl = fetchManager.addDirectory(files);
-                            const fbxFileUrl = directoryUrl + '/' + fbxFile.name;
-
-                            THREE.Model.FBX(fbxFileUrl)
-                              .then(object => {
-                                object.position.copy(placementPosition);
-                                scene.add(object);
-
-                                const fn = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
-                                animations.push(fn);
-                              })
-                              .catch(err => {
-                                console.warn(err.stack);
-                              });
-
-                            // console.log('get fbx file', directoryUrl + '/' + fbxFiled.name);
-
-                            /* return fetch()
-                              .then(fbxFile => {
-                                console.log('got fbx file', fbxFile); // XXX
-                              }); */
-                            return Promise.resolve(fbxFile);
-                          } else {
-                            return Promise.reject(new Error('could not find model file in bundle'));
-                          }
-                        });
-                    } else if (/^image\//.test(type)) {
                       return Promise.all([
                         _requestSkinPreviewCanvas(file.url)
                           .then(canvas => {
@@ -1972,7 +1941,35 @@
                               });
                             }
                           }),
-                      ]);
+                      ])
+                        .then(() => {});
+                    } else if (type === 'application/x-tar') {
+                      console.log('set model skin', file.url);
+
+                      return res.arrayBuffer()
+                        .then(arrayBuffer => untar(arrayBuffer))
+                        .then(files => {
+                          const fbxFile = files.find(file => /\.fbx/.test(file.name));
+
+                          if (fbxFile) {
+                            const directoryUrl = fetchManager.addDirectory(files);
+                            const fbxFileUrl = directoryUrl + '/' + fbxFile.name;
+
+                            return THREE.Model.FBX(fbxFileUrl)
+                              .then(object => {
+                                object.position.copy(placementPosition);
+                                scene.add(object);
+
+                                const fn = object.bindAvatar(camera, controllerMeshes[0], controllerMeshes[1], DEFAULT_USER_HEIGHT);
+                                animations.push(fn);
+                              })
+                              .catch(err => {
+                                console.warn(err.stack);
+                              });
+                          } else {
+                            return Promise.reject(new Error('could not find model file in bundle'));
+                          }
+                        });
                     } else {
                       console.warn('cannot open unknown file type', {type});
                     }
