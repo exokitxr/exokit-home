@@ -2035,7 +2035,7 @@
                             return Promise.reject(new Error('could not find model file in bundle'));
                           }
                         });
-                    } else if (/^image\/png;?/.test(type)) {
+                    } else if (/^image\//.test(type)) {
                       return Promise.all([
                         _requestSkinPreviewCanvas(file.name)
                           .then(canvas => {
