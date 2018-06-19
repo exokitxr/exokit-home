@@ -174,7 +174,7 @@ class XRMultiplayerTHREE {
       const microphoneSourceNode = audioCtx.createMediaStreamSource(newMediaStream);
       const scriptProcessorNode = audioCtx.createScriptProcessor(AUDIO_BUFFER_SIZE, 1, 1);
       scriptProcessorNode.onaudioprocess = e => {
-        localPlayer.pushAudio(e.inputBuffer.getChannelData(0));
+        localPlayer.pushAudio(e.inputBuffer.sampleRate, e.inputBuffer.getChannelData(0));
 
         e.outputBuffer.getChannelData(0).fill(0);
       };
@@ -278,21 +278,36 @@ class XRMultiplayerTHREE {
   }
   _bindPlayerMeshAudio(playerMesh) {
     const audioCtx = this.getAudioContext();
-    const scriptProcessorNode = audioCtx.createScriptProcessor(AUDIO_BUFFER_SIZE, 1, 1);
-    scriptProcessorNode.onaudioprocess = e => {
-      if (playerMesh.audioBuffers.length > 0) {
-        e.outputBuffer.copyToChannel(playerMesh.audioBuffers.shift(), 0);
-      } else {
-        e.outputBuffer.getChannelData(0).fill(0);
+
+    const buffers = [];
+    let playing = false;
+    const _flushBuffer = () => {
+      if (!playing && playerMesh.audioBuffers.length > 0) {
+        const [buffer, sampleRate] = playerMesh.audioBuffers.shift();
+        const audioBuffer = audioCtx.createBuffer(1, buffer.length, sampleRate);
+        audioBuffer.copyToChannel(buffer, 0);
+
+        const bufferSourceNode = audioCtx.createBufferSource();
+        bufferSourceNode.connect(audioCtx.destination);
+        bufferSourceNode.buffer = audioBuffer;
+        bufferSourceNode.start();
+        bufferSourceNode.onended = () => {
+          bufferSourceNode.onended = null;
+          playing = false;
+
+          _flushBuffer();
+
+          bufferSourceNode.disconnect(playerMesh.positionalAudio.getOutput());
+        };
+        playerMesh.positionalAudio.setNodeSource(bufferSourceNode);
+        playing = true;
       }
     };
-    // const microphoneSourceNode = audioCtx.createMediaStreamSource(mediaStream);
-    // microphoneSourceNode.connect(scriptProcessorNode);
-
-    playerMesh.positionalAudio.setNodeSource(scriptProcessorNode);
 
     playerMesh.player.onaudio = e => {
-      playerMesh.audioBuffers.push(e.buffer);
+      playerMesh.audioBuffers.push([e.buffer, e.sampleRate]);
+
+      _flushBuffer();
     };
   }
   _bindObjectMesh(objectMesh) {
