@@ -957,6 +957,17 @@
       };
     });
 
+    let menuImg = null;
+    window.drawWindow && window.drawWindow(`${window.location.origin}/html/menu.html`, urlBarWidth, 512)
+      .then(img => {
+        menuImg = img;
+
+        menuMesh.urlMesh.updateText();
+      })
+      .catch(err => {
+        console.warn(err.stack);
+      });
+
     const tabs = ['URL', 'Files', 'Apps', 'Party', 'Config'];
     const cursorWidth = 10;
     const _getTab = () => {
@@ -1163,6 +1174,10 @@
 
             ctx.fillStyle = '#03a9f4';
             ctx.fillRect(10 + urlState.measures[urlState.cursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
+
+            if (menuImg) {
+              ctx.drawImage(menuImg, 0, urlBarOffset + 20, menuImg.width, menuImg.height);
+            }
           } else if (tab === 'Files') {
             for (let i = 0; i < files.length; i++) {
               const file = files[i];
