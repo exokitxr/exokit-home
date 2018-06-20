@@ -958,7 +958,7 @@
     });
 
     let menuImg = null;
-    window.drawWindow && window.drawWindow(`${window.location.origin}/html/menu.html`, urlBarWidth, 512)
+    /* window.drawWindow && window.drawWindow(`${window.location.origin}/html/menu.html`, urlBarWidth, 512)
       .then(img => {
         menuImg = img;
 
@@ -966,7 +966,7 @@
       })
       .catch(err => {
         console.warn(err.stack);
-      });
+      }); */
 
     const tabs = ['URL', 'Files', 'Apps', 'Party', 'Config'];
     const cursorWidth = 10;
