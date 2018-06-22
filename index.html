@@ -958,9 +958,11 @@
     });
 
     let menuImg = null;
+    let menuMetrics = null;
     /* window.drawWindow && window.drawWindow(`${window.location.origin}/html/menu.html`, urlBarWidth, 512)
-      .then(img => {
+      .then(({img, metrics}) => {
         menuImg = img;
+        menuMetrics = metrics;
 
         menuMesh.urlMesh.updateText();
       })
@@ -1176,7 +1178,7 @@
             ctx.fillRect(10 + urlState.measures[urlState.cursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
 
             if (menuImg) {
-              ctx.drawImage(menuImg, 0, urlBarOffset + 20, menuImg.width, menuImg.height);
+              ctx.drawImage(menuImg, 0, menuHeight - menuImg.height, menuImg.width, menuImg.height);
             }
           } else if (tab === 'Files') {
             for (let i = 0; i < files.length; i++) {
