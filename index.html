@@ -959,16 +959,19 @@
 
     let menuImg = null;
     let menuMetrics = null;
-    /* window.drawWindow && window.drawWindow('html/menu.html', menuWidth, 512)
-      .then(({img, metrics}) => {
-        menuImg = img;
-        menuMetrics = metrics;
+    const _renderHtml = u => {
+      window.drawWindow && window.drawWindow(`html/${u}`, menuWidth, menuHeight)
+        .then(({img, metrics}) => {
+          menuImg = img;
+          menuMetrics = metrics;
 
-        menuMesh.urlMesh.updateText();
-      })
-      .catch(err => {
-        console.warn(err.stack);
-      }); */
+          menuMesh.urlMesh.updateText();
+        })
+        .catch(err => {
+          console.warn(err.stack);
+        });
+    };
+    // _renderHtml('menu.html?t=url');
 
     const tabs = ['URL', 'Files', 'Apps', 'Party', 'Config'];
     const cursorWidth = 10;
@@ -2091,10 +2094,11 @@
                   });
               }
             } else if (intersectionRect) {
-              if (intersectionRect.onclick) {
-                console.log('eval rect', intersectionRect.onclick); // XXX
-              } else if (intersectionRect.tagName === 'A' && intersectionRect.src) {
-                console.log('navigate rect', intersectionRect.src); // XXX
+              if (intersectionRect.click) {
+                // console.log('eval click', intersectionRect.click); // XXX
+                _renderHtml(intersectionRect.click);
+              } else if (intersectionRect.tagName === 'A' && intersectionRect.href) {
+                console.log('eval href', intersectionRect.href); // XXX
               } else {
                 // nothing
               }
