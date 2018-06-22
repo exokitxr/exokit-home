@@ -1771,9 +1771,19 @@
                     const anchorSize = localVector.set(intersectionRect.width/menuWidth*menuWorldWidth, intersectionRect.height/menuHeight*menuWorldHeight, 0.01);
 
                     boxMesh.position.copy(menuMesh.position)
-                      .add(localVector2.set(-menuWorldWidth/2, menuWorldHeight/2, 0))
-                      .add(localVector2.set(anchorSize.x/2, -anchorSize.y/2, 0))
-                      .add(localVector2.set(intersectionRect.left/menuWidth*menuWorldWidth, -intersectionRect.top/menuHeight*menuWorldHeight, 0));
+                      .add(
+                        localVector2.set(-menuWorldWidth/2, menuWorldHeight/2, 0)
+                          .applyQuaternion(menuMesh.quaternion)
+                      )
+                      .add(
+                        localVector2.set(anchorSize.x/2, -anchorSize.y/2, 0)
+                          .applyQuaternion(menuMesh.quaternion)
+                      )
+                      .add(
+                        localVector2.set(intersectionRect.left/menuWidth*menuWorldWidth, -intersectionRect.top/menuHeight*menuWorldHeight, 0)
+                          .applyQuaternion(menuMesh.quaternion)
+                      );
+                    boxMesh.quaternion.copy(menuMesh.quaternion);
                     boxMesh.scale.copy(anchorSize);
                     boxMesh.visible = true;
                   } else {
