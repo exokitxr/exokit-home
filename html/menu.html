@@ -4,6 +4,8 @@
   <style>
     body {
       margin: 0;
+      font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif;
+      font-size: 100px;
     }
     * {
       box-sizing: border-box;
@@ -11,8 +13,13 @@
   </style>
 </head>
 <body>
+  <div style="display: flex; justify-content: stretch; background-color: #EEE; color: #AAA;">
+    <a style="display: flex; justify-content: center; align-items: center; padding: 30px; flex: 1; background-color: #FFF; color: #000;" click="url.html">URL</a>
+    <a style="display: flex; justify-content: center; align-items: center; padding: 30px; flex: 1;" click="files.html">Files</a>
+    <a style="display: flex; justify-content: center; align-items: center; padding: 30px; flex: 1;" click="apps.html">Apps</a>
+    <a style="display: flex; justify-content: center; align-items: center; padding: 30px; flex: 1;" click="party.html">Party</a>
+  </div>
   <div style="display: flex; flex-direction: column; align-items: flex-start;">
-    <h1>Menu</h1>
     <a href="https://google.com/">Link me!</a>
     <button click="console.log('lol');">Submit</button>
   </div>
