@@ -1358,6 +1358,21 @@
     })();
     scene.add(menuMesh);
 
+    const boxMesh = (() => {
+      const geometry = new THREE.BoxBufferGeometry(1, 1, 1);
+      const material = new THREE.MeshBasicMaterial({
+        color: RAY_COLOR,
+        transparent: true,
+        opacity: 0.5,
+        // depthTest: false,
+        depthWrite: false,
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.visible = false;
+      return mesh;
+    })();
+    scene.add(boxMesh);
+
     const keyboardMesh = (() => {
       const object = new THREE.Object3D();
 
@@ -1639,11 +1654,13 @@
             controllerMesh.rayDot.visible = false;
 
             controllerMesh.keyMesh.visible = false;
+
+            boxMesh.visible = false;
           };
 
           // keyboard
-          let intersectionKey = null;
           let intersectionPoint = keyboardMesh.visible ? controllerMesh.ray.intersectPlane(keyboardMesh.plane, localVector) : null;
+          let intersectionKey = null;
           if (intersectionPoint) {
             const leftIntersectionPoint = keyboardMesh.leftLine.closestPointToPoint(intersectionPoint, true, localVector2);
 
@@ -1714,6 +1731,7 @@
           // menu mesh
           let tabIndex = -1;
           let urlCoords = null;
+          let intersectionRect = null;
           let appIndex = -1;
           let fileIndex = -1;
           let fileRemove = false;
@@ -1737,7 +1755,31 @@
                 const y = yFactor * menuHeight;
 
                 const tab = _getTab();
-                if (y < urlBarOffset) {
+                if (menuMetrics) {
+                  intersectionRect = menuMetrics.find(rect => x >= rect.left && x < rect.right && y >= rect.top && y < rect.bottom);
+
+                  if (intersectionRect) {
+                    controllerMesh.rayMesh.scale.z = distance;
+                    controllerMesh.updateMatrixWorld();
+
+                    controllerMesh.rayDot.position.z = -distance;
+                    controllerMesh.updateMatrixWorld();
+                    controllerMesh.rayDot.visible = true;
+
+                    const anchorSize = localVector.set(intersectionRect.width/menuWidth*menuWorldWidth, intersectionRect.height/menuHeight*menuWorldHeight, 0.01);
+
+                    boxMesh.position.copy(menuMesh.position)
+                      .add(localVector2.set(-menuWorldWidth/2, menuWorldHeight/2, 0))
+                      .add(localVector2.set(anchorSize.x/2, -anchorSize.y/2, 0))
+                      .add(localVector2.set(intersectionRect.left/menuWidth*menuWorldWidth, -intersectionRect.top/menuHeight*menuWorldHeight, 0));
+                    boxMesh.scale.copy(anchorSize);
+                    boxMesh.visible = true;
+                  } else {
+                    intersectionPoint = null;
+                  }
+
+                  // intersectionRect && console.log('check rect', x, y, intersectionRect);
+                } else if (y < urlBarOffset) {
                   const newTabIndex = Math.floor(x / tabWidth);
                   if (newTabIndex < tabs.length) {
                     tabIndex = newTabIndex;
@@ -2035,6 +2077,14 @@
                   .catch(err => {
                     console.warn(err);
                   });
+              }
+            } else if (intersectionRect) {
+              if (intersectionRect.onclick) {
+                console.log('eval rect', intersectionRect.onclick); // XXX
+              } else if (intersectionRect.tagName === 'A' && intersectionRect.src) {
+                console.log('navigate rect', intersectionRect.src); // XXX
+              } else {
+                // nothing
               }
             } else if (intersectionKey) {
               const code = keyCode(intersectionKey);
