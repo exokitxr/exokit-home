@@ -10,14 +10,41 @@
     * {
       box-sizing: border-box;
     }
+    .tab.selected {
+      background-color: #FFF;
+      color: #000;
+    }
   </style>
+  <script>
+    console.log('got load');
+  </script>
+  <script>
+    function getParameterByName(url, name) {
+      name = name.replace(/[\[\]]/g, "\\$&");
+      const regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+      if (!results) return null;
+      if (!results[2]) return '';
+      return decodeURIComponent(results[2].replace(/\+/g, " "));
+    }
+
+    window.onload = () => {
+      const t = getParameterByName(window.location.href, 't');
+      console.log('select tab', {t});
+      if (t) {
+        const tabEl = document.querySelector('tab.' + t);
+        tabEl.classList.add('selected');
+      }
+    };
+  </script>
 </head>
 <body>
   <div style="display: flex; justify-content: stretch; background-color: #EEE; color: #AAA;">
-    <a style="display: flex; justify-content: center; align-items: center; padding: 30px; flex: 1; background-color: #FFF; color: #000;" click="url.html">URL</a>
-    <a style="display: flex; justify-content: center; align-items: center; padding: 30px; flex: 1;" click="files.html">Files</a>
-    <a style="display: flex; justify-content: center; align-items: center; padding: 30px; flex: 1;" click="apps.html">Apps</a>
-    <a style="display: flex; justify-content: center; align-items: center; padding: 30px; flex: 1;" click="party.html">Party</a>
+    <a class='tab url selected' style="display: flex; justify-content: center; align-items: center; padding: 30px; flex: 1;" click="menu.html?t=url">URL</a>
+    <a class='tab files' style="display: flex; justify-content: center; align-items: center; padding: 30px; flex: 1;" click="menu.html?t=files">Files</a>
+    <a class='tab apps' style="display: flex; justify-content: center; align-items: center; padding: 30px; flex: 1;" click="menu.html?t=apps">Apps</a>
+    <a class='tab party' style="display: flex; justify-content: center; align-items: center; padding: 30px; flex: 1;" click="menu.html?t=party">Party</a>
+    <a class='tab party' style="display: flex; justify-content: center; align-items: center; padding: 30px; flex: 1;" click="menu.html?t=config">Config</a>
   </div>
   <div style="display: flex; flex-direction: column; align-items: flex-start;">
     <a href="https://google.com/">Link me!</a>
