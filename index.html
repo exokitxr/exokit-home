@@ -977,21 +977,29 @@
       };
     });
 
+    let page = null;
     let menuImg = null;
-    let menuMetrics = null;
-    const _renderHtml = u => {
-      window.drawWindow && window.drawWindow(`html/${u}`, menuWidth, menuHeight)
-        .then(({img, metrics}) => {
-          menuImg = img;
-          menuMetrics = metrics;
-
-          menuMesh.urlMesh.updateText();
-        })
-        .catch(err => {
-          console.warn(err.stack);
+    const _renderHtml = async () => {
+      if (window.requestPage) {
+        page = await window.requestPage(`html/build/index.html`, menuWidth, menuHeight);
+        // page = await window.requestPage(`http://127.0.0.1:3000/`, menuWidth, menuHeight);
+        page.on('pageerror', err => {
+          console.warn(err);
         });
+        page.on('console', m => {
+          console.log(m.args().map(a => a._remoteObject.value));
+        });
+        menuImg = await page.requestImage();
+
+        menuMesh.urlMesh.updateText();
+      }
     };
-    // _renderHtml('menu.html?t=url');
+    const _updateHtml = async () => {
+      menuImg = await page.requestImage();
+
+      menuMesh.urlMesh.updateText();
+    };
+    _renderHtml();
 
     const tabs = ['URL', 'Files', 'Apps', 'Party', 'Config'];
     const cursorWidth = 10;
@@ -1750,8 +1758,8 @@
 
           // menu mesh
           let tabIndex = -1;
-          let urlCoords = null;
           let intersectionRect = null;
+          let urlCoords = null;
           let appIndex = -1;
           let fileIndex = -1;
           let fileRemove = false;
@@ -1775,40 +1783,15 @@
                 const y = yFactor * menuHeight;
 
                 const tab = _getTab();
-                if (menuMetrics) {
-                  intersectionRect = menuMetrics.find(rect => x >= rect.left && x < rect.right && y >= rect.top && y < rect.bottom);
+                if (menuImg) {
+                  controllerMesh.rayMesh.scale.z = distance;
+                  controllerMesh.updateMatrixWorld();
 
-                  if (intersectionRect) {
-                    controllerMesh.rayMesh.scale.z = distance;
-                    controllerMesh.updateMatrixWorld();
+                  controllerMesh.rayDot.position.z = -distance;
+                  controllerMesh.updateMatrixWorld();
+                  controllerMesh.rayDot.visible = true;
 
-                    controllerMesh.rayDot.position.z = -distance;
-                    controllerMesh.updateMatrixWorld();
-                    controllerMesh.rayDot.visible = true;
-
-                    const anchorSize = localVector.set(intersectionRect.width/menuWidth*menuWorldWidth, intersectionRect.height/menuHeight*menuWorldHeight, 0.01);
-
-                    boxMesh.position.copy(menuMesh.position)
-                      .add(
-                        localVector2.set(-menuWorldWidth/2, menuWorldHeight/2, 0)
-                          .applyQuaternion(menuMesh.quaternion)
-                      )
-                      .add(
-                        localVector2.set(anchorSize.x/2, -anchorSize.y/2, 0)
-                          .applyQuaternion(menuMesh.quaternion)
-                      )
-                      .add(
-                        localVector2.set(intersectionRect.left/menuWidth*menuWorldWidth, -intersectionRect.top/menuHeight*menuWorldHeight, 0)
-                          .applyQuaternion(menuMesh.quaternion)
-                      );
-                    boxMesh.quaternion.copy(menuMesh.quaternion);
-                    boxMesh.scale.copy(anchorSize);
-                    boxMesh.visible = true;
-                  } else {
-                    intersectionPoint = null;
-                  }
-
-                  // intersectionRect && console.log('check rect', x, y, intersectionRect);
+                  intersectionRect = [x, y];
                 } else if (y < urlBarOffset) {
                   const newTabIndex = Math.floor(x / tabWidth);
                   if (newTabIndex < tabs.length) {
@@ -2110,13 +2093,14 @@
                   });
               }
             } else if (intersectionRect) {
-              if (intersectionRect.click) {
-                // console.log('eval click', intersectionRect.click); // XXX
-                _renderHtml(intersectionRect.click);
-              } else if (intersectionRect.tagName === 'A' && intersectionRect.href) {
-                console.log('eval href', intersectionRect.href); // XXX
-              } else {
-                // nothing
+              if (menuImg) {
+                page.mouse.click(intersectionRect[0], intersectionRect[1])
+                  .then(() => {
+                    _updateHtml();
+                  })
+                  .catch(err => {
+                    console.warn(err.stack);
+                  });
               }
             } else if (intersectionKey) {
               const code = keyCode(intersectionKey);
@@ -2412,59 +2396,86 @@
       })();
     }
 
-    const _handleDefaultKey = (code, shiftKey) => {
-      let c = String.fromCharCode(code);
-      if (shiftKey) {
-        c = c.toUpperCase();
+    const _findKey = code => {
+      for (const k in window.USKeyboardLayout) {
+        const o = window.USKeyboardLayout[k];
+        if (o.keyCode === code) {
+          return o.key;
+        }
       }
-      keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor) + c + keyboardState.text.slice(keyboardState.cursor);
-      keyboardState.cursor++;
-      menuMesh.urlMesh.updateText();
+      return null;
     };
-    const _handleKey = (code, shiftKey) => {
-      if (code === 8) { // backspace
-        if (keyboardState.cursor > 0) {
-          keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor - 1) + keyboardState.text.slice(keyboardState.cursor);
-          keyboardState.cursor--;
-          menuMesh.urlMesh.updateText();
+    const _handlePageKey = async (code, shiftKey) => {
+      if (shiftKey) {
+        await page.keyboard.down('Shift');
+      }
+      await page.keyboard.press(_findKey(code));
+      if (shiftKey) {
+        await page.keyboard.up('Shift');
+      }
+      _updateHtml();
+    };
+    const _handleDefaultKey = (code, shiftKey) => {
+      if (menuImg) {
+        _handlePageKey(code, shiftKey);
+      } else {
+        let c = String.fromCharCode(code);
+        if (shiftKey) {
+          c = c.toUpperCase();
         }
-      } else if (code === 46) { // delete
-        if (keyboardState.cursor < keyboardState.text.length) {
-          keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor) + keyboardState.text.slice(keyboardState.cursor + 1);
-          menuMesh.urlMesh.updateText();
-        }
-      } else if (code === 32) { // space
-        keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor) + ' ' + keyboardState.text.slice(keyboardState.cursor);
+        keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor) + c + keyboardState.text.slice(keyboardState.cursor);
         keyboardState.cursor++;
         menuMesh.urlMesh.updateText();
-      } else if (code === 13) { // enter
-        keyboardState.submit();
-      } else if (
-        code === 9 || // tab
-        code === 16 || // shift
-        code === 17 || // ctrl
-        code === 18 || // alt
-        code === 20 || // capslock
-        code === 27 || // esc
-        code === 91 // win
-      ) {
-        // nothing
-      } else if (code === 37) { // left
-        keyboardState.cursor = Math.max(keyboardState.cursor - 1, 0);
-        menuMesh.urlMesh.updateText();
-      } else if (code === 39) { // right
-        keyboardState.cursor = Math.min(keyboardState.cursor + 1, keyboardState.text.length);
-        menuMesh.urlMesh.updateText();
-      } else if (code === 38) { // up
-        keyboardState.cursor = 0;
-        menuMesh.urlMesh.updateText();
-      } else if (code === 40) { // down
-        keyboardState.cursor = keyboardState.text.length;
-        menuMesh.urlMesh.updateText();
-      } else if (code === -1) {
-        // nothing
+      }
+    };
+    const _handleKey = (code, shiftKey) => {
+      if (menuImg) {
+        _handlePageKey(code, shiftKey);
       } else {
-        _handleDefaultKey(code, shiftKey);
+        if (code === 8) { // backspace
+          if (keyboardState.cursor > 0) {
+            keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor - 1) + keyboardState.text.slice(keyboardState.cursor);
+            keyboardState.cursor--;
+            menuMesh.urlMesh.updateText();
+          }
+        } else if (code === 46) { // delete
+          if (keyboardState.cursor < keyboardState.text.length) {
+            keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor) + keyboardState.text.slice(keyboardState.cursor + 1);
+            menuMesh.urlMesh.updateText();
+          }
+        } else if (code === 32) { // space
+          keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor) + ' ' + keyboardState.text.slice(keyboardState.cursor);
+          keyboardState.cursor++;
+          menuMesh.urlMesh.updateText();
+        } else if (code === 13) { // enter
+          keyboardState.submit();
+        } else if (
+          code === 9 || // tab
+          code === 16 || // shift
+          code === 17 || // ctrl
+          code === 18 || // alt
+          code === 20 || // capslock
+          code === 27 || // esc
+          code === 91 // win
+        ) {
+          // nothing
+        } else if (code === 37) { // left
+          keyboardState.cursor = Math.max(keyboardState.cursor - 1, 0);
+          menuMesh.urlMesh.updateText();
+        } else if (code === 39) { // right
+          keyboardState.cursor = Math.min(keyboardState.cursor + 1, keyboardState.text.length);
+          menuMesh.urlMesh.updateText();
+        } else if (code === 38) { // up
+          keyboardState.cursor = 0;
+          menuMesh.urlMesh.updateText();
+        } else if (code === 40) { // down
+          keyboardState.cursor = keyboardState.text.length;
+          menuMesh.urlMesh.updateText();
+        } else if (code === -1) {
+          // nothing
+        } else {
+          _handleDefaultKey(code, shiftKey);
+        }
       }
     };
 
