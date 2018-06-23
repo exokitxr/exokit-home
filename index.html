@@ -1072,7 +1072,7 @@
       });
     const menuMesh = (() => {
       const object = new THREE.Object3D();
-      object.position.copy(camera.position).add(new THREE.Vector3(0, 0.5, -2));
+      object.position.copy(camera.position).add(new THREE.Vector3(0, 0, -2));
 
       const urlMesh = (() => {
         const canvas = document.createElement('canvas');
@@ -1167,6 +1167,7 @@
             ctx.fillRect(10 + urlState.measures[urlState.cursor] - cursorWidth/2, urlBarOffset + 20, cursorWidth, urlBarHeight - 20*2);
 
             if (menuImg) {
+              ctx.clearRect(0, 0, menuWidth, menuHeight);
               ctx.drawImage(menuImg, 0, menuHeight - menuImg.height, menuImg.width, menuImg.height);
             }
           } else if (tab === 'Files') {

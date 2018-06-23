@@ -36,20 +36,20 @@ import no2 from './img/No_on.svg';
 
 const buttons = [
   [fieldMap, fieldMap2],
-  [player, player2],
-  [oneHandedStraghtSword, oneHandedStraghtSword2],
+  // [player, player2],
+  // [oneHandedStraghtSword, oneHandedStraghtSword2],
   [items, items2],
   [invite, invite2],
-  [skills, skills2],
-  [searching, searching2],
-  [friend, friend2],
+  // [skills, skills2],
+  // [searching, searching2],
+  // [friend, friend2],
   [party, party2],
   [option, option2],
   [help, help2],
   [logout, logout2],
   [calling, calling2],
-  [yes, yes2],
-  [no, no2],
+  // [yes, yes2],
+  // [no, no2],
 ];
 
 const Tab = ({name, selected, onclick}) => <a className={classnames('tab', 'url', selected ? 'selected' : null)} style={{display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '30px', flex: 1}} onClick={onclick}>{name}</a>;
@@ -60,7 +60,7 @@ class App extends Component {
 
     this.state = {
       currentTab: 'URL',
-      selectedButton: -1,
+      selectedButton: 0,
       url: 'http://',
     };
   }
@@ -102,9 +102,9 @@ class App extends Component {
           <input className='text-input' type='text' value={this.state.url} onChange={e => this.setState({url: e.target.value})}/>
           {buttons.map((button, i) => {
             if (this.state.selectedButton !== i) {
-              return <img src={button[0]} onClick={() => this.setState({selectedButton: i})} key={i}/>
+              return <img src={button[0]} style={{padding: '10px 0'}} onClick={() => this.setState({selectedButton: i})} key={i}/>
             } else {
-              return <img src={button[1]} onClick={() => this.setState({selectedButton: -1})} key={i}/>
+              return <img src={button[1]} style={{padding: '10px 0'}} onClick={() => this.setState({selectedButton: -1})} key={i}/>
             }
           })}
         </div>
