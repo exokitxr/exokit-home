@@ -1,3 +1,9 @@
+/* tabs */
+
+body {
+  background-color: #333;
+}
+
 .tab {
   font-size: 3vw;
 }
@@ -17,4 +23,61 @@
 }
 .text-input:focus {
   outline: none;
+}
+
+/* menu lists */
+
+.menu {
+  position: absolute;
+  margin-top: -25px;
+  margin-left: 130px;
+	// border: 1px solid red;
+  border-left: 2px solid #FFF;
+	// border-image: linear-gradient(to top, transparent, #f9f9f9 20%, #f9f9f9 80%, transparent) 0 0 0 1;
+	display: inline-block;
+}
+
+.menu-list {
+	list-style-type: none;
+	margin: 0 5px;
+	padding: 0;
+	position: relative;
+}
+
+.menu-list:before {
+	position: absolute;
+	content: '';
+	border-right: 25px solid #f9f9f9;
+	border-top: 10px solid transparent;
+	border-bottom: 10px solid transparent;
+	left: -30px;
+	top: calc(50% - 10px);
+}
+
+.menu-list:after {
+	position: absolute;
+	content: '';
+	border: 3px solid #333;
+	border-radius: 50%;
+	left: -15px;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+.menu-list-item {
+	background-color: #f9f9f9;
+	color: #494748;
+	width: 150px;
+	padding: 15px 25px;
+	margin-bottom: 5px;
+}
+
+.menu-list-item:last-child {
+	margin-bottom: 0;
+}
+
+.menu-list-item:hover {
+	cursor: pointer;
+	background-color: #eda60c;
+	color: #f9f9f9;
 }

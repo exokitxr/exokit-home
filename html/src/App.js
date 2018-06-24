@@ -35,24 +35,53 @@ import no from './img/No.svg';
 import no2 from './img/No_on.svg';
 
 const buttons = [
-  [fieldMap, fieldMap2],
+  [fieldMap, fieldMap2, ['Options', 'Help', 'Logout']],
   // [player, player2],
   // [oneHandedStraghtSword, oneHandedStraghtSword2],
-  [items, items2],
-  [invite, invite2],
+  [items, items2, ['Options', 'Help', 'Logout']],
+  [invite, invite2, ['Options', 'Help', 'Logout']],
   // [skills, skills2],
   // [searching, searching2],
   // [friend, friend2],
-  [party, party2],
-  [option, option2],
-  [help, help2],
-  [logout, logout2],
-  [calling, calling2],
+  [party, party2, ['Options', 'Help', 'Logout']],
+  [option, option2, ['Options', 'Help', 'Logout']],
+  [help, help2, ['Options', 'Help', 'Logout']],
+  [logout, logout2, ['Options', 'Help', 'Logout']],
+  [calling, calling2, ['Options', 'Help', 'Logout']],
   // [yes, yes2],
   // [no, no2],
 ];
 
-const Tab = ({name, selected, onclick}) => <a className={classnames('tab', 'url', selected ? 'selected' : null)} style={{display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '30px', flex: 1}} onClick={onclick}>{name}</a>;
+const Tab = ({name, selected, onclick}) =>
+  <a
+    className={classnames('tab', 'url', selected ? 'selected' : null)}
+    style={{display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '30px', flex: 1}}
+    onClick={onclick}>
+      {name}
+  </a>;
+
+class Button extends Component {
+  constructor() {
+    super();
+  }
+
+  render() {
+    return <div style={{display: 'flex'}}>
+      <img
+        src={this.props.src}
+        style={{padding: '10px 0'}}
+        onClick={this.props.onclick}/>
+      {this.props.children}
+      {this.props.selected ? <div className="menu">
+        <ul className="menu-list">
+          <li className="menu-list-item">Options</li>
+          <li className="menu-list-item">Help</li>
+          <li className="menu-list-item">Logout</li>
+        </ul>
+      </div> : null}
+    </div>
+  }
+}
 
 class App extends Component {
   constructor() {
@@ -96,15 +125,24 @@ class App extends Component {
     return (
       <div>
         <div style={{display: 'flex', justifyContent: 'stretch', backgroundColor: '#CCC', color: '#808080'}}>
-          {['URL', 'Apps', 'Files', 'Party', 'Config'].map(t => <Tab name={t} selected={this.state.currentTab === t} onclick={() => this.setState({currentTab: t})} key={t}/>)}
+          {/*['URL', 'Apps', 'Files', 'Party', 'Config'].map(t => <Tab name={t} selected={this.state.currentTab === t} onclick={() => this.setState({currentTab: t})} key={t}/>)*/}
         </div>
         <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
           <input className='text-input' type='text' value={this.state.url} onChange={e => this.setState({url: e.target.value})}/>
           {buttons.map((button, i) => {
+            const menu = this.props.selected ? <div className="menu">
+              <ul className="menu-list">
+                {button[2].map((option, i) => <li className="menu-list-item" key={i}>Options</li>)}
+              </ul>
+            </div> : null;
             if (this.state.selectedButton !== i) {
-              return <img src={button[0]} style={{padding: '10px 0'}} onClick={() => this.setState({selectedButton: i})} key={i}/>
+              return <Button src={button[0]} onclick={() => this.setState({selectedButton: i})} selected={false} key={i}>
+                {menu}
+              </Button>;
             } else {
-              return <img src={button[1]} style={{padding: '10px 0'}} onClick={() => this.setState({selectedButton: -1})} key={i}/>
+              return <Button src={button[1]} onclick={() => this.setState({selectedButton: -1})} selected={true} key={i}>
+                {menu}
+              </Button>;
             }
           })}
         </div>
