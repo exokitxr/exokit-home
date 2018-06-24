@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import classnames from 'classnames';
+import './js/xrid.js';
+
 import './App.css';
 
 import player from './img/Player.svg';
@@ -102,7 +104,7 @@ class App extends Component {
   }
 
   componentDidMount() {
-    function getParameterByName(url, name) {
+    /* function getParameterByName(url, name) {
       name = name.replace(/[[\]]/g, "\\$&");
       const regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
         results = regex.exec(url);
@@ -125,7 +127,24 @@ class App extends Component {
       if (document.readyState === 'complete') {
         render();
       }
-    });
+    }); */
+
+    const xrid = new window.XRID('https://id.webmr.io');
+    const _openLogin = () => { // XXX
+      xrid.login({
+        username: 'lol@lol.zol',
+        password: 'zol',
+      })
+        .then(newUser => {
+          // user = newUser;
+
+          console.log('log in', newUser);
+        })
+        .catch(err => {
+          console.warn(err.stack);
+        });
+    };
+    _openLogin();
   }
 
   render() {
