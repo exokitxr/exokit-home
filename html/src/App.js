@@ -78,32 +78,32 @@ class Button extends Component {
 class Modal extends Component {
   render() {
     return <div className="experimentSAOModalRoot">
-        <div data-keyboard="false" data-backdrop="static" id="SAOModal" role="dialog" aria-labelledby="SAOModalLabel" aria-hidden="true">
-            <div className="modal-dialog open" role="document">
-                <div className="modal-content">
-                    <div className="modal-header text-xs-center">
-                        <h4 className="modal-title" id="SAOModalTitle">Log in</h4>
-                    </div>
-                    <div className="modal-body text-xs-center c-vcenter c-hcenter p-x-3">
-                        <span id="SAOModalBody">Wanna log in?</span>
-                    </div>
-                    <div className="modal-footer container-fluid p-y-2">
-                        <div className="row btnrow">
-                            <div className="col-xs-6 c-hcenter text-xs-center btnholder" id="SAOModalAccept">
-                              <nav onClick={this.props.onyes}>
-                                <img className='btn' src={yes} />
-                              </nav>
-                            </div>
-                            <div className="col-xs-6 c-hcenter text-xs-center btnholder" id="SAOModalDeny">
-                              <nav onClick={this.props.onno}>
-                                <img className='btn' src={no}/>
-                              </nav>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+      <div data-keyboard="false" data-backdrop="static" id="SAOModal" role="dialog" aria-labelledby="SAOModalLabel" aria-hidden="true">
+        <div className="modal-dialog open" role="document">
+          <div className="modal-content">
+            <div className="modal-header text-xs-center">
+              <h4 className="modal-title" id="SAOModalTitle">Log in</h4>
             </div>
+            <div className="modal-body text-xs-center c-vcenter c-hcenter p-x-3">
+              <span id="SAOModalBody">Wanna log in?</span>
+            </div>
+            <div className="modal-footer container-fluid p-y-2">
+              <div className="row btnrow">
+                <div className="col-xs-6 c-hcenter text-xs-center btnholder" id="SAOModalAccept">
+                  <nav onClick={this.props.onyes}>
+                    <img className='btn' src={yes} />
+                  </nav>
+                </div>
+                <div className="col-xs-6 c-hcenter text-xs-center btnholder" id="SAOModalDeny">
+                  <nav onClick={this.props.onno}>
+                    <img className='btn' src={no}/>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
     </div>;
   }
 }
