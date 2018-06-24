@@ -34,20 +34,21 @@ import yes2 from './img/Yes_on.svg';
 import no from './img/No.svg';
 import no2 from './img/No_on.svg';
 
+const defaultOptions = ['Options', 'Help', 'Logout'].map((option, i) => <li className="menu-list-item" key={i}>{option}</li>);
 const buttons = [
-  [fieldMap, fieldMap2, ['Options', 'Help', 'Logout']],
+  [fieldMap, fieldMap2, defaultOptions],
   // [player, player2],
   // [oneHandedStraghtSword, oneHandedStraghtSword2],
-  [items, items2, ['Options', 'Help', 'Logout']],
-  [invite, invite2, ['Options', 'Help', 'Logout']],
+  [items, items2, defaultOptions],
+  [invite, invite2, defaultOptions],
   // [skills, skills2],
   // [searching, searching2],
   // [friend, friend2],
-  [party, party2, ['Options', 'Help', 'Logout']],
-  [option, option2, ['Options', 'Help', 'Logout']],
-  [help, help2, ['Options', 'Help', 'Logout']],
-  [logout, logout2, ['Options', 'Help', 'Logout']],
-  [calling, calling2, ['Options', 'Help', 'Logout']],
+  [party, party2, defaultOptions],
+  [option, option2, defaultOptions],
+  [help, help2, defaultOptions],
+  [logout, logout2, defaultOptions],
+  [calling, calling2, defaultOptions],
   // [yes, yes2],
   // [no, no2],
 ];
@@ -132,7 +133,7 @@ class App extends Component {
               )
             )}>
               <ul className="menu-list">
-                {button[2].map((option, i) => <li className="menu-list-item" key={i}>{option}</li>)}
+                {button[2]}
               </ul>
             </div> : null;
             if (!selected) {
