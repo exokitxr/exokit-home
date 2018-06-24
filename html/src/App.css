@@ -30,11 +30,17 @@ body {
 .menu {
   position: absolute;
   margin-top: -25px;
-  margin-left: 130px;
-	// border: 1px solid red;
-  border-left: 2px solid #FFF;
-	// border-image: linear-gradient(to top, transparent, #f9f9f9 20%, #f9f9f9 80%, transparent) 0 0 0 1;
 	display: inline-block;
+}
+
+.menu.left {
+  margin-left: -200px;
+  border-right: 2px solid #FFF;
+}
+
+.menu.right {
+  margin-left: 140px;
+  border-left: 2px solid #FFF;
 }
 
 .menu-list {
@@ -47,10 +53,8 @@ body {
 .menu-list:before {
 	position: absolute;
 	content: '';
-	border-right: 25px solid #f9f9f9;
 	border-top: 10px solid transparent;
 	border-bottom: 10px solid transparent;
-	left: -30px;
 	top: calc(50% - 10px);
 }
 
@@ -59,10 +63,26 @@ body {
 	content: '';
 	border: 3px solid #333;
 	border-radius: 50%;
-	left: -15px;
 	top: 50%;
 	transform: translateY(-50%);
 }
+
+.menu.left .menu-list:before {
+	border-left: 25px solid #f9f9f9;
+	right: -30px;
+}
+.menu.left .menu-list:after {
+	right: -15px;
+}
+.menu.right .menu-list:before {
+	border-right: 25px solid #f9f9f9;
+	left: -30px;
+}
+.menu.right .menu-list:after {
+	left: -15px;
+}
+
+
 
 .menu-list-item {
 	background-color: #f9f9f9;

@@ -72,13 +72,6 @@ class Button extends Component {
         style={{padding: '10px 0'}}
         onClick={this.props.onclick}/>
       {this.props.children}
-      {this.props.selected ? <div className="menu">
-        <ul className="menu-list">
-          <li className="menu-list-item">Options</li>
-          <li className="menu-list-item">Help</li>
-          <li className="menu-list-item">Logout</li>
-        </ul>
-      </div> : null}
     </div>
   }
 }
@@ -130,17 +123,18 @@ class App extends Component {
         <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
           <input className='text-input' type='text' value={this.state.url} onChange={e => this.setState({url: e.target.value})}/>
           {buttons.map((button, i) => {
-            const menu = this.props.selected ? <div className="menu">
+            const selected = this.state.selectedButton === i;
+            const menu = selected ? <div className={classnames('menu', (i % 2) === 0 ? 'left' : 'right')}>
               <ul className="menu-list">
                 {button[2].map((option, i) => <li className="menu-list-item" key={i}>Options</li>)}
               </ul>
             </div> : null;
-            if (this.state.selectedButton !== i) {
-              return <Button src={button[0]} onclick={() => this.setState({selectedButton: i})} selected={false} key={i}>
+            if (!selected) {
+              return <Button src={button[0]} onclick={() => this.setState({selectedButton: i})} selected={selected} key={i}>
                 {menu}
               </Button>;
             } else {
-              return <Button src={button[1]} onclick={() => this.setState({selectedButton: -1})} selected={true} key={i}>
+              return <Button src={button[1]} onclick={() => this.setState({selectedButton: -1})} selected={selected} key={i}>
                 {menu}
               </Button>;
             }
