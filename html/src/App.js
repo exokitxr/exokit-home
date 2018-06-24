@@ -84,8 +84,10 @@ class Modal extends Component {
             <div className="modal-header text-xs-center">
               <h4 className="modal-title" id="SAOModalTitle">Log in</h4>
             </div>
-            <div className="modal-body text-xs-center c-vcenter c-hcenter p-x-3">
-              <span id="SAOModalBody">Wanna log in?</span>
+            <div className="modal-body text-xs-center p-x-3">
+              <div id="SAOModalBody" className='modal-body-heading'>Wanna log in?</div>
+              <input type='text' placeholder='your@email.com'/>
+              <input type='password' placeholder='Password'/>
             </div>
             <div className="modal-footer container-fluid p-y-2">
               <div className="row btnrow">

@@ -48,9 +48,9 @@ body.modal-open {
 
 .experimentSAOModalRoot .modal.sao .modal-dialog {
     transform: scale(.9);
-    transition-duration: .075s;
-    transition-property: transform;
-    transition-timing-function: ease-in-out;
+    // transition-duration: .075s;
+    // transition-property: transform;
+    // transition-timing-function: ease-in-out;
     user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
@@ -116,22 +116,23 @@ body.modal-open {
     font-weight: 400;
 }
 
-.experimentSAOModalRoot .modal-dialog .modal-body,
+/* .experimentSAOModalRoot .modal-dialog .modal-body,
 .experimentSAOModalRoot .modal-dialog .modal-body * {
     transition-duration: .2s;
     transition-property: height, padding, opacity, box-shadow;
     transition-timing-function: ease-in-out;
-}
+} */
 
-.experimentSAOModalRoot .modal-dialog.open .modal-body * {
+/* .experimentSAOModalRoot .modal-dialog.open .modal-body * {
     transition-delay: .05s
 }
 
 .experimentSAOModalRoot .modal-dialog.closed .modal-body * {
     transition-duration: .15s
-}
+} */
 
 .experimentSAOModalRoot .modal-dialog .modal-body {
+    display: flex;
     background-color: #D8D8D8;
     box-shadow:
         0 10px 25px -15px rgba(0, 0, 0, .5) inset,
@@ -139,6 +140,24 @@ body.modal-open {
     color: #808080;
     font-size: 3vw;
     width: 50vw;
+    flex-direction: column;
+}
+
+.experimentSAOModalRoot .modal-dialog .modal-body-heading {
+  margin-bottom: 2vw;
+  text-align: center;
+}
+
+.experimentSAOModalRoot input[type=text], .experimentSAOModalRoot input[type=password] {
+  // width: 100%;
+  margin: 1vw 2vw;
+  padding: 2vw;
+  border: 0;
+  font-family: inherit;
+  font-size: 3vw;
+}
+.experimentSAOModalRoot input[type=text]::-webkit-input-placeholder, .experimentSAOModalRoot input[type=password]::-webkit-input-placeholder {
+  color: #BBB;
 }
 
 .experimentSAOModalRoot .modal-dialog.closed .modal-body {
@@ -156,7 +175,7 @@ body.modal-open {
     padding: 5vw 0;
 }
 
-.experimentSAOModalRoot .modal-footer .btnholder,
+/* .experimentSAOModalRoot .modal-footer .btnholder,
 .experimentSAOModalRoot .modal-dialog .modal-title,
 .experimentSAOModalRoot .modal-footer .btnholder .btn {
     transition-property: opacity;
@@ -170,7 +189,7 @@ body.modal-open {
 
 .experimentSAOModalRoot .modal-footer .btnholder .btn {
     transition-duration: .075s;
-}
+} */
 
 .experimentSAOModalRoot .modal-footer .btnholder div:hover {
     opacity: .8
@@ -213,14 +232,4 @@ body.modal-open {
   display: inline-block;
   text-align: left;
   vertical-align: middle;
-}
-
-.c-vcenter {
-    align-items: center;
-    display: flex;
-}
-
-.c-hcenter {
-    display: flex;
-    justify-content: center
 }
