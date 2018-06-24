@@ -30,22 +30,26 @@ body {
 
 .menu {
   position: absolute;
-  margin-top: -25px;
-	display: inline-block;
+  margin-top: calc(50% + 10px);
+  display: inline-block;
+  transform: translateY(-50%);
 }
 
 .menu.top {
+  margin-top: -30px;
   margin-left: 50%;
   border-bottom: 2px solid #FFF;
   transform: translateX(-50%) translateY(-100%);
 }
 .menu.left {
-  margin-left: -200px;
+  margin-left: -40px;
   border-right: 2px solid #FFF;
+  transform: translateX(-100%) translateY(-50%);
 }
 .menu.right {
   margin-left: 140px;
   border-left: 2px solid #FFF;
+  transform:  translateY(-50%);
 }
 
 .menu-list {
@@ -103,14 +107,16 @@ body {
 	left: -15px;
 }
 
-
-
 .menu-list-item {
+  display: flex;
 	background-color: #f9f9f9;
 	color: #494748;
-	width: 150px;
-	padding: 15px 25px;
+	width: 30vw;
+  height: 7vw;
+	padding: 0 3vw;
 	margin-bottom: 5px;
+  font-size: 2vw;
+  align-items: center;
 }
 
 .menu-list-item:last-child {
