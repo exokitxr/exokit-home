@@ -33,6 +33,7 @@ body {
   margin-top: calc(50% + 10px);
   display: inline-block;
   transform: translateY(-50%);
+  opacity: 0.95;
 }
 
 .menu.top {

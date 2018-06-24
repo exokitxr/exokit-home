@@ -1,0 +1,226 @@
+body {
+    // background-image: url('http://vignette3.wikia.nocookie.net/swordartonline/images/d/dd/First_Floor_forest.png/revision/latest?cb=20140309042049');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center center;
+}
+
+body.modal-open {
+    overflow-y: scroll !important;
+}
+
+/* Sword Art Online experiment ####################################################################################################### */
+
+.sao-blur-behind:before {
+    content: "";
+    display: block;
+    position: absolute;
+    // background-image: url('http://vignette3.wikia.nocookie.net/swordartonline/images/d/dd/First_Floor_forest.png/revision/latest?cb=20140309042049');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center center;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    filter: blur(10px) brightness(.8);
+    z-index: -1;
+    margin: -10px;
+    clip-path: inset(10px 9px 9px 10px);
+}
+
+.sao-blur-behind {
+    box-shadow: 5px 5px 20px 0 rgba(0, 0, 0, .5);
+    background-color: transparent;
+    position: relative;
+    z-index: 1;
+}
+
+.sao-blur-behind > * {
+    position: relative;
+}
+
+.modal.sao.in .modal-dialog {		
+     transform: scale(1);		
+}
+
+.experimentSAOModalRoot .modal.sao .modal-dialog {
+    transform: scale(.9);
+    transition-duration: .075s;
+    transition-property: transform;
+    transition-timing-function: ease-in-out;
+    user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+}
+
+.experimentSAOModalRoot .modal.sao span {
+    cursor: default
+}
+
+.experimentSAOModalRoot .modal.sao .SAOOuterCircle {
+    cursor: pointer
+}
+
+.experimentSAOModalRoot .circle .btn-sao {
+    border-radius: 100%;
+    height: 50px;
+    margin-top: 4px;
+    outline: none !important;
+    // width: 50px;
+}
+
+.experimentSAOModalRoot .SAOOuterCircle.o {
+    /* background-image: url("Yes.svg"); */
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 64px;
+    width: 64px;
+}
+
+.experimentSAOModalRoot .SAOOuterCircle.x {
+    /* background-image: url("No.svg"); */
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 64px;
+    width: 64px;
+}
+
+.experimentSAOModalRoot .SAOOuterCircle.info {
+    border-color: #3577B3;
+}
+
+.experimentSAOModalRoot .SAOOuterCircle.danger {
+    border-color: #D23C69;
+}
+
+.experimentSAOModalRoot .modal-content {
+    background-color: #EEEEEE;
+    /* border-color: white;
+    border-radius: 0;
+    border-style: solid;
+    border-width: 2px; */
+    /* font-family: "SAO"; */
+    opacity: 0.95;
+}
+
+.experimentSAOModalRoot .modal-dialog .modal-title {
+    margin: 0;
+    padding: 4vw 0;
+    text-align: center;
+    font-size: 5vw;
+    font-weight: 400;
+}
+
+.experimentSAOModalRoot .modal-dialog .modal-body,
+.experimentSAOModalRoot .modal-dialog .modal-body * {
+    transition-duration: .2s;
+    transition-property: height, padding, opacity, box-shadow;
+    transition-timing-function: ease-in-out;
+}
+
+.experimentSAOModalRoot .modal-dialog.open .modal-body * {
+    transition-delay: .05s
+}
+
+.experimentSAOModalRoot .modal-dialog.closed .modal-body * {
+    transition-duration: .15s
+}
+
+.experimentSAOModalRoot .modal-dialog .modal-body {
+    background-color: #D8D8D8;
+    box-shadow:
+        0 10px 25px -15px rgba(0, 0, 0, .5) inset,
+        0 -10px 25px -15px rgba(0, 0, 0, .5) inset;
+    color: #808080;
+    font-size: 3vw;
+    width: 50vw;
+}
+
+.experimentSAOModalRoot .modal-dialog.closed .modal-body {
+    height: 0;
+    padding-bottom: 0;
+    padding-top: 0;
+}
+
+.experimentSAOModalRoot .modal-dialog.closed .modal-body * {
+    opacity: 0
+}
+
+.experimentSAOModalRoot .modal-dialog.open .modal-body {
+    // height: 5vw;
+    padding: 5vw 0;
+}
+
+.experimentSAOModalRoot .modal-footer .btnholder,
+.experimentSAOModalRoot .modal-dialog .modal-title,
+.experimentSAOModalRoot .modal-footer .btnholder .btn {
+    transition-property: opacity;
+    transition-timing-function: ease;
+}
+
+.experimentSAOModalRoot .modal-footer .btnholder,
+.experimentSAOModalRoot .modal-dialog .modal-title {
+    transition-duration: .2s;
+}
+
+.experimentSAOModalRoot .modal-footer .btnholder .btn {
+    transition-duration: .075s;
+}
+
+.experimentSAOModalRoot .modal-footer .btnholder div:hover {
+    opacity: .8
+}
+
+.experimentSAOModalRoot .modal-footer .btnholder div:active {
+    opacity: .6
+}
+
+.experimentSAOModalRoot .modal-dialog.closed .modal-footer .btnholder,
+.experimentSAOModalRoot .modal-dialog.closed .modal-title {
+    opacity: 0
+}
+
+.experimentSAOModalRoot .btnrow {
+  display: flex;
+  padding: 3vw 6vw;
+  justify-content: space-between;
+}
+
+.experimentSAOModalRoot .btn {
+  width: 10vw;
+  height: 10vw;
+}
+
+.experimentSAOModalRoot .modal {
+  padding: 0 !important;
+  text-align: center;
+}
+
+.experimentSAOModalRoot .modal:before {
+  content: '';
+  display: inline-block;
+  height: 100%;
+  /* margin-right: -4px; */
+  vertical-align: middle;
+}
+
+.experimentSAOModalRoot .modal-dialog {
+  display: inline-block;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.c-vcenter {
+    align-items: center;
+    display: flex;
+}
+
+.c-hcenter {
+    display: flex;
+    justify-content: center
+}

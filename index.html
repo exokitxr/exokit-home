@@ -1097,7 +1097,7 @@
           map: texture,
           side: THREE.DoubleSide,
           transparent: true,
-          alphaTest: 0.9,
+          alphaTest: 0.5,
         });
         const mesh = new THREE.Mesh(geometry, material);
 
@@ -1301,7 +1301,7 @@
             }
           }
 
-          ctx.font = `${fontSize*0.7}px Arial`;
+          /* ctx.font = `${fontSize*0.7}px Arial`;
           if (!user) {
             ctx.fillStyle = '#333';
             ctx.fillText('Not logged in', menuWidth - 550, urlBarOffset);
@@ -1309,7 +1309,7 @@
             ctx.fillStyle = '#333';
             ctx.fillRect(menuWidth - 550, urlBarOffset - 100, 100, 100);
             ctx.fillText(user.username, menuWidth - 550 + 100 + 20, urlBarOffset);
-          }
+          } */
 
           texture.needsUpdate = true;
         };

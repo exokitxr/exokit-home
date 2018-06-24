@@ -3,6 +3,7 @@ import classnames from 'classnames';
 import './js/xrid.js';
 
 import './App.css';
+import './css/experiments.css';
 
 import player from './img/Player.svg';
 import player2 from './img/Player_on.svg';
@@ -74,6 +75,39 @@ class Button extends Component {
   }
 }
 
+class Modal extends Component {
+  render() {
+    return <div className="experimentSAOModalRoot">
+        <div data-keyboard="false" data-backdrop="static" id="SAOModal" role="dialog" aria-labelledby="SAOModalLabel" aria-hidden="true">
+            <div className="modal-dialog open" role="document">
+                <div className="modal-content">
+                    <div className="modal-header text-xs-center">
+                        <h4 className="modal-title" id="SAOModalTitle">Log in</h4>
+                    </div>
+                    <div className="modal-body text-xs-center c-vcenter c-hcenter p-x-3">
+                        <span id="SAOModalBody">Wanna log in?</span>
+                    </div>
+                    <div className="modal-footer container-fluid p-y-2">
+                        <div className="row btnrow">
+                            <div className="col-xs-6 c-hcenter text-xs-center btnholder" id="SAOModalAccept">
+                              <nav onClick={this.props.onyes}>
+                                <img className='btn' src={yes} />
+                              </nav>
+                            </div>
+                            <div className="col-xs-6 c-hcenter text-xs-center btnholder" id="SAOModalDeny">
+                              <nav onClick={this.props.onno}>
+                                <img className='btn' src={no}/>
+                              </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>;
+  }
+}
+
 const defaultOptions = ['Options', 'Help', 'Logout'].map((option, i) => <li className="menu-list-item" key={i}>{option}</li>);
 const buttons = [
   [fieldMap, fieldMap2, <UrlBar/>],
@@ -87,7 +121,7 @@ const buttons = [
   [party, party2, defaultOptions],
   [option, option2, defaultOptions],
   [help, help2, defaultOptions],
-  [logout, logout2, defaultOptions],
+  [logout, logout2, ({onlogout}) => <li className="menu-list-item" onClick={onlogout}>Log out</li>],
   [calling, calling2, defaultOptions],
   // [yes, yes2],
   // [no, no2],
@@ -98,6 +132,7 @@ class App extends Component {
     super();
 
     this.state = {
+      user: null,
       // currentTab: 'URL',
       selectedButton: 0,
     };
@@ -154,8 +189,10 @@ class App extends Component {
           {/*['URL', 'Apps', 'Files', 'Party', 'Config'].map(t => <Tab name={t} selected={this.state.currentTab === t} onclick={() => this.setState({currentTab: t})} key={t}/>)*/}
         </div>
         <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-          {buttons.map((button, i) => {
+          {!this.state.user ? <Modal onyes={() => this.setState({user: {}})} onno={() => this.setState({user: null})}/> : null}
+          {this.state.user ? buttons.map((button, i) => {
             const selected = this.state.selectedButton === i;
+            const opts = typeof button[2] === 'function' ? button[2]({onlogout: () => this.setState({selectedButton: -1, user: null})}) : button[2];
             const menu = selected ? <div className={classnames('menu',
               (i === 0) ?
                 'top'
@@ -164,7 +201,7 @@ class App extends Component {
               )
             )}>
               <ul className="menu-list">
-                {button[2]}
+                {opts}
               </ul>
             </div> : null;
             if (!selected) {
@@ -176,7 +213,7 @@ class App extends Component {
                 {menu}
               </Button>;
             }
-          })}
+          }) : null}
         </div>
       </div>
     );
