@@ -2,7 +2,7 @@
 
 body {
   background-color: #333;
-  padding-top: 200px;
+  padding-top: 10vw;
 }
 
 .tab {
@@ -15,11 +15,11 @@ body {
 
 .text-input {
   display: flex;
-  width: 100%;
-  padding: 2vw;
+  width: 90vw;
+  padding: 1vw;
   background-color: #EEE;
   border: 0;
-  font-size: 4vw;
+  font-size: 3vw;
   font-weight: 300;
 }
 .text-input:focus {
@@ -35,9 +35,9 @@ body {
 }
 
 .menu.top {
-  margin-top: -200px;
-  margin-left: -25px;
+  margin-left: 50%;
   border-bottom: 2px solid #FFF;
+  transform: translateX(-50%) translateY(-100%);
 }
 .menu.left {
   margin-left: -200px;

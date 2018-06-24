@@ -34,9 +34,47 @@ import yes2 from './img/Yes_on.svg';
 import no from './img/No.svg';
 import no2 from './img/No_on.svg';
 
+/* const Tab = ({name, selected, onclick}) =>
+  <a
+    className={classnames('tab', 'url', selected ? 'selected' : null)}
+    style={{display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '30px', flex: 1}}
+    onClick={onclick}>
+      {name}
+  </a>; */
+
+class UrlBar extends Component {
+  constructor() {
+    super();
+
+    this.state = {
+      url: 'http://',
+    };
+  }
+
+  render() {
+    return <input className='text-input' type='text' value={this.state.url} onChange={e => this.setState({url: e.target.value})}/>;
+  }
+}
+
+class Button extends Component {
+  constructor() {
+    super();
+  }
+
+  render() {
+    return <div style={{position: 'relative', display: 'flex'}}>
+      <img
+        src={this.props.src}
+        style={{padding: '10px 0'}}
+        onClick={this.props.onclick}/>
+      {this.props.children}
+    </div>
+  }
+}
+
 const defaultOptions = ['Options', 'Help', 'Logout'].map((option, i) => <li className="menu-list-item" key={i}>{option}</li>);
 const buttons = [
-  [fieldMap, fieldMap2, defaultOptions],
+  [fieldMap, fieldMap2, <UrlBar/>],
   // [player, player2],
   // [oneHandedStraghtSword, oneHandedStraghtSword2],
   [items, items2, defaultOptions],
@@ -53,38 +91,13 @@ const buttons = [
   // [no, no2],
 ];
 
-const Tab = ({name, selected, onclick}) =>
-  <a
-    className={classnames('tab', 'url', selected ? 'selected' : null)}
-    style={{display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '30px', flex: 1}}
-    onClick={onclick}>
-      {name}
-  </a>;
-
-class Button extends Component {
-  constructor() {
-    super();
-  }
-
-  render() {
-    return <div style={{display: 'flex'}}>
-      <img
-        src={this.props.src}
-        style={{padding: '10px 0'}}
-        onClick={this.props.onclick}/>
-      {this.props.children}
-    </div>
-  }
-}
-
 class App extends Component {
   constructor() {
     super();
 
     this.state = {
-      currentTab: 'URL',
+      // currentTab: 'URL',
       selectedButton: 0,
-      url: 'http://',
     };
   }
 
@@ -122,7 +135,6 @@ class App extends Component {
           {/*['URL', 'Apps', 'Files', 'Party', 'Config'].map(t => <Tab name={t} selected={this.state.currentTab === t} onclick={() => this.setState({currentTab: t})} key={t}/>)*/}
         </div>
         <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-          <input className='text-input' type='text' value={this.state.url} onChange={e => this.setState({url: e.target.value})}/>
           {buttons.map((button, i) => {
             const selected = this.state.selectedButton === i;
             const menu = selected ? <div className={classnames('menu',
