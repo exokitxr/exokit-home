@@ -124,9 +124,15 @@ class App extends Component {
           <input className='text-input' type='text' value={this.state.url} onChange={e => this.setState({url: e.target.value})}/>
           {buttons.map((button, i) => {
             const selected = this.state.selectedButton === i;
-            const menu = selected ? <div className={classnames('menu', (i % 2) === 0 ? 'left' : 'right')}>
+            const menu = selected ? <div className={classnames('menu',
+              (i === 0) ?
+                'top'
+              : (
+                (i % 2) === 1 ? 'left' : 'right'
+              )
+            )}>
               <ul className="menu-list">
-                {button[2].map((option, i) => <li className="menu-list-item" key={i}>Options</li>)}
+                {button[2].map((option, i) => <li className="menu-list-item" key={i}>{option}</li>)}
               </ul>
             </div> : null;
             if (!selected) {

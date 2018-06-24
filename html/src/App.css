@@ -2,6 +2,7 @@
 
 body {
   background-color: #333;
+  padding-top: 200px;
 }
 
 .tab {
@@ -33,11 +34,15 @@ body {
 	display: inline-block;
 }
 
+.menu.top {
+  margin-top: -200px;
+  margin-left: -25px;
+  border-bottom: 2px solid #FFF;
+}
 .menu.left {
   margin-left: -200px;
   border-right: 2px solid #FFF;
 }
-
 .menu.right {
   margin-left: 140px;
   border-left: 2px solid #FFF;
@@ -49,6 +54,9 @@ body {
 	padding: 0;
 	position: relative;
 }
+.menu.top .menu-list {
+  margin: 5px 0;
+}
 
 .menu-list:before {
 	position: absolute;
@@ -57,7 +65,6 @@ body {
 	border-bottom: 10px solid transparent;
 	top: calc(50% - 10px);
 }
-
 .menu-list:after {
 	position: absolute;
 	content: '';
@@ -66,7 +73,21 @@ body {
 	top: 50%;
 	transform: translateY(-50%);
 }
-
+.menu.top .menu-list:before {
+  border: 0;
+	border-top: 25px solid #f9f9f9;
+  border-left: 10px solid transparent;
+	border-right: 10px solid transparent;
+	bottom: -30px;
+	top: auto;
+	left: calc(50% - 10px);
+}
+.menu.top .menu-list:after {
+  top: auto;
+	bottom: -15px;
+  left: calc(50% - 3px);
+	transform: none;
+}
 .menu.left .menu-list:before {
 	border-left: 25px solid #f9f9f9;
 	right: -30px;
