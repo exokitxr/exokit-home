@@ -1364,6 +1364,59 @@
     })();
     scene.add(menuMesh);
 
+    const skyboxMesh = (() => {
+      const geometry = new THREE.BoxBufferGeometry(100, 100, 100)
+        .applyMatrix(localMatrix.makeScale(-1, -1, -1));
+      const material = new THREE.MeshBasicMaterial({
+        color: 0x7E57C2,
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      return mesh;
+    })();
+    scene.add(skyboxMesh);
+
+    let screenFramebuffer = null;
+    (() => {
+      const geometry = new THREE.PlaneBufferGeometry(2, 2, 1);
+      const texture = new THREE.Texture(
+        null,
+        THREE.UVMapping,
+        THREE.RepeatWrapping,
+        THREE.RepeatWrapping,
+        THREE.NearestFilter,
+        THREE.NearestFilter,
+        THREE.RGBAFormat,
+        THREE.UnsignedByteType,
+        1
+      );
+      const material = new THREE.MeshBasicMaterial({
+        map: texture,
+      });
+      const screenMesh = new THREE.Mesh(geometry, material);
+      screenMesh.position.set(1, 1, 0);
+      screenMesh.rotation.set(0, -Math.PI/2, 0, 'YXZ');
+      scene.add(screenMesh);
+
+      const iframe = document.createElement('iframe')
+      iframe.hidden = true;
+      iframe.src = `http://127.0.0.1:8001/`;
+      iframe.onload = () => {
+        console.log('iframe load');
+      };
+      iframe.addEventListener('framebuffer', newFramebuffer => {
+        screenFramebuffer = newFramebuffer;
+
+        console.log('got framebuffer', screenFramebuffer);
+
+        const properties = renderer.properties.get(texture);
+        properties.__webglTexture = {
+          id: screenFramebuffer.colorTexture,
+        };
+        properties.__webglInit = true;
+      });
+      document.body.appendChild(iframe);
+    })();
+
     const boxMesh = (() => {
       const geometry = new THREE.BoxBufferGeometry(1, 1, 1);
       const material = new THREE.MeshBasicMaterial({
@@ -1560,6 +1613,9 @@
     const _render = () => {
       if (framebuffer) {
         framebuffer.render();
+      }
+      if (screenFramebuffer) {
+        screenFramebuffer.render();
       }
 
       const device = renderer.vr.getDevice();
