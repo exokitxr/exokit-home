@@ -37,6 +37,8 @@ import yes2 from './img/Yes_on.svg';
 import no from './img/No.svg';
 import no2 from './img/No_on.svg';
 
+import stick from './img/items/stick.png';
+
 /* const Tab = ({name, selected, onclick}) =>
   <a
     className={classnames('tab', 'url', selected ? 'selected' : null)}
@@ -111,11 +113,19 @@ class Modal extends Component {
 }
 
 const defaultOptions = ['Options', 'Help', 'Logout'].map((option, i) => <li className="menu-list-item" key={i}>{option}</li>);
+const defaultFile = ['Apple', 'Carrot', 'Stick'].map((file, i) =>
+  <li className="menu-list-item" key={i}>
+    <div className='file'>
+      <img src={stick}/>
+      <div>{file}</div>
+    </div>
+  </li>
+);
 const buttons = [
   [fieldMap, fieldMap2, <UrlBar/>],
   // [player, player2],
   // [oneHandedStraghtSword, oneHandedStraghtSword2],
-  [items, items2, defaultOptions],
+  [items, items2, defaultFile],
   [invite, invite2, defaultOptions],
   // [skills, skills2],
   // [searching, searching2],
