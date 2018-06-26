@@ -1,6 +1,7 @@
 const vrDisplay = THREE => {
 
 const defaultCanvasSize = [1280, 1024];
+const defaultEyeSeparation = 0.625;
 
 const localVector = new THREE.Vector3();
 const localVector2 = new THREE.Vector3();
@@ -110,6 +111,7 @@ class Gamepad {
     this.index = index;
 
     this.connected = true;
+    this.mapping = 'standard';
     this.buttons = Array(16);
     for (let i = 0; i < this.buttons.length; i++) {
       this.buttons[i] = new GamepadButton();
@@ -150,8 +152,8 @@ class VRStageParameters {
 }
 
 class MRDisplay {
-  constructor(name) {
-    this.name = name;
+  constructor(displayName) {
+    this.displayName = displayName;
 
     this.isPresenting = false;
     this.capabilities = {
@@ -171,9 +173,9 @@ class MRDisplay {
 
     this._width = defaultCanvasSize[0] / 2;
     this._height = defaultCanvasSize[1];
-    this._leftOffset = Float32Array.from([-0.1, 0, 0]);
+    this._leftOffset = Float32Array.from([-defaultEyeSeparation/2, 0, 0]);
     this._leftFov = Float32Array.from([45, 45, 45, 45]);
-    this._rightOffset = Float32Array.from([0.1, 0, 0]);
+    this._rightOffset = Float32Array.from([defaultEyeSeparation/2, 0, 0]);
     this._rightFov = Float32Array.from([45, 45, 45, 45]);
     this._rafs = [];
   }
@@ -273,8 +275,8 @@ class MRDisplay {
   }
 }
 class VRDisplay extends MRDisplay {
-  constructor(name = 'VR') {
-    super(name);
+  constructor(displayName = 'VR') {
+    super(displayName);
 
     this._frameData = new VRFrameData();
   }
@@ -352,9 +354,9 @@ class FakeVRDisplay extends MRDisplay {
     this.depthFar = 10 * 1024;
     this._width = defaultCanvasSize[0];
     this._height = defaultCanvasSize[1];
-    this._leftOffset = Float32Array.from([-0.1, 0, 0]);
+    this._leftOffset = Float32Array.from([-defaultEyeSeparation/2, 0, 0]);
     this._leftFov = Float32Array.from([45, 45, 45, 45]);
-    this._rightOffset = Float32Array.from([0.1, 0, 0]);
+    this._rightOffset = Float32Array.from([defaultEyeSeparation/2, 0, 0]);
     this._rightFov = Float32Array.from([45, 45, 45, 45]);
     this.stageParameters = new VRStageParameters();
 
