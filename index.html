@@ -1638,11 +1638,15 @@
 
         const gamepads = _getGamepads();
 
-        (() => {
-          const controllerMesh = controllerMeshes[controllerIndex];
+        for (let i = 0; i < 2; i++) {
+          if (fakeDisplay.isPresenting && i !== controllerIndex) {
+            continue;
+          }
+
+          const controllerMesh = controllerMeshes[i];
           controllerMesh.update();
 
-          const gamepad = gamepads[controllerIndex];
+          const gamepad = gamepads[i];
           let pressed = false;
           let grabbed = false;
           let menuPressed = false;
@@ -1967,8 +1971,8 @@
             _setIntersectionDefault();
           }
 
-          const lastMenuPressed = lastMenuPresseds[controllerIndex];
-          lastMenuPresseds[controllerIndex] = menuPressed;
+          const lastMenuPressed = lastMenuPresseds[i];
+          lastMenuPresseds[i] = menuPressed;
           if (menuPressed && !lastMenuPressed) {
             const opening = !menuOpen;
             if (opening) {
@@ -1992,9 +1996,9 @@
                     .applyEuler(localEuler)
                 );
 
-              controllerMeshes[controllerIndex].rayMesh.visible = true;
+              controllerMeshes[i].rayMesh.visible = true;
             } else {
-              controllerMeshes[controllerIndex].rayMesh.visible = false;
+              controllerMeshes[i].rayMesh.visible = false;
             }
             menuOpen = opening;
 
@@ -2025,24 +2029,25 @@
             };
           }
 
-          const lastGrabbed = lastGrabbeds[controllerIndex];
-          lastGrabbeds[controllerIndex] = grabbed;
+          const lastGrabbed = lastGrabbeds[i];
+          lastGrabbeds[i] = grabbed;
+          // console.log('check grabbed', {i, grabbed, lastGrabbed});
           if (grabbed && !lastGrabbed) {
             const targetObject = fileMeshes.find(objectMesh =>
               objectMesh.position.distanceTo(controllerMesh.position) < 0.1
             );
             if (targetObject) {
-              grabbedObjects[controllerIndex] = targetObject;
+              grabbedObjects[i] = targetObject;
             } else if (_isInBody(controllerMesh.position) && currentFileIndex !== -1) {
               const currentFile = files[currentFileIndex];
               const fileObject = _makeFileObject(currentFile);
               scene.add(fileObject);
               fileMeshes.push(fileObject);
 
-              grabbedObjects[controllerIndex] = fileObject;
+              grabbedObjects[i] = fileObject;
             }
           } else if (!grabbed && lastGrabbed) {
-            const grabbedObject = grabbedObjects[controllerIndex];
+            const grabbedObject = grabbedObjects[i];
 
             if (grabbedObject) {
               if (_isInBody(controllerMesh.position)) {
@@ -2050,12 +2055,12 @@
                 fileMeshes.splice(fileMeshes.indexOf(grabbedObject), 1);
               }
 
-              grabbedObjects[controllerIndex] = null;
+              grabbedObjects[i] = null;
             }
           }
 
-          const lastPressed = lastPresseds[controllerIndex];
-          lastPresseds[controllerIndex] = pressed;
+          const lastPressed = lastPresseds[i];
+          lastPresseds[i] = pressed;
           if (pressed && !lastPressed) {
             if (gamepad.hapticActuators) {
               for (let j = 0; j < gamepad.hapticActuators.length; j++) {
@@ -2063,7 +2068,7 @@
               }
             }
 
-            const grabbedObject = grabbedObjects[controllerIndex];
+            const grabbedObject = grabbedObjects[i];
             if (grabbedObject) {
               const {file} = grabbedObject;
 
