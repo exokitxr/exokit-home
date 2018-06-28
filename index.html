@@ -460,6 +460,7 @@
     };
     const _makeFileObject = file => {
       const object = new THREE.Object3D();
+      object.isFile = ture;
       object.file = file;
 
       _requestSpriteMesh('file')
@@ -1376,7 +1377,7 @@
     scene.add(skyboxMesh);
 
     let screenFramebuffer = null;
-    (() => {
+    // (() => {
       function sum(a) {
         let result = 0;
         for (let i = 0; i < a.length; i++) {
@@ -1524,6 +1525,8 @@
         const leftGamepadMesh = (() => {
           const object = new THREE.Object3D();
           object.position.set(-0.1, 1.5, 0.7);
+          object.isGamepad = true;
+          // object.controllerIndex = 0;
 
           const coreMesh = (() => {
             const geometry = new THREE.BoxBufferGeometry(0.05, 0.02, 0.1);
@@ -1560,6 +1563,8 @@
         const rightGamepadMesh = (() => {
           const object = new THREE.Object3D();
           object.position.set(0.1, 1.5, 0.7);
+          object.isGamepad = true;
+          // object.controllerIndex = 1;
 
           const coreMesh = (() => {
             const geometry = new THREE.BoxBufferGeometry(0.05, 0.02, 0.1);
@@ -1635,13 +1640,70 @@
         scene.add(gamepadMeshes[i]);
       }
 
-      const iframe = document.createElement('iframe')
-      iframe.hidden = true;
-      iframe.src = `http://127.0.0.1:8001/`;
-      iframe.onload = () => {
+      const DIRECTIONS = [
+        {
+          direction: 'left',
+          x: -1,
+          y: 0,
+          keyCode: 37,
+          which: 37,
+          charCode: 0,
+          key: 'ArrowLeft',
+          code: 'ArrowLeft',
+        },
+        {
+          direction: 'right',
+          x: 1,
+          y: 0,
+          keyCode: 39,
+          which: 39,
+          charCode: 0,
+          key: 'ArrowRight',
+          code: 'ArrowRight',
+        },
+        {
+          direction: 'up',
+          x: 0,
+          y: 1,
+          keyCode: 38,
+          which: 38,
+          charCode: 0,
+          key: 'ArrowUp',
+          code: 'ArrowUp',
+        },
+        {
+          direction: 'down',
+          x: 0,
+          y: -1,
+          keyCode: 40,
+          which: 40,
+          charCode: 0,
+          key: 'ArrowDown',
+          code: 'ArrowDown',
+        },
+      ];
+      const _getGamepadDirection = gamepad => {
+        const {axes} = gamepad;
+        const [x, y] = axes;
+
+        return DIRECTIONS.map(directionSpec => {
+          const dx = x - directionSpec.x;
+          const dy = y - directionSpec.y;
+          const distance = Math.sqrt((dx * dx) + (dy * dy));
+          return {
+            distance,
+            direction: directionSpec.direction,
+          };
+        }).sort((a, b) => a.distance - b.distance)[0].direction;
+      };
+
+      const screenIframe = document.createElement('iframe')
+      screenIframe.hidden = true;
+      screenIframe.src = `http://127.0.0.1:8001/`;
+      screenIframe.onload = () => {
         console.log('iframe load');
       };
-      iframe.addEventListener('framebuffer', newFramebuffer => {
+      screenIframe.addEventListener('framebuffer', newFramebuffer => {
         screenFramebuffer = newFramebuffer;
 
         console.log('got framebuffer', screenFramebuffer);
@@ -1652,8 +1714,8 @@
         };
         properties.__webglInit = true;
       });
-      document.body.appendChild(iframe);
-    })();
+      document.body.appendChild(screenIframe);
+    // })();
 
     const boxMesh = (() => {
       const geometry = new THREE.BoxBufferGeometry(1, 1, 1);
@@ -2330,9 +2392,9 @@
           lastGrabbeds[i] = grabbed;
           // console.log('check grabbed', {i, grabbed, lastGrabbed});
           if (grabbed && !lastGrabbed) {
-            const targetObject = fileMeshes.find(objectMesh =>
-              objectMesh.position.distanceTo(controllerMesh.position) < 0.1
-            );
+            const _checkDistance = objectMesh => objectMesh.position.distanceTo(controllerMesh.position) < 0.1;
+            const targetObject = gamepadMeshes.find(_checkDistance) || fileMeshes.find(_checkDistance);
+            console.log('get target object', targetObject && targetObject.isFile, targetObject && targetObject.isGamepad);
             if (targetObject) {
               grabbedObjects[i] = targetObject;
             } else if (_isInBody(controllerMesh.position) && currentFileIndex !== -1) {
@@ -2356,6 +2418,102 @@
             }
           }
 
+          const grabbedObject = grabbedObjects[i];
+          if (grabbedObject && grabbedObject.isGamepad) {
+            const lastPadPressed = lastPadPresseds[i];
+            lastPadPresseds[i] = padPressed;
+            if (padPressed && !lastPadPressed) {
+              if (i === 0) {
+                const directionSpec = DIRECTIONS.find(d => d.direction === padPressed);
+                console.log('got pad pressed', padPressed, directionSpec);
+                const {keyCode, which, charCode, key, code} = directionSpec;
+
+                const keydownEvent = new KeyboardEvent('keydown', {
+                  keyCode,
+                  which,
+                  charCode,
+                  key,
+                  code,
+                });
+                screenIframe.contentDocument.dispatchEvent(keydownEvent);
+              } else {
+                console.log('right controller pad down');
+
+                const keydownEvent = new KeyboardEvent('keydown', {
+                  keyCode: 65,
+                  which: 65,
+                  charCode: 0,
+                  key: 'A',
+                  code: 'KeyA',
+                });
+                screenIframe.contentDocument.dispatchEvent(keydownEvent);
+              }
+            } else if (!padPressed && lastPadPressed) {
+              if (i === 0) {
+                const directionSpec = DIRECTIONS.find(d => d.direction === lastPadPressed);
+                const {keyCode, which, charCode, key, code} = directionSpec;
+
+                const keyupEvent = new KeyboardEvent('keyup', {
+                  keyCode,
+                  which,
+                  charCode,
+                  key,
+                  code,
+                });
+                screenIframe.contentDocument.dispatchEvent(keyupEvent);
+              } else {
+                const keyupEvent = new KeyboardEvent('keyup', {
+                  keyCode: 65,
+                  which: 65,
+                  charCode: 0,
+                  key: 'A',
+                  code: 'KeyA',
+                });
+                screenIframe.contentDocument.dispatchEvent(keyupEvent);
+              }
+            } else if (padPressed && lastPadPressed && padPressed !== lastPadPressed) {
+              if (i === 0) {
+                const lastDirectionSpec = DIRECTIONS.find(d => d.direction === lastPadPressed);
+                const keyupEvent = new KeyboardEvent('keyup', {
+                  keyCode: lastDirectionSpec.keyCode,
+                  which: lastDirectionSpec.which,
+                  charCode: lastDirectionSpec.charCode,
+                  key: lastDirectionSpec.key,
+                  code: lastDirectionSpec.code,
+                });
+                screenIframe.contentDocument.dispatchEvent(keyupEvent);
+
+                const directionSpec = DIRECTIONS.find(d => d.direction === padPressed);
+                const keydownEvent = new KeyboardEvent('keydown', {
+                  keyCode: directionSpec.keyCode,
+                  which: directionSpec.which,
+                  charCode: directionSpec.charCode,
+                  key: directionSpec.key,
+                  code: directionSpec.code,
+                });
+                screenIframe.contentDocument.dispatchEvent(keydownEvent);
+              } else {
+                const keyupEvent = new KeyboardEvent('keyup', {
+                  keyCode: 65,
+                  which: 65,
+                  charCode: 0,
+                  key: 'A',
+                  code: 'KeyA',
+                });
+                screenIframe.contentDocument.dispatchEvent(keyupEvent);
+
+                const keydownEvent = new KeyboardEvent('keydown', {
+                  keyCode: 65,
+                  which: 65,
+                  charCode: 0,
+                  key: 'A',
+                  code: 'KeyA',
+                });
+                screenIframe.contentDocument.dispatchEvent(keydownEvent);
+              }
+            }
+          }
+
           const lastPressed = lastPresseds[i];
           lastPresseds[i] = pressed;
           if (pressed && !lastPressed) {
@@ -2366,7 +2524,16 @@
             }
 
             const grabbedObject = grabbedObjects[i];
-            if (grabbedObject) {
+            if (grabbedObject && grabbedObject.isGamepad) {
+              const enterEvent = new KeyboardEvent('keydown', {
+                keyCode: 13,
+                which: 13,
+                charCode: 0,
+                key: 'Enter',
+                code: 'Enter',
+              });
+              screenIframe.contentDocument.dispatchEvent(enterEvent);
+            } else  if (grabbedObject && grabbedObject.isFile) {
               const {file} = grabbedObject;
 
               if (_isIdOpen()) {
@@ -2566,6 +2733,18 @@
                   _closeLogin();
                 }
               }
+            }
+          } else if (!pressed && lastPressed) {
+            const grabbedObject = grabbedObjects[i];
+            if (grabbedObject && grabbedObject.isGamepad) {
+              const enterEvent = new KeyboardEvent('keyup', {
+                keyCode: 13,
+                which: 13,
+                charCode: 0,
+                key: 'Enter',
+                code: 'Enter',
+              });
+              screenIframe.contentDocument.dispatchEvent(enterEvent);
             }
           }
         }
