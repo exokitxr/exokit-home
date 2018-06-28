@@ -37,6 +37,15 @@
     const container = document.getElementById('container');
     const canvas = document.getElementById('canvas');
 
+    function getQueryParameter(name) {
+      name = name.replace(/[\[\]]/g, '\\$&');
+      var regex = new RegExp("[?&]" + name + '(=([^&#]*)|&|#|$)'),
+          results = regex.exec(window.location.href);
+      if (!results) return null;
+      if (!results[2]) return '';
+      return decodeURIComponent(results[2].replace(/\+/g, ' '));
+    }
+
     const REGISTRY_QUERY_URL = 'https://registry.webmr.io/q';
     const DEFAULT_USER_HEIGHT = 1.6;
     const DEFAULT_SKIN_URL = 'img/skins/male.png';
@@ -1001,48 +1010,6 @@
         return Promise.reject(new Error('invalid status code: ' + res.status));
       }
     };
-    (() => {
-      fetch(REGISTRY_QUERY_URL)
-        .then(_resJson)
-        .then(j => {
-          const {xrmultiplayerHosts, xrUrls} = j;
-
-          const newServers = [];
-          return Promise.all(xrmultiplayerHosts.map(xrmpHost => {
-            const prefix = xrmpHost + '/servers';
-
-            return fetch('https://' + prefix)
-              .then(_resJson)
-              .then(j => {
-                const {servers} = j;
-
-                for (let i = 0; i < servers.length; i++) {
-                  const server = servers[i];
-                  const {name, players, objects} = server;
-                  newServers.push({
-                    name,
-                    url: prefix + '/' + name,
-                    players,
-                    objects,
-                  });
-                }
-              })
-              .catch(err => {
-                console.warn(err.stack);
-              });
-          }))
-            .then(() => {
-              apps = xrUrls;
-              servers = newServers;
-            });
-        })
-        .then(() => {
-          menuMesh.urlMesh.updateText();
-        })
-        .catch(err => {
-          console.warn(err.stack);
-        });
-    })();
 
     const _requestSkinPreviewCanvas = src => new Promise((accept, reject) => {
       const canvas = document.createElement('canvas');
@@ -3151,6 +3118,54 @@
         }
       }
     });
+
+    (() => {
+      fetch(REGISTRY_QUERY_URL)
+        .then(_resJson)
+        .then(j => {
+          const {xrmultiplayerHosts, xrUrls} = j;
+
+          const newServers = [];
+          return Promise.all(xrmultiplayerHosts.map(xrmpHost => {
+            const prefix = xrmpHost + '/servers';
+
+            return fetch('https://' + prefix)
+              .then(_resJson)
+              .then(j => {
+                const {servers} = j;
+
+                for (let i = 0; i < servers.length; i++) {
+                  const server = servers[i];
+                  const {name, players, objects} = server;
+                  newServers.push({
+                    name,
+                    url: prefix + '/' + name,
+                    players,
+                    objects,
+                  });
+                }
+              })
+              .catch(err => {
+                console.warn(err.stack);
+              });
+          }))
+            .then(() => {
+              apps = xrUrls;
+              servers = newServers;
+            });
+        })
+        .then(() => {
+          menuMesh.urlMesh.updateText();
+        })
+        .catch(err => {
+          console.warn(err.stack);
+        });
+
+      const initialTab = getQueryParameter('t');
+      if (initialTab) {
+        _submitUrl(initialTab);
+      }
+    })();
 })();
   </script>
 </body>
