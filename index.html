@@ -162,6 +162,15 @@
 
     const fakeDisplay = window.navigator.createVRDisplay();
     fakeDisplay.setSize(window.innerWidth * window.devicePixelRatio, window.innerHeight * window.devicePixelRatio);
+    fakeDisplay.getEyeParameters = (getEyeParameters => function(eye) {
+      if (!fakeDisplay.getStereo() && eye === 'right') {
+        const result = getEyeParameters.call(this, 'right');
+        result.renderWidth = 0;
+        return result;
+      } else {
+        return getEyeParameters.apply(this, arguments);
+      }
+    })(fakeDisplay.getEyeParameters);
     fakeDisplay.position.copy(camera.position);
     fakeDisplay.quaternion.copy(camera.quaternion);
     camera.projectionMatrix.toArray(fakeDisplay._frameData.leftProjectionMatrix);
