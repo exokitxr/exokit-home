@@ -477,6 +477,7 @@
     const lastPresseds = [false, false];
     const lastMenuPresseds = [false, false];
     const lastGrabbeds = [false, false];
+    const lastPadPresseds = [null, null];
     const grabbedObjects = [null, null];
     for (let i = 0; i < 2; i++) {
       const controllerMesh = new THREE.Object3D();
@@ -1650,10 +1651,12 @@
           let pressed = false;
           let grabbed = false;
           let menuPressed = false;
+          let padPressed = null;
           if (gamepad) {
             pressed = gamepad.buttons[1].pressed;
             grabbed = gamepad.buttons[2].pressed;
             menuPressed = gamepad.buttons[3].pressed;
+            padPressed = gamepad.buttons[0].pressed ? _getGamepadDirection(gamepad) : null;
           }
 
           const _setIntersectionDefault = () => {
@@ -2753,6 +2756,7 @@
               lastPresseds[controllerIndex] = false;
               lastMenuPresseds[controllerIndex] = false;
               lastGrabbeds[controllerIndex] = false;
+              lastPadPresseds[controllerIndex] = false;
 
               controllerMeshes[controllerIndex].rayMesh.visible = false;
               controllerMeshes[controllerIndex].rayDot.visible = false;
@@ -2772,6 +2776,7 @@
               lastPresseds[controllerIndex] = false;
               lastMenuPresseds[controllerIndex] = false;
               lastGrabbeds[controllerIndex] = false;
+              lastPadPresseds[controllerIndex] = false;
 
               controllerMeshes[controllerIndex].rayMesh.visible = false;
               controllerMeshes[controllerIndex].rayDot.visible = false;
