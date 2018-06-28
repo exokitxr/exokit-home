@@ -64,24 +64,27 @@
     let fileMeshes = [];
     const fetchManager = new FetchManager();
 
+    const _submitUrl = u => {
+      currentApps = [u];
+      _updateLocalApps();
+
+      if (_isMpOpen()) {
+        xrmp.updateRemoteApps();
+      }
+
+      loadingBarState.loaded = false;
+      loadingBarState.loading = true;
+      loadingBarState.error = false;
+      loadingBarState.text = 'Loading...';
+
+      menuMesh.urlMesh.updateText();
+    };
     const urlState = {
       text: 'http://',
       cursor: -1,
       measures: [],
       submit() {
-        currentApps = [urlState.text];
-        _updateLocalApps();
-
-        if (_isMpOpen()) {
-          xrmp.updateRemoteApps();
-        }
-
-        loadingBarState.loaded = false;
-        loadingBarState.loading = true;
-        loadingBarState.error = false;
-        loadingBarState.text = 'Loading...';
-
-        menuMesh.urlMesh.updateText();
+        _submitUrl(urlState.text);
       },
     };
     urlState.cursor = urlState.text.length;
