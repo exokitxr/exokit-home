@@ -736,8 +736,6 @@
       graphImg.onload = () => {
         texture.image = graphImg;
         texture.needsUpdate = true;
-
-        mesh.visible = true;
       };
       graphImg.onerror = err => {
         console.warn(err.stack);
