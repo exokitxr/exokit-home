@@ -295,9 +295,15 @@ class App extends Component {
         });
     };
     _openLogin();
+
+    this._refreshSkin();
   }
 
   componentDidUpdate() {
+    this._refreshSkin();
+  }
+
+  _refreshSkin() {
     if (this.state.user) {
       const canvas = this.refs.canvas;
       canvas.width = 400;
