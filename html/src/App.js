@@ -172,19 +172,19 @@ const defaultFile = ['Apple', 'Carrot', 'Stick'].map((file, i) =>
   </li>
 );
 const buttons = [
-  ['Map', fieldMap, fieldMap2, <UrlBar/>],
+  ['Apps', fieldMap, fieldMap2, <UrlBar/>],
   // [player, player2],
   // [oneHandedStraghtSword, oneHandedStraghtSword2],
+  ['Party', party, party2, defaultOptions],
   ['Items', items, items2, defaultFile],
-  ['Invite', invite, invite2, defaultOptions],
+  // ['Invite', invite, invite2, defaultOptions],
   // [skills, skills2],
   // [searching, searching2],
   // [friend, friend2],
-  ['Party', party, party2, defaultOptions],
   ['Option', option, option2, defaultOptions],
   ['Help', help, help2, defaultOptions],
   ['Logout', logout, logout2, ({onlogout}) => <li className="menu-list-item" onClick={onlogout}>Log out</li>],
-  ['Calling', calling, calling2, defaultOptions],
+  // ['Calling', calling, calling2, defaultOptions],
   // [yes, yes2],
   // [no, no2],
 ];
