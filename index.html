@@ -983,7 +983,6 @@
     let menuImg = null;
     const _renderHtml = async () => {
       if (window.requestPage) {
-        // page = await window.requestPage(`html/build/index.html`, menuWidth, menuHeight);
         page = await window.requestPage(`http://127.0.0.1:3000/`, menuWidth, menuHeight);
         page.on('pageerror', err => {
           console.warn(err);
