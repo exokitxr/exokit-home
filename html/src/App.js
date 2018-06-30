@@ -64,14 +64,21 @@ class UrlBar extends Component {
 class Button extends Component {
   constructor() {
     super();
+
+    this.state = {
+      hovered: false,
+    };
   }
 
   render() {
-    return <div style={{position: 'relative', display: 'flex'}}>
+    console.log('render', this.state.hovered);
+
+    return <div style={{position: 'relative', display: 'flex', margin: '0.2vw 0', backgroundColor: this.state.hovered ? '#EEE' : '#FFF'}} onMouseOver={() => this.setState({hovered: true})} onMouseOut={() => this.setState({hovered: false})} onClick={this.props.onclick}>
+      <span style={{display: 'flex', width: '15vw', height: '8vw', marginRight: '2vw', padding: '2vw', backgroundColor: '#000', color: '#FFF', fontSize: '4vw', fontWeight: 300, alignItems: 'center'}}>{this.props.label}</span>
       <img
         src={this.props.src}
-        style={{padding: '10px 0'}}
-        onClick={this.props.onclick}/>
+        style={{width: '8vw', height: '8vw'}}
+      />
       {this.props.children}
     </div>
   }
@@ -122,19 +129,19 @@ const defaultFile = ['Apple', 'Carrot', 'Stick'].map((file, i) =>
   </li>
 );
 const buttons = [
-  [fieldMap, fieldMap2, <UrlBar/>],
+  ['Map', fieldMap, fieldMap2, <UrlBar/>],
   // [player, player2],
   // [oneHandedStraghtSword, oneHandedStraghtSword2],
-  [items, items2, defaultFile],
-  [invite, invite2, defaultOptions],
+  ['Items', items, items2, defaultFile],
+  ['Invite', invite, invite2, defaultOptions],
   // [skills, skills2],
   // [searching, searching2],
   // [friend, friend2],
-  [party, party2, defaultOptions],
-  [option, option2, defaultOptions],
-  [help, help2, defaultOptions],
-  [logout, logout2, ({onlogout}) => <li className="menu-list-item" onClick={onlogout}>Log out</li>],
-  [calling, calling2, defaultOptions],
+  ['Party', party, party2, defaultOptions],
+  ['Option', option, option2, defaultOptions],
+  ['Help', help, help2, defaultOptions],
+  ['Logout', logout, logout2, ({onlogout}) => <li className="menu-list-item" onClick={onlogout}>Log out</li>],
+  ['Calling', calling, calling2, defaultOptions],
   // [yes, yes2],
   // [no, no2],
 ];
@@ -182,10 +189,10 @@ class App extends Component {
         username: 'lol@lol.zol',
         password: 'zol',
       })
-        .then(newUser => {
-          // user = newUser;
+        .then(user => {
+          this.setState({user})
 
-          console.log('log in', newUser);
+          console.log('log in', user);
         })
         .catch(err => {
           console.warn(err.stack);
@@ -200,11 +207,11 @@ class App extends Component {
         <div style={{display: 'flex', justifyContent: 'stretch', backgroundColor: '#CCC', color: '#808080'}}>
           {/*['URL', 'Apps', 'Files', 'Party', 'Config'].map(t => <Tab name={t} selected={this.state.currentTab === t} onclick={() => this.setState({currentTab: t})} key={t}/>)*/}
         </div>
-        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+        <div style={{display: 'flex', flexDirection: 'column'}}>
           {!this.state.user ? <Modal onyes={() => this.setState({user: {}})} onno={() => this.setState({user: null})}/> : null}
           {this.state.user ? buttons.map((button, i) => {
             const selected = this.state.selectedButton === i;
-            const opts = typeof button[2] === 'function' ? button[2]({onlogout: () => this.setState({selectedButton: -1, user: null})}) : button[2];
+            const opts = typeof button[3] === 'function' ? button[3]({onlogout: () => this.setState({selectedButton: -1, user: null})}) : button[3];
             const menu = selected ? <div className={classnames('menu',
               (i === 0) ?
                 'top'
@@ -217,11 +224,11 @@ class App extends Component {
               </ul>
             </div> : null;
             if (!selected) {
-              return <Button src={button[0]} onclick={() => this.setState({selectedButton: i})} selected={selected} key={i}>
+              return <Button label={button[0]} src={button[1]} onclick={() => this.setState({selectedButton: i})} selected={selected} key={i}>
                 {menu}
               </Button>;
             } else {
-              return <Button src={button[1]} onclick={() => this.setState({selectedButton: -1})} selected={selected} key={i}>
+              return <Button label={button[0]} src={button[2]} onclick={() => this.setState({selectedButton: -1})} selected={selected} key={i}>
                 {menu}
               </Button>;
             }
