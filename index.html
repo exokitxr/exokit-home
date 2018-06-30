@@ -37,6 +37,8 @@
     const container = document.getElementById('container');
     const canvas = document.getElementById('canvas');
 
+    skin = skin(THREE);
+
     function getQueryParameter(name) {
       name = name.replace(/[\[\]]/g, '\\$&');
       var regex = new RegExp("[?&]" + name + '(=([^&#]*)|&|#|$)'),
