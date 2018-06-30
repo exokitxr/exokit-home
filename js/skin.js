@@ -1,3 +1,4 @@
+(() => {
 const skin = THREE => {
 
 const scale = 1 / 18;
@@ -1198,3 +1199,5 @@ if (typeof module !== 'undefined') {
 } else {
   window.skin = skin;
 }
+
+})();
