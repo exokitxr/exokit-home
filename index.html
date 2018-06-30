@@ -1341,6 +1341,37 @@
     })();
     scene.add(menuMesh);
 
+    const skyboxMesh = (() => {
+      const vertexShader = [
+        'varying vec3 vWorldPosition;',
+        'void main() {',
+          'vec4 worldPosition = modelMatrix * vec4( position, 1.0 );',
+          'vWorldPosition = worldPosition.xyz;',
+          'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
+        '}'
+      ].join('\n');
+      const fragmentShader = [
+        'vec3 colorTop = vec3(33.0/256.0, 33.0/256.0, 33.0/256.0);',
+        'vec3 colorBottom = vec3(11.0/256.0, 11.0/256.0, 11.0/256.0);',
+        'varying vec3 vWorldPosition;',
+        'void main() {',
+          'vec3 pointOnSphere = normalize(vWorldPosition.xyz);',
+          'float f = 1.0;',
+          'if (pointOnSphere.y > - 0.2){',
+            'f = sin(pointOnSphere.y * 2.0);',
+          '}',
+          'gl_FragColor = vec4(mix(colorBottom,colorTop, f ), 1.0);',
+        '}'
+      ].join('\n');
+      const mesh = new THREE.Mesh(new THREE.BoxBufferGeometry(1000, 1000, 1000), new THREE.ShaderMaterial({
+        vertexShader,
+        fragmentShader,
+        side: THREE.BackSide,
+      }));
+      return mesh;
+    })();
+    scene.add(skyboxMesh);
+
     const boxMesh = (() => {
       const geometry = new THREE.BoxBufferGeometry(1, 1, 1);
       const material = new THREE.MeshBasicMaterial({
