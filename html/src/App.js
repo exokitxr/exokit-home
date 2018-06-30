@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import classnames from 'classnames';
+import * as THREE from './js/three.js';
+import skin from './js/skin.js';
 import './js/xrid.js';
 
 import './App.css';
@@ -39,6 +41,42 @@ import no2 from './img/No_on.svg';
 
 import stick from './img/items/stick.png';
 
+const localVector = new THREE.Vector3();
+const localVector2 = new THREE.Vector3();
+
+const _requestSkinPreview = (canvas, src) => new Promise((accept, reject) => {
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    alpha: true,
+  });
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(90, 1/2, 0.1, 1024);
+
+  const mesh = skin(THREE)({
+    limbs: true,
+  });
+  mesh.position.set(0, -1.5/2, -1.2);
+  mesh.quaternion.setFromUnitVectors(
+    localVector.set(0, 0, -1),
+    localVector2.set(0, 0, 1)
+  );
+  scene.add(mesh);
+
+  const skinImg = new Image();
+  skinImg.crossOrigin = 'Anonymous';
+  skinImg.src = src;
+  skinImg.onload = () => {
+    mesh.setImage(skinImg);
+
+    renderer.render(scene, camera);
+
+    accept(canvas);
+  };
+  skinImg.onerror = err => {
+    reject(err);
+  };
+});
+
 /* const Tab = ({name, selected, onclick}) =>
   <a
     className={classnames('tab', 'url', selected ? 'selected' : null)}
@@ -61,7 +99,7 @@ class UrlBar extends Component {
   }
 }
 
-const Label = ({text, width = '15vw', height = '8vw'}) => <span style={{display: 'flex', width, height, marginRight: '2vw', padding: '2vw', backgroundColor: '#000', color: '#FFF', fontSize: '3vw', fontWeight: 300, alignItems: 'center'}}>{text}</span>;
+const Label = ({children, width = '15vw', height = '8vw'}) => <span style={{display: 'flex', width, height, marginRight: '2vw', padding: '2vw', backgroundColor: '#000', color: '#FFF', fontSize: '3vw', fontWeight: 300, alignItems: 'center'}}>{children}</span>;
 
 class Button extends Component {
   constructor() {
@@ -74,7 +112,7 @@ class Button extends Component {
 
   render() {
     return <div style={{position: 'relative', display: 'flex', margin: '0.2vw 0', backgroundColor: this.state.hovered ? '#EEE' : '#FFF'}} onMouseOver={() => this.setState({hovered: true})} onMouseOut={() => this.setState({hovered: false})} onClick={this.props.onclick}>
-      <Label text={this.props.label}/>
+      <Label>{this.props.label}</Label>
       <img
         src={this.props.src}
         style={{width: '8vw', height: '8vw'}}
@@ -151,37 +189,50 @@ class Buttons extends Component {
     super();
 
     this.state = {
-      selectedButton: 0,
+      selectedButton: -1,
     };
   }
 
   render() {
-    return <div style={{display: 'flex', flex: 1, flexDirection: 'column'}}>
-      {buttons.map((button, i) => {
-        const selected = this.state.selectedButton === i;
-        const opts = typeof button[3] === 'function' ? button[3]({onlogout: () => this.setState({selectedButton: -1, user: null})}) : button[3];
-        const menu = selected ? <div className={classnames('menu',
-          (i === 0) ?
-            'top'
-          : (
-            (i % 2) === 1 ? 'left' : 'right'
-          )
-        )}>
-          <ul className="menu-list">
-            {opts}
-          </ul>
-        </div> : null;
-        if (!selected) {
-          return <Button label={button[0]} src={button[1]} onclick={() => this.setState({selectedButton: i})} selected={selected} key={i}>
-            {menu}
-          </Button>;
-        } else {
-          return <Button label={button[0]} src={button[2]} onclick={() => this.setState({selectedButton: -1})} selected={selected} key={i}>
-            {menu}
-          </Button>;
-        }
-      })}
-    </div>;
+    if (this.state.selectedButton >= 0) {
+      const button = buttons[this.state.selectedButton];
+
+      return <div style={{display: 'flex', flex: 1, flexDirection: 'column'}}>
+        <Label width='auto'>
+          <div style={{display: 'flex', height: '8vw', width: '8vw', margin: '-2vw', marginRight: '2vw', backgroundColor: '#29B6F6', justifyContent: 'center', alignItems: 'center'}} onClick={() => this.setState({selectedButton: -1})}>
+            <div style={{marginTop: '-1vw', fontSize: '5vw'}}>‹</div>
+          </div>
+          <span>{button[0]}</span>
+        </Label>
+      </div>
+    } else {
+      return <div style={{display: 'flex', flex: 1, flexDirection: 'column'}}>
+        {buttons.map((button, i) => {
+          const selected = this.state.selectedButton === i;
+          const opts = typeof button[3] === 'function' ? button[3]({onlogout: () => this.setState({selectedButton: -1, user: null})}) : button[3];
+          const menu = selected ? <div className={classnames('menu',
+            (i === 0) ?
+              'top'
+            : (
+              (i % 2) === 1 ? 'left' : 'right'
+            )
+          )}>
+            <ul className="menu-list">
+              {opts}
+            </ul>
+          </div> : null;
+          if (!selected) {
+            return <Button label={button[0]} src={button[1]} onclick={() => this.setState({selectedButton: i})} selected={selected} key={i}>
+              {menu}
+            </Button>;
+          } else {
+            return <Button label={button[0]} src={button[2]} onclick={() => this.setState({selectedButton: -1})} selected={selected} key={i}>
+              {menu}
+            </Button>;
+          }
+        })}
+      </div>;
+    }
   }
 }
 
@@ -240,14 +291,24 @@ class App extends Component {
     _openLogin();
   }
 
+  componentDidUpdate() {
+    if (this.state.user) {
+      const canvas = this.refs.canvas;
+      canvas.width = 400;
+      canvas.height = 800;
+      _requestSkinPreview(canvas, 'https://rawgit.com/webmixedreality/exokit-home/master/img/skins/male.png');
+    }
+  }
+
   render() {
     if (!this.state.user) {
       return <Modal onyes={() => this.setState({user: {}})} onno={() => this.setState({user: null})}/>;
     } else {
       return <div style={{display: 'flex'}}>
         <Buttons/>
-        <div style={{width: '25vw', backgroundColor: '#EEE'}}>
+        <div style={{display: 'flex', width: '25vw', backgroundColor: '#EEE', flexDirection: 'column', justifyContent: 'flex-start'}}>
           <Label text='Avaer Kazmer' width='100%'/>
+          <canvas width={400} height={800} style={{height: 'calc(25vw*2)'}} ref='canvas'/>
         </div>
       </div>;
     }

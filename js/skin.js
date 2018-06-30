@@ -1,4 +1,4 @@
-window.skin = (() => {
+const skin = THREE => {
 
 const scale = 1 / 18;
 const offsetY = 22 + 13.5/2 - 8/2;
@@ -1191,4 +1191,10 @@ skin.SKIN_SHADER = SKIN_SHADER;
 
 return skin;
 
-})();
+};
+
+if (typeof module !== 'undefined') {
+  module.exports = skin;
+} else {
+  window.skin = skin;
+}
