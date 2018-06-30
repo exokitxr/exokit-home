@@ -3,6 +3,7 @@
 body {
   // background-color: #333;
   // padding-top: 10vw;
+  overflow-y: scroll;
 }
 
 .tab {

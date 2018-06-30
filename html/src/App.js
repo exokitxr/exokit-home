@@ -16,6 +16,8 @@ import items2 from './img/Items_on.svg';
 // import equipment from './img/Equipment.svg';
 import fieldMap from './img/Field Map & Position Check.svg';
 import fieldMap2 from './img/Field Map & Position Check_on.svg';
+import dungeonMap from './img/Dungeon Map.svg';
+import dungeonMap2 from './img/Dungeon Map_on.svg';
 import invite from './img/Invite.svg';
 import invite2 from './img/Invite_on.svg';
 import skills from './img/Skills.svg';
@@ -95,7 +97,10 @@ class UrlBar extends Component {
   }
 
   render() {
-    return <input className='text-input' type='text' value={this.state.url} onChange={e => this.setState({url: e.target.value})}/>;
+    return <div style={{display: 'flex', marginRight: '2vw', backgroundColor: '#000', borderLeft: '2vw solid #29b6f6'}}>
+      {/*<img src={dungeonMap} style={{width: '8vw', height: '8vw'}}/>*/}
+      <input type='text' value={this.state.url} style={{display: 'flex', height: '8vw', padding: '1vw', flex: 1, backgroundColor: '#000', border: 0, color: '#FFF', fontFamily: 'inherit', fontSize: '3vw', outline: 'none'}} onChange={e => this.setState({url: e.target.value})}/>
+    </div>;
   }
 }
 
@@ -207,6 +212,7 @@ class Buttons extends Component {
       </div>
     } else {
       return <div style={{display: 'flex', flex: 1, flexDirection: 'column'}}>
+        <UrlBar/>
         {buttons.map((button, i) => {
           const selected = this.state.selectedButton === i;
           const opts = typeof button[3] === 'function' ? button[3]({onlogout: () => this.setState({selectedButton: -1, user: null})}) : button[3];
@@ -304,11 +310,11 @@ class App extends Component {
     if (!this.state.user) {
       return <Modal onyes={() => this.setState({user: {}})} onno={() => this.setState({user: null})}/>;
     } else {
-      return <div style={{display: 'flex'}}>
+      return <div style={{display: 'flex', minHeight: '100vh'}}>
         <Buttons/>
-        <div style={{display: 'flex', width: '25vw', backgroundColor: '#EEE', flexDirection: 'column', justifyContent: 'flex-start'}}>
-          <Label text='Avaer Kazmer' width='100%'/>
-          <canvas width={400} height={800} style={{height: 'calc(25vw*2)'}} ref='canvas'/>
+        <div style={{display: 'flex', width: '25vw', backgroundColor: '#EEE', flexDirection: 'column'}}>
+          <Label width='100%'>Avaer Kazmer</Label>
+          <canvas width={400} height={800} style={{width: 'calc(25vw/2)', height: 'calc(25vw*2/2)'}} ref='canvas'/>
         </div>
       </div>;
     }
