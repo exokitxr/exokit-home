@@ -116,7 +116,7 @@ class Button extends Component {
   }
 
   render() {
-    return <div style={{position: 'relative', display: 'flex', margin: '0.2vw 0', backgroundColor: this.state.hovered ? '#EEE' : '#FFF'}} onMouseOver={() => this.setState({hovered: true})} onMouseOut={() => this.setState({hovered: false})} onClick={this.props.onclick}>
+    return <div style={{position: 'relative', display: 'flex', margin: '0.2vw 0', marginRight: '2vw', backgroundColor: this.state.hovered ? '#EEE' : 'rgba(255, 255, 255, 0.9)'}} onMouseOver={() => this.setState({hovered: true})} onMouseOut={() => this.setState({hovered: false})} onClick={this.props.onclick}>
       <Label>{this.props.label}</Label>
       <img
         src={this.props.src}
@@ -318,9 +318,9 @@ class App extends Component {
     } else {
       return <div style={{display: 'flex', minHeight: '100vh'}}>
         <Buttons/>
-        <div style={{display: 'flex', width: '25vw', backgroundColor: '#EEE', flexDirection: 'column'}}>
+        <div style={{display: 'flex', width: '25vw', flexDirection: 'column'}}>
           <Label width='100%'>Avaer Kazmer</Label>
-          <canvas width={400} height={800} style={{width: 'calc(25vw/2)', height: 'calc(25vw*2/2)'}} ref='canvas'/>
+          <canvas width={400} height={800} style={{width: 'calc(25vw/2)', height: 'calc(25vw*2/2)', backgroundColor: 'rgba(255, 255, 255, 0.8)'}} ref='canvas'/>
         </div>
       </div>;
     }
