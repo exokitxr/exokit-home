@@ -138,6 +138,19 @@ class Items extends Component {
   }
 }
 
+class Help extends Component {
+  render() {
+    return <div style={{display: 'flex', height: 'calc(100vh - 8vw)', padding: '2vw', flexDirection: 'column'}}>
+      <div style={{fontSize: '5vw'}}>How to use</div>
+      <div style={{flex: 1}}></div>
+      <div style={{display: 'flex'}}>
+        <div style={{backgroundColor: '#000', color: '#FFF', marginRight: 'auto', padding: '1vw'}}>Previous</div>
+        <div style={{backgroundColor: '#000', color: '#FFF', padding: '1vw'}}>Next</div>
+      </div>
+    </div>;
+  }
+}
+
 const Label = ({children, width = '15vw', height = '8vw'}) => <span style={{display: 'flex', width, height, marginRight: '2vw', padding: '2vw', backgroundColor: '#000', color: '#FFF', fontSize: '3vw', fontWeight: 300, alignItems: 'center'}}>{children}</span>;
 
 class Button extends Component {
@@ -209,7 +222,7 @@ const buttons = [
   // [searching, searching2],
   // [friend, friend2],
   ['Option', option, option2, defaultOptions],
-  ['Help', help, help2, defaultOptions],
+  ['Help', help, help2, <Help/>],
   ['Logout', logout, logout2, ({onlogout}) => <li className="menu-list-item" onClick={onlogout}>Log out</li>],
   // ['Calling', calling, calling2, defaultOptions],
   // [yes, yes2],
