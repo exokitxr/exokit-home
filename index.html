@@ -2707,7 +2707,26 @@
             if (!e.ctrlKey) {
               let c = String.fromCharCode(e.which);
               if (e.shiftKey) {
-                c = c.toUpperCase();
+                c = c.toUpperCase()
+                  .replace(/\;/, ':')
+                  .replace(/\//, '?')
+                  .replace(/'/, '"')
+                  .replace(/,/, '<')
+                  .replace(/\./, '>')
+                  .replace(/\[/, '[')
+                  .replace(/\]/, ']')
+                  .replace(/\-/, '_')
+                  .replace(/=/, '+')
+                  .replace(/1/, '!')
+                  .replace(/2/, '@')
+                  .replace(/3/, '#')
+                  .replace(/4/, '$$')
+                  .replace(/5/, '%')
+                  .replace(/6/, '^')
+                  .replace(/7/, '&')
+                  .replace(/8/, '*')
+                  .replace(/9/, '(')
+                  .replace(/0/, ')');
               }
               keyboardState.text = keyboardState.text.slice(0, keyboardState.cursor) + c + keyboardState.text.slice(keyboardState.cursor);
               keyboardState.cursor++;
