@@ -118,8 +118,9 @@ class Apps extends Component {
 class Party extends Component {
   render() {
     return <ul>
-      {this.props.servers.map((server, i) => <li key={i}>
-        {server.url}
+      {this.props.servers.map((server, i) => <li style={{display: 'flex', margin: '1vw 0', padding: '1vw', backgroundColor: '#EEE', fontSize: '2.5vw', alignItems: 'center'}} key={i}>
+        <img src={party} style={{width: '5vw', height: '5vw', marginRight: '1vw'}}/>
+        <div>{server.url}</div>
       </li>)}
     </ul>;
   }
@@ -127,12 +128,10 @@ class Party extends Component {
 
 class Items extends Component {
   render() {
-    return <ul>
-      {this.props.files.map((file, i) => <li className="menu-list-item" key={i}>
-        <div className='file'>
-          <img src={stick}/>
-          <div>{file.name}</div>
-        </div>
+    return <ul style={{display: 'flex', marginRight: '2vw', flexDirection: 'column'}}>
+      {this.props.files.map((file, i) => <li className='file' style={{margin: '0.2vw 0', padding: '1vw', backgroundColor: '#EEE'}} key={i}>
+        <img src={stick}/>
+        <div>{file.name}</div>
       </li>)}
     </ul>;
   }
