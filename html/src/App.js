@@ -105,6 +105,16 @@ class UrlBar extends Component {
   }
 }
 
+class Apps extends Component {
+  render() {
+    return <ul>
+      {this.props.apps.map((app, i) => <li key={i}>
+        {app}
+      </li>)}
+    </ul>;
+  }
+}
+
 class Party extends Component {
   render() {
     return <ul>
@@ -183,13 +193,10 @@ const defaultFile = ['Apple', 'Carrot', 'Stick'].map((file, i) =>
   </li>
 );
 const buttons = [
-  ['Apps', fieldMap, fieldMap2, null],
+  ['Apps', fieldMap, fieldMap2, ({props, state}) => <Apps apps={props.apps}/>],
   // [player, player2],
   // [oneHandedStraghtSword, oneHandedStraghtSword2],
-  ['Party', party, party2, ({props, state}) => {
-    console.log('got servers', props, state);
-    return <Party servers={props.servers}/>;
-  }],
+  ['Party', party, party2, ({props, state}) => <Party servers={props.servers}/>],
   ['Items', items, items2, defaultFile],
   // ['Invite', invite, invite2, defaultOptions],
   // [skills, skills2],
@@ -249,6 +256,7 @@ class App extends Component {
       user: null,
       // currentTab: 'URL',
       selectedButton: 0,
+      apps: [],
       servers: [],
     };
   }
@@ -325,7 +333,7 @@ class App extends Component {
               });
           }))
             .then(() => {
-              this.setState({servers: newServers});
+              this.setState({apps: xrUrls, servers: newServers});
             });
         });
     };
@@ -358,7 +366,7 @@ class App extends Component {
       return <Modal onyes={() => this.setState({user: {}})} onno={() => this.setState({user: null})}/>;
     } else {
       return <div style={{display: 'flex', minHeight: '100vh'}}>
-        <Buttons servers={this.state.servers}/>
+        <Buttons apps={this.state.apps} servers={this.state.servers}/>
         <div style={{display: 'flex', width: '25vw', flexDirection: 'column'}}>
           <Label width='100%'>Avaer Kazmer</Label>
           <canvas width={400} height={800} style={{width: 'calc(25vw/2)', height: 'calc(25vw*2/2)', backgroundColor: 'rgba(255, 255, 255, 0.8)'}} ref='canvas'/>
