@@ -125,6 +125,19 @@ class Party extends Component {
   }
 }
 
+class Items extends Component {
+  render() {
+    return <ul>
+      {this.props.files.map((file, i) => <li className="menu-list-item" key={i}>
+        <div className='file'>
+          <img src={stick}/>
+          <div>{file.name}</div>
+        </div>
+      </li>)}
+    </ul>;
+  }
+}
+
 const Label = ({children, width = '15vw', height = '8vw'}) => <span style={{display: 'flex', width, height, marginRight: '2vw', padding: '2vw', backgroundColor: '#000', color: '#FFF', fontSize: '3vw', fontWeight: 300, alignItems: 'center'}}>{children}</span>;
 
 class Button extends Component {
@@ -184,20 +197,13 @@ class Modal extends Component {
 }
 
 const defaultOptions = ['Options', 'Help', 'Logout'].map((option, i) => <li className="menu-list-item" key={i}>{option}</li>);
-const defaultFile = ['Apple', 'Carrot', 'Stick'].map((file, i) =>
-  <li className="menu-list-item" key={i}>
-    <div className='file'>
-      <img src={stick}/>
-      <div>{file}</div>
-    </div>
-  </li>
-);
+
 const buttons = [
   ['Apps', fieldMap, fieldMap2, ({props, state}) => <Apps apps={props.apps}/>],
   // [player, player2],
   // [oneHandedStraghtSword, oneHandedStraghtSword2],
   ['Party', party, party2, ({props, state}) => <Party servers={props.servers}/>],
-  ['Items', items, items2, defaultFile],
+  ['Items', items, items2, ({props, state}) => <Items files={props.files}/>],
   // ['Invite', invite, invite2, defaultOptions],
   // [skills, skills2],
   // [searching, searching2],
@@ -227,7 +233,7 @@ class Buttons extends Component {
       :
         button[3];
 
-      return <div style={{display: 'flex', flex: 1, flexDirection: 'column'}}>
+      return <div style={{display: 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden'}}>
         <Label width='auto'>
           <div style={{display: 'flex', height: '8vw', width: '8vw', margin: '-2vw', marginRight: '2vw', backgroundColor: '#29B6F6', justifyContent: 'center', alignItems: 'center'}} onClick={() => this.setState({selectedButton: -1})}>
             <div style={{marginTop: '-1vw', fontSize: '5vw'}}>‹</div>
@@ -254,6 +260,7 @@ class App extends Component {
 
     this.state = {
       user: null,
+      files: [],
       // currentTab: 'URL',
       selectedButton: 0,
       apps: [],
@@ -294,7 +301,10 @@ class App extends Component {
         password: 'zol',
       })
         .then(user => {
-          this.setState({user});
+          return xrid.getFiles()
+            .then(files => {
+              this.setState({user, files});
+            });
         })
         .catch(err => {
           console.warn(err.stack);
@@ -366,7 +376,7 @@ class App extends Component {
       return <Modal onyes={() => this.setState({user: {}})} onno={() => this.setState({user: null})}/>;
     } else {
       return <div style={{display: 'flex', minHeight: '100vh'}}>
-        <Buttons apps={this.state.apps} servers={this.state.servers}/>
+        <Buttons files={this.state.files} apps={this.state.apps} servers={this.state.servers}/>
         <div style={{display: 'flex', width: '25vw', flexDirection: 'column'}}>
           <Label width='100%'>Avaer Kazmer</Label>
           <canvas width={400} height={800} style={{width: 'calc(25vw/2)', height: 'calc(25vw*2/2)', backgroundColor: 'rgba(255, 255, 255, 0.8)'}} ref='canvas'/>
