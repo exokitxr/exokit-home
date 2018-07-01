@@ -36,6 +36,8 @@
 (() => {
     const container = document.getElementById('container');
     const canvas = document.getElementById('canvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
     function getQueryParameter(name) {
       name = name.replace(/[\[\]]/g, '\\$&');
@@ -72,6 +74,14 @@
     let menuOpen = true;
     let fileMeshes = [];
     const fetchManager = new FetchManager();
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.sortObjects = false;
+    renderer.vr.enabled = true;
 
     const _submitUrl = u => {
       currentApps = [u];
@@ -427,16 +437,6 @@
 
       localSkinMesh.destroy();
     };
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-    });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.sortObjects = false;
-    renderer.vr.enabled = true;
 
     const _makeRenderTarget = (width, height) => {
       const renderTarget = new THREE.WebGLRenderTarget(width, height);
