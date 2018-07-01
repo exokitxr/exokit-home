@@ -223,7 +223,7 @@ const buttons = [
   // [friend, friend2],
   ['Option', option, option2, defaultOptions],
   ['Help', help, help2, <Help/>],
-  ['Logout', logout, logout2, ({onlogout}) => <li className="menu-list-item" onClick={onlogout}>Log out</li>],
+  ['Logout', logout, logout2, ({setState}) => <div style={{display: 'flex', height: '7vw', margin: '1vw 0', padding: '1vw', backgroundColor: '#EEE', fontSize: '2.5vw', alignItems: 'center'}} onClick={() => setState({user: null})}>Log out</div>],
   // ['Calling', calling, calling2, defaultOptions],
   // [yes, yes2],
   // [no, no2],
@@ -242,7 +242,7 @@ class Buttons extends Component {
     if (this.state.selectedButton >= 0) {
       const button = buttons[this.state.selectedButton];
       const content = typeof button[3] === 'function' ?
-        button[3]({props: this.props, state: this.state})
+        button[3]({props: this.props, state: this.state, setState: this.props.setState.bind(this)})
       :
         button[3];
 
@@ -389,7 +389,12 @@ class App extends Component {
       return <Modal onyes={() => this.setState({user: {}})} onno={() => this.setState({user: null})}/>;
     } else {
       return <div style={{display: 'flex', minHeight: '100vh'}}>
-        <Buttons files={this.state.files} apps={this.state.apps} servers={this.state.servers}/>
+        <Buttons
+          files={this.state.files}
+          apps={this.state.apps}
+          servers={this.state.servers}
+          setState={this.setState.bind(this)}
+        />
         <div style={{display: 'flex', width: '25vw', flexDirection: 'column'}}>
           <Label width='100%'>Avaer Kazmer</Label>
           <canvas width={400} height={800} style={{width: 'calc(25vw/2)', height: 'calc(25vw*2/2)', backgroundColor: 'rgba(255, 255, 255, 0.8)'}} ref='canvas'/>
