@@ -43,9 +43,18 @@ import no2 from './img/No_on.svg';
 
 import stick from './img/items/stick.png';
 
+const REGISTRY_QUERY_URL = 'https://registry.webmr.io/q';
+
 const localVector = new THREE.Vector3();
 const localVector2 = new THREE.Vector3();
 
+const _resJson = res => {
+  if (res.ok) {
+    return res.json();
+  } else {
+    return Promise.reject(new Error('invalid status code: ' + res.status));
+  }
+};
 const _requestSkinPreview = (canvas, src) => new Promise((accept, reject) => {
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -79,14 +88,6 @@ const _requestSkinPreview = (canvas, src) => new Promise((accept, reject) => {
   };
 });
 
-/* const Tab = ({name, selected, onclick}) =>
-  <a
-    className={classnames('tab', 'url', selected ? 'selected' : null)}
-    style={{display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '30px', flex: 1}}
-    onClick={onclick}>
-      {name}
-  </a>; */
-
 class UrlBar extends Component {
   constructor() {
     super();
@@ -101,6 +102,16 @@ class UrlBar extends Component {
       {/*<img src={dungeonMap} style={{width: '8vw', height: '8vw'}}/>*/}
       <input type='text' value={this.state.url} style={{display: 'flex', height: '8vw', padding: '1vw', flex: 1, backgroundColor: '#000', border: 0, color: '#FFF', fontFamily: 'inherit', fontSize: '3vw', outline: 'none'}} onChange={e => this.setState({url: e.target.value})}/>
     </div>;
+  }
+}
+
+class Party extends Component {
+  render() {
+    return <ul>
+      {this.props.servers.map((server, i) => <li key={i}>
+        {server.url}
+      </li>)}
+    </ul>;
   }
 }
 
@@ -172,10 +183,13 @@ const defaultFile = ['Apple', 'Carrot', 'Stick'].map((file, i) =>
   </li>
 );
 const buttons = [
-  ['Apps', fieldMap, fieldMap2, <UrlBar/>],
+  ['Apps', fieldMap, fieldMap2, null],
   // [player, player2],
   // [oneHandedStraghtSword, oneHandedStraghtSword2],
-  ['Party', party, party2, defaultOptions],
+  ['Party', party, party2, ({props, state}) => {
+    console.log('got servers', props, state);
+    return <Party servers={props.servers}/>;
+  }],
   ['Items', items, items2, defaultFile],
   // ['Invite', invite, invite2, defaultOptions],
   // [skills, skills2],
@@ -201,6 +215,10 @@ class Buttons extends Component {
   render() {
     if (this.state.selectedButton >= 0) {
       const button = buttons[this.state.selectedButton];
+      const content = typeof button[3] === 'function' ?
+        button[3]({props: this.props, state: this.state})
+      :
+        button[3];
 
       return <div style={{display: 'flex', flex: 1, flexDirection: 'column'}}>
         <Label width='auto'>
@@ -209,33 +227,14 @@ class Buttons extends Component {
           </div>
           <span>{button[0]}</span>
         </Label>
+        {content}
       </div>
     } else {
       return <div style={{display: 'flex', flex: 1, flexDirection: 'column'}}>
         <UrlBar/>
         {buttons.map((button, i) => {
-          const selected = this.state.selectedButton === i;
-          const opts = typeof button[3] === 'function' ? button[3]({onlogout: () => this.setState({selectedButton: -1, user: null})}) : button[3];
-          const menu = selected ? <div className={classnames('menu',
-            (i === 0) ?
-              'top'
-            : (
-              (i % 2) === 1 ? 'left' : 'right'
-            )
-          )}>
-            <ul className="menu-list">
-              {opts}
-            </ul>
-          </div> : null;
-          if (!selected) {
-            return <Button label={button[0]} src={button[1]} onclick={() => this.setState({selectedButton: i})} selected={selected} key={i}>
-              {menu}
-            </Button>;
-          } else {
-            return <Button label={button[0]} src={button[2]} onclick={() => this.setState({selectedButton: -1})} selected={selected} key={i}>
-              {menu}
-            </Button>;
-          }
+          return <Button label={button[0]} src={button[1]} onclick={() => this.setState({selectedButton: i})} key={i}>
+          </Button>;
         })}
       </div>;
     }
@@ -250,6 +249,7 @@ class App extends Component {
       user: null,
       // currentTab: 'URL',
       selectedButton: 0,
+      servers: [],
     };
   }
 
@@ -293,6 +293,43 @@ class App extends Component {
         });
     };
     _openLogin();
+
+    const _openServers = () => {
+      fetch(REGISTRY_QUERY_URL)
+        .then(_resJson)
+        .then(j => {
+          const {xrmultiplayerHosts, xrUrls} = j;
+
+          const newServers = [];
+          return Promise.all(xrmultiplayerHosts.map(xrmpHost => {
+            const prefix = xrmpHost + '/servers';
+
+            return fetch('https://' + prefix)
+              .then(_resJson)
+              .then(j => {
+                const {servers} = j;
+
+                for (let i = 0; i < servers.length; i++) {
+                  const server = servers[i];
+                  const {name, players, objects} = server;
+                  newServers.push({
+                    name,
+                    url: prefix + '/' + name,
+                    players,
+                    objects,
+                  });
+                }
+              })
+              .catch(err => {
+                console.warn(err.stack);
+              });
+          }))
+            .then(() => {
+              this.setState({servers: newServers});
+            });
+        });
+    };
+    _openServers();
   }
 
   componentDidUpdate() {
@@ -321,7 +358,7 @@ class App extends Component {
       return <Modal onyes={() => this.setState({user: {}})} onno={() => this.setState({user: null})}/>;
     } else {
       return <div style={{display: 'flex', minHeight: '100vh'}}>
-        <Buttons/>
+        <Buttons servers={this.state.servers}/>
         <div style={{display: 'flex', width: '25vw', flexDirection: 'column'}}>
           <Label width='100%'>Avaer Kazmer</Label>
           <canvas width={400} height={800} style={{width: 'calc(25vw/2)', height: 'calc(25vw*2/2)', backgroundColor: 'rgba(255, 255, 255, 0.8)'}} ref='canvas'/>
