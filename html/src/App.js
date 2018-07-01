@@ -286,17 +286,13 @@ class App extends Component {
         password: 'zol',
       })
         .then(user => {
-          this.setState({user})
-
-          console.log('log in', user);
+          this.setState({user});
         })
         .catch(err => {
           console.warn(err.stack);
         });
     };
     _openLogin();
-
-    this._refreshSkin();
   }
 
   componentDidUpdate() {
@@ -308,7 +304,15 @@ class App extends Component {
       const canvas = this.refs.canvas;
       canvas.width = 400;
       canvas.height = 800;
-      _requestSkinPreview(canvas, 'https://rawgit.com/webmixedreality/exokit-home/master/img/skins/male.png');
+      _requestSkinPreview(canvas, 'https://rawgit.com/webmixedreality/exokit-home/master/img/skins/male.png')
+        .then(() => {
+          console.log({
+            _type: 'update',
+          });
+        })
+        .catch(err => {
+          console.warn(err);
+        });
     }
   }
 

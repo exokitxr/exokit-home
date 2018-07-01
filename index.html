@@ -988,11 +988,12 @@
           console.warn(err);
         });
         page.on('console', m => {
-          console.log(m.args().map(a => a._remoteObject.value));
+          const updateFlag = m.args().some(a => a._remoteObject.preview && a._remoteObject.preview.properties && a._remoteObject.preview.properties.some(p => p.name === '_type' && p.value === 'update'));
+          if (updateFlag) {
+            _updateHtml();
+          }
         });
-        menuImg = await page.requestImage();
-
-        menuMesh.urlMesh.updateText();
+        _updateHtml();
       }
     };
     const _updateHtml = async () => {
