@@ -108,8 +108,9 @@ class UrlBar extends Component {
 class Apps extends Component {
   render() {
     return <ul>
-      {this.props.apps.map((app, i) => <li key={i}>
-        {app}
+      {this.props.apps.map((app, i) => <li style={{display: 'flex', margin: '1vw 0', padding: '1vw', backgroundColor: '#EEE', fontSize: '2.5vw', alignItems: 'center'}} key={i}>
+        <img src={fieldMap} style={{width: '5vw', height: '5vw', marginRight: '1vw'}}/>
+        <div>{app}</div>
       </li>)}
     </ul>;
   }
