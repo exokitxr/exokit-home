@@ -2629,7 +2629,8 @@
     const _updateDisplays = () => {
       Promise.all([
         window.navigator.getVRDisplays ? window.navigator.getVRDisplays() : Promise.resolve([]),
-        window.navigator.xr ? window.navigator.xr.requestDevice().then(device => [device]) : Promise.resolve([]),
+        window.navigator.xr ? window.navigator.xr.requestDevice('VR').then(device => [device]) : Promise.resolve([]),
+        window.navigator.xr ? window.navigator.xr.requestDevice('AR').then(device => [device]) : Promise.resolve([]),
       ])
         .then(ds => {
           displays.length = 0;
@@ -2863,7 +2864,7 @@
             console.log('enable VR');
 
             const display = displays.find(display =>
-              display.constructor.name === 'XRDevice'
+              display.constructor.name === 'XRDevice' && display.name === 'VR'
             );
 
             if (display) {
@@ -2912,7 +2913,7 @@
             console.log('enable ML');
 
             const display = displays.find(display =>
-              display.constructor.name === 'MLDisplay'
+              display.constructor.name === 'XRDevice' && display.name === 'AR'
             );
             if (display) {
               if (window.document.pointerLockElement) {
