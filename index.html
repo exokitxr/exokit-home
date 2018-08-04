@@ -2629,8 +2629,8 @@
     const _updateDisplays = () => {
       Promise.all([
         window.navigator.getVRDisplays ? window.navigator.getVRDisplays() : Promise.resolve([]),
-        window.navigator.xr ? window.navigator.xr.requestDevice('VR').then(device => [device]) : Promise.resolve([]),
-        window.navigator.xr ? window.navigator.xr.requestDevice('AR').then(device => [device]) : Promise.resolve([]),
+        window.navigator.xr ? window.navigator.xr.requestDevice('VR').then(device => device ? [device] : []) : Promise.resolve([]),
+        window.navigator.xr ? window.navigator.xr.requestDevice('AR').then(device => device ? [device] : []) : Promise.resolve([]),
       ])
         .then(ds => {
           displays.length = 0;
