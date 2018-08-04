@@ -2944,6 +2944,9 @@
                         renderer.vr.setDevice(display);
                         renderer.vr.setAnimationLoop(animate);
 
+                        scene.background = null;
+                        floorMesh.visible = false;
+
                         renderTarget = _makeRenderTarget(width * 2, height);
 
                         screenQuad.material.uniforms.uTexture1.value = renderTarget.texture;
