@@ -2629,7 +2629,8 @@
     const _updateDisplays = () => {
       Promise.all([
         window.navigator.getVRDisplays ? window.navigator.getVRDisplays() : Promise.resolve([]),
-        window.navigator.xr ? window.navigator.xr.requestDevice().then(device => [device]) : Promise.resolve([]),
+        window.navigator.xr ? window.navigator.xr.requestDevice('VR').then(device => device ? [device] : []) : Promise.resolve([]),
+        window.navigator.xr ? window.navigator.xr.requestDevice('AR').then(device => device ? [device] : []) : Promise.resolve([]),
       ])
         .then(ds => {
           displays.length = 0;
@@ -2863,7 +2864,7 @@
             console.log('enable VR');
 
             const display = displays.find(display =>
-              display.constructor.name === 'XRDevice'
+              display.constructor.name === 'XRDevice' && display.name === 'VR'
             );
 
             if (display) {
@@ -2912,7 +2913,7 @@
             console.log('enable ML');
 
             const display = displays.find(display =>
-              display.constructor.name === 'MLDisplay'
+              display.constructor.name === 'XRDevice' && display.name === 'AR'
             );
             if (display) {
               if (window.document.pointerLockElement) {
@@ -2921,14 +2922,40 @@
               renderer.vr.setDevice(null);
               renderer.vr.setAnimationLoop(null);
 
-              fakeDisplay.session.end();
+              fakeDisplay.session.end()
+                .then(() =>
+                  display.requestSession({
+                    exclusive: true,
+                  })
+                    .then(session => {
+                      display.session = session;
 
-              display.requestPresent([{source: canvas}])
-                .then(() => {
-                  renderer.vr.setDevice(display);
-                  renderer.vr.setAnimationLoop(animate);
+                      session.requestAnimationFrame((timestamp, frame) => {
+                        renderer.vr.setSession(session, {
+                          frameOfReferenceType: 'stage',
+                        });
 
-                  scene.background = null;
+                        const viewport = session.baseLayer.getViewport(frame.views[0]);
+                        const width = viewport.width;
+                        const height = viewport.height;
+
+                        renderer.setSize(width * 2, height);
+
+                        renderer.vr.setDevice(display);
+                        renderer.vr.setAnimationLoop(animate);
+
+                        scene.background = null;
+                        floorMesh.visible = false;
+
+                        renderTarget = _makeRenderTarget(width * 2, height);
+
+                        screenQuad.material.uniforms.uTexture1.value = renderTarget.texture;
+                        screenQuad.material.uniforms.uDepth1.value = renderTarget.depthTexture;
+                      });
+                    })
+                )
+                .catch(err => {
+                  console.warn(err.stack);
                 });
             }
             break;
